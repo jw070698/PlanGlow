@@ -7,7 +7,7 @@ import re, os
 from openai import OpenAI
 from components.OpenAI_request import ChatApp
 # from components.Database import get_recent_messages, store_messages
-# from components.YouTube_request import get_search_response, get_video_info, info_to_dict, extract_video_id, get_video_thumbnail, check_resource_availability
+from components.YouTube_request import get_search_response, get_video_info, info_to_dict, extract_video_id, get_video_thumbnail, check_resource_availability
 # from components.GoogleSearch_request import google_search_availability
 
 from dotenv import load_dotenv
