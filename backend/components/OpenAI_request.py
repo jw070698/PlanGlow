@@ -35,7 +35,7 @@ class ChatApp:
     def chat(self, message):
         self.messages.append({"role": "user", "content": message})
         try:
-            response = self.client.chat.completions.create(model="gpt-4o", messages=self.messages)
+            response = self.client.chat.completions.create(model="gpt-4o", messages=self.messages, temperature=0)
             return response.choices[0].message.content
         except Exception as e:
             print(f"OpenAI API request error: {e}")
