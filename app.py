@@ -7,8 +7,8 @@ import re, os
 from openai import OpenAI
 from src.components.OpenAI_request import ChatApp
 # from src.components.Database import get_recent_messages, store_messages
-from src.components.YouTube_request import get_search_response, get_video_info, info_to_dict, extract_video_id, get_video_thumbnail, check_resource_availability
-from src.components.GoogleSearch_request import google_search_availability
+# from src.components.YouTube_request import get_search_response, get_video_info, info_to_dict, extract_video_id, get_video_thumbnail, check_resource_availability
+# from src.components.GoogleSearch_request import google_search_availability
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -88,35 +88,35 @@ async def generate_info_response(request: InfoRequest):
     except Exception as e:
         print(f"Error: {str(e)}")
 
-@app.post("/search")
-async def generate_search_response(request: SearchRequest):
-    search_message = request.search_message
-    response_resources = get_search_response(search_message)
-    return {"response": response_resources}
+# @app.post("/search")
+# async def generate_search_response(request: SearchRequest):
+#     search_message = request.search_message
+#     response_resources = get_search_response(search_message)
+#     return {"response": response_resources}
 
-@app.post("/thumbnails")
-async def generate_thumbnails(request: YouTubeLink):
-    try:
-        link_message = request.link_message
-        response_thumbnail = get_video_thumbnail(link_message)
-        if response_thumbnail:
-            return {"response": response_thumbnail}
-        else:
-            return {"response": 'none'}
-    except Exception as e:
-        print(f"Error occurred: {e}")
-        return {"response": 'none', "error": str(e)}
+# @app.post("/thumbnails")
+# async def generate_thumbnails(request: YouTubeLink):
+#     try:
+#         link_message = request.link_message
+#         response_thumbnail = get_video_thumbnail(link_message)
+#         if response_thumbnail:
+#             return {"response": response_thumbnail}
+#         else:
+#             return {"response": 'none'}
+#     except Exception as e:
+#         print(f"Error occurred: {e}")
+#         return {"response": 'none', "error": str(e)}
 
-@app.post("/checkResource")
-async def generate_check_response(request: CheckRequest):
-    check_message = request.check_message
-    print("Received request for /checkResource")
-    try:
-        response_check = check_resource_availability(check_message)
-        return {"response": response_check}
-    except Exception as e:
-        print(f"Error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+# @app.post("/checkResource")
+# async def generate_check_response(request: CheckRequest):
+#     check_message = request.check_message
+#     print("Received request for /checkResource")
+#     try:
+#         response_check = check_resource_availability(check_message)
+#         return {"response": response_check}
+#     except Exception as e:
+#         print(f"Error: {str(e)}")
+#         raise HTTPException(status_code=500, detail="Internal server error")
 
 
 if __name__ == '__main__':
