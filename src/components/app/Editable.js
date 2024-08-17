@@ -28,7 +28,7 @@ const Editable = ({ formData, setResponsePlan , setStudyPlan}) => {
         try {
             const { topic, background, studyMaterials, duration, availableTime } = updatedData;
             const updated_userMessage = `Create a study plan for a ${background} student on ${topic} using ${studyMaterials.join(', ')} over ${duration.months} months, ${duration.weeks} weeks, and ${duration.days} days with ${availableTime} hours available per week.`;
-            const response = await axios.post('http://localhost:1350/response', {user_message: updated_userMessage});
+            const response = await axios.post('https://ai-curriculum-pi.vercel.app/response', {user_message: updated_userMessage});
             if (response.data?.response) {
                 const markdownText = response.data.response;
                 const jsonMatch = markdownText.match(/```json([\s\S]*?)```/);

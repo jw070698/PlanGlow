@@ -43,7 +43,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
 
             try {
                 const search_message = `${topic} in ${formData?.topic || ''}`;
-                const response = await axios.post('http://localhost:1350/search', { search_message: search_message });
+                const response = await axios.post('https://ai-curriculum-pi.vercel.app/search', { search_message: search_message });
                 const items = response.data.response.items || [];
                 const formattedResults = items.map(item => {
                     const thumbnailUrl = item.snippet.thumbnails?.default?.url || 'https://via.placeholder.com/120'; // Fallback URL

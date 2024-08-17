@@ -3,7 +3,7 @@ import axios from 'axios';
 // YouTube 
 export const checkAvailability = async (url) => {
     try {
-        const response = await axios.post('http://localhost:1350/checkResource', {
+        const response = await axios.post('https://ai-curriculum-pi.vercel.app/checkResource', {
             check_message: url
         });
         const result = response.data.response;
@@ -31,7 +31,7 @@ export const checkAvailability = async (url) => {
 export const checkAvailabilityBlog = async (url) => {
     try {
         console.log(url)
-        const response = await axios.post('http://localhost:1350/checkResource', {
+        const response = await axios.post('https://ai-curriculum-pi.vercel.app/checkResource', {
             check_message: url
         });
         const result = response.data.response;

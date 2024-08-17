@@ -81,7 +81,7 @@ const ChatBox = () => {
     ]);
 
     try {
-      const response = await axios.post('http://localhost:1350/response', { user_message: userMessage });
+      const response = await axios.post('https://ai-curriculum-pi.vercel.app/response', { user_message: userMessage });
       const newResponsePlan = response.data.response;
       setResponsePlan(newResponsePlan);
       
@@ -120,7 +120,7 @@ const ChatBox = () => {
     ]);
     setUserInput('');
     try {
-      const response = await axios.post('http://localhost:1350/response', { user_message: userInput });
+      const response = await axios.post('https://ai-curriculum-pi.vercel.app/response', { user_message: userInput });
       setResponsePlan(response.data.response);
       setMessages((prevMessages) => [
         ...prevMessages,
@@ -138,7 +138,7 @@ const ChatBox = () => {
     const infoMessage = `Can you explain more about the background knowledge levels for the topic: ${formData.topic}?`;
     try {
       if (formData.topic) {
-        const response = await axios.post('http://localhost:1350/info', { info_message: infoMessage });
+        const response = await axios.post('https://ai-curriculum-pi.vercel.app/info', { info_message: infoMessage });
         setInfoInput(response.data.response);
         setModalIsOpen(true);
       } else {
@@ -156,7 +156,7 @@ const ChatBox = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:1350/search', { search_message: formData.topic });
+      const response = await axios.post('https://ai-curriculum-pi.vercel.app/search', { search_message: formData.topic });
 
       const items = response.data.response.items || [];
       console.log('Extracted Items Array:', items);
