@@ -59,6 +59,10 @@ def extract_topic(user_message):
         return match.group(1)
     return None
 
+@app.get('/')
+def hello_world():
+    return "Hello,World"
+
 @app.post("/response")
 async def generate_response(request: MessageRequest):
     if request.user_message:
@@ -131,4 +135,4 @@ async def generate_check_response_blog(request: CheckRequestBlog):
         raise HTTPException(status_code=500, detail="Internal server error")
 '''
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=1350)
+    uvicorn.run(app)
