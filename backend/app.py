@@ -5,8 +5,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import re, os
 from openai import OpenAI
+
+import firebase_admin
+from firebase_admin import credentials, firestore, auth
+
+# Initialize Firebase Admin SDK
+cred = credentials.Certificate("ai-curriculum-cbe8b-2fcf877d7b21.json")
+firebase_admin.initialize_app(cred)
+
 from components.OpenAI_request import ChatApp
-# from components.Database import get_recent_messages, store_messages
+from components.Database import get_recent_messages, store_messages
 from components.YouTube_request import get_search_response, get_video_info, info_to_dict, extract_video_id, get_video_thumbnail, check_resource_availability
 # from components.GoogleSearch_request import google_search_availability
 
@@ -62,10 +70,10 @@ def extract_topic(user_message):
 async def generate_response(request: MessageRequest):
     if request.user_message:
         response_text = chat_app.chat(request.user_message)
-        # store_messages(request.user_message,response_text) # Store user message & study plan
+        store_messages(request.user_message,response_text) # Store user message & study plan
     elif request.user_input:
         response_text = chat_app.chat(request.user_input) 
-        # store_messages(request.user_input,response_text) # Store user input & study plan
+        store_messages(request.user_input,response_text) # Store user input & study plan
         print("Received user_input")
     else:
         response_text = 'No message'

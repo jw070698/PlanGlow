@@ -1,4 +1,8 @@
 import json
+from firebase_admin import firestore
+db = firestore.client()
+# TODO: Define the session
+update_time, session_ref = db.collection("messages").add({"history": []})
 
 # Get recent messages 
 def get_recent_messages():
@@ -29,19 +33,23 @@ def get_recent_messages():
 
 # Store Messages 
 def store_messages(request_message, response_message):
+    # Add messages to data
+    user_message = {"role": "user", "content": request_message}
+    assistant_message = {"role": "assistant", "content": response_message}
+    session_ref.update({"history": firestore.ArrayUnion([user_message, assistant_message])})
 
-  # Define the file name
-  file_name = "stored_data.json"
+#   # Define the file name
+#   file_name = "stored_data.json"
 
-  # Get recent messages
-  messages = get_recent_messages()[1:]
+#   # Get recent messages
+#   messages = get_recent_messages()[1:]
 
-  # Add messages to data
-  user_message = {"role": "user", "content": request_message}
-  assistant_message = {"role": "assistant", "content": response_message}
-  messages.append(user_message)
-  messages.append(assistant_message)
+#   # Add messages to data
+#   user_message = {"role": "user", "content": request_message}
+#   assistant_message = {"role": "assistant", "content": response_message}
+#   messages.append(user_message)
+#   messages.append(assistant_message)
 
-  # Save the updated file
-  with open(file_name, "w") as f:
-    json.dump(messages, f)
+#   # Save the updated file
+#   with open(file_name, "w") as f:
+#     json.dump(messages, f)
