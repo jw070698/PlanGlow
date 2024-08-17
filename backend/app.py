@@ -10,7 +10,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore, auth
 
 # Initialize Firebase Admin SDK
-cred = credentials.Certificate("ai-curriculum-cbe8b-2fcf877d7b21.json")
+cred = credentials.Certificate("serviceAccountKey.json")
 firebase_admin.initialize_app(cred)
 
 from components.OpenAI_request import ChatApp
