@@ -7,7 +7,8 @@ from dotenv import load_dotenv
 import os
 import re
 load_dotenv()
-youtube = build('youtube', 'v3', developerKey = os.getenv('API_KEY2'))
+# youtube = build('youtube', 'v3', developerKey = os.getenv('API_KEY2'))
+youtube = None
 # pylint: disable=maybe-no-member
 
 def get_search_response(query):
