@@ -16,7 +16,6 @@ bitarray==2.8.2
 bitstring==4.1.2
 bleach==3.3.0
 blis==0.7.11
-browser==0.0.1
 CacheControl==0.14.0
 cachetools==4.2.2
 catalogue==2.0.10
