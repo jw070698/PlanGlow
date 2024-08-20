@@ -13,10 +13,10 @@ from firebase_admin import credentials, firestore, auth
 cred = credentials.Certificate("serviceAccountKey.json")
 firebase_admin.initialize_app(cred)
 
-from components.Backend.OpenAI_request import ChatApp
-from components.Backend.Database import get_recent_messages, store_messages
-from components.Backend.YouTube_request import get_search_response, get_video_info, info_to_dict, extract_video_id, get_video_thumbnail, check_resource_availability, get_video_stats
-from components.Backend.GoogleSearch_request import google_search_availability
+from components.OpenAI_request import ChatApp
+from components.Database import get_recent_messages, store_messages
+from components.YouTube_request import get_search_response, get_video_info, info_to_dict, extract_video_id, get_video_thumbnail, check_resource_availability, get_video_stats
+from components.GoogleSearch_request import google_search_availability
 
 from dotenv import load_dotenv
 load_dotenv()
