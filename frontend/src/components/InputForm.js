@@ -1,14 +1,17 @@
 import React from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCircleInfo, faLightbulb } from '@fortawesome/free-solid-svg-icons';
 
 const InputForm = ({ formData, handleInputChange, handleFormSubmit, handleInfoClick }) => (
   <div>
     <label style={styles.label}>Please answer the questions below for your study plan!</label>
+    <br></br>
     <InputGroup 
-      label="Subject:" 
+      label="What subject do you want to learn and what goals do you hope to achieve?" 
       name="topic" 
       value={formData.topic} 
       onChange={handleInputChange} 
-      placeholder="Enter the topic you want to study here"
+      placeholder="For example) Python for data analysis, Algorithms for job interview"
     />
     <InputGroup 
       label="Background Knowledge:" 
@@ -16,13 +19,16 @@ const InputForm = ({ formData, handleInputChange, handleFormSubmit, handleInfoCl
       value={formData.background} 
       onChange={handleInputChange} 
       type="select" 
-      options={["absolute beginner", "beginner", "intermediate", "advanced"]} 
-      button={<button onClick={handleInfoClick} style={styles.button}>Info</button>}
+      options={["Absolute beginner", "Beginner", "Intermediate", "Advanced"]} 
+      button=
+      {<button style={{ background: 'none', border: 'none', cursor: 'pointer' }} onClick={handleInfoClick}>
+        <FontAwesomeIcon icon={faLightbulb} style={{ marginLeft: '0.5rem', marginTop: '0.5rem' }} />
+      </button>}
     />
     <InputGroup 
       label="Study Materials:" 
       type="checkbox" 
-      options={["YouTube", "Blogs"]} 
+      options={["YouTube"]} 
       selectedOptions={formData.studyMaterials} 
       onChange={handleInputChange} 
     />
@@ -33,7 +39,7 @@ const InputForm = ({ formData, handleInputChange, handleFormSubmit, handleInfoCl
       onChange={handleInputChange} 
     />
     <InputGroup 
-      label="Available Time in Week:" 
+      label="Available Time per Day:" 
       name="availableTime" 
       value={formData.availableTime} 
       onChange={handleInputChange} 

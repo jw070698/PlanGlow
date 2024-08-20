@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
+import './ChatBox.css';
+import './Styles.css'; 
 import { checkAvailability } from './ReferenceCheck';
+import FAQIconStudyPlan from './FAQIconStudyPlan';
 import Editable from './Editable';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faThumbsUp, faEye, faCircleCheck, faCaretDown, faCaretRight } from '@fortawesome/free-solid-svg-icons';
+import { replaceVideoInStudyPlan } from './VideoReplacement'; 
+
 const API_BASE_URL = "https://ai-curriculum-pi.vercel.app";
 
 const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
@@ -10,25 +17,75 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
     const [parsedJson, setParsedJson] =  useState(null);
     const [searchResults, setSearchResults] = useState([]);
     const [resourcesModalIsOpen, setResourcesModalIsOpen] = useState(false);
+    const [isReasonsModalOpen, setIsReasonsModalOpen] = useState(false);
+    const [reasonsModalContent, setReasonsModalContent] = useState('');
     const [completedItems, setCompletedItems] = useState({});
+    const [originalPlan, setOriginalPlan] = useState(null);
+    const [updatedPlan, setUpdatedPlan] = useState(null);
     const [studyPlan, setStudyPlan] = useState({} || parsedJson.studyPlan); 
+    const [videoStatuses, setVideoStatuses] = useState({});
+    const [buttonStyles, setButtonStyles] = useState({});
+    const [selectedWeek, setSelectedWeek] = useState(null);
+    const [selectedDayIndex, setSelectedDayIndex] = useState(null);
+    const [tooltipVisible, setTooltipVisible] = useState(false);
+    const [explanationContent, setExplanationContent] = useState({}); 
+    const [weekVisibility, setWeekVisibility] = useState({});  
+    const [dayVisibility, setDayVisibility] = useState({});   
+    const handleToggleWeek = (week) => {
+        setWeekVisibility(prevState => ({
+            ...prevState,
+            [week]: !prevState[week] 
+        }));
+    };
+
+    const handleToggleDay = (week, day, topic) => {
+        setDayVisibility(prevState => ({
+            ...prevState,
+            [week]: {
+                ...prevState[week],
+                [day]: !prevState[week]?.[day]
+            }
+        }));
+        if (!dayVisibility[week]?.[day]) {
+            fetchExplanation(topic, week, day);
+        }
+    };
+
+    const formatNumber = (num) => {
+        if (num >= 1000000) {
+            return (num / 1000000).toFixed(1) + 'M';
+        }
+        if (num >= 1000) {
+            return (num / 1000).toFixed(1) + 'k';
+        }
+        return num.toString();
+    };
+    const handleMouseOver = (link) => {
+        setTooltipVisible((prevState) => ({
+            ...prevState,
+            [link]: true
+        }));
+    };
+
+    const handleMouseOut = (link) => {
+        setTooltipVisible((prevState) => ({
+            ...prevState,
+            [link]: false
+        }));
+    };
 
     useEffect(() => {
         if (!markdownText) {
             console.error("markdownText is undefined");
             return;
         }
-        
-        console.log(markdownText);
         const jsonMatch = markdownText.match(/```json([\s\S]*?)```/);
-        if (jsonMatch) {
-            try {
-                const jsonData = JSON.parse(jsonMatch[1].trim());
-                setParsedJson(jsonData);
-                console.log('jsonData in CustomMarkdown.js', jsonData);
-            } catch (error) {
-                console.error("JSON parsing error:", error);
-            }
+        try {
+            const jsonData = JSON.parse(jsonMatch[1].trim());
+            setParsedJson(jsonData);
+            console.log(jsonData);
+        } catch (error) {
+            console.error("JSON parsing error:", error);
         }
     }, [markdownText]);
 
@@ -37,10 +94,109 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
             setStudyPlan(parsedJson.studyPlan);  // Update study plan when parsedJson changes
             if (setResponsePlan) {
                 setResponsePlan(parsedJson.studyPlan); // Notify parent component of the updated study plan
-                console.log('studyplan',parsedJson.studyPlan);
             }
         }
     }, [parsedJson, setResponsePlan]);
+
+    useEffect(() => {
+        if (parsedJson && parsedJson.studyPlan) {
+            const updateButtonStyles = async () => {
+                const resources = Object.values(parsedJson.studyPlan).flatMap(item => 
+                    item.flatMap(day => 
+                        Object.values(day.resources || {})
+                    )
+                );
+    
+                const linkStatuses = await Promise.all(resources.map(async resource => {
+                    const result = await checkAvailability(resource.link);
+                    return {
+                        link: resource.link,
+                        backgroundColor: result.exists ? '#AFD0BF' : '#EB5353',
+                        color: result.exists ? '#4F5452' : '#FFF'
+                    };
+                }));
+                const updatedButtonStyles = linkStatuses.reduce((acc, { link, backgroundColor, color }) => {
+                    acc[link] = { backgroundColor, color };
+                    return acc;
+                }, {});
+                setButtonStyles(updatedButtonStyles);
+            };
+    
+            updateButtonStyles();
+        }
+    }, [parsedJson]);
+
+    const extractVideoId = (url) => {
+        const urlObj = new URL(url);
+        const searchParams = urlObj.searchParams;
+        const videoId = searchParams.get('v');
+        
+        if (!videoId && urlObj.hostname.includes('youtu.be')) {
+            return urlObj.pathname.slice(1); 
+        }
+        
+        return videoId;
+    };
+
+    useEffect(() => {
+        if (parsedJson && parsedJson.studyPlan) {
+            const fetchAndStoreVideoStatuses = async () => {
+                const resources = Object.values(parsedJson.studyPlan).flatMap(item => 
+                    item.flatMap(day => 
+                        Object.values(day.resources || {})
+                    )
+                );
+    
+                const videoData = resources.map(resource => {
+                    const videoId = extractVideoId(resource.link);
+                    return {
+                        link: resource.link,
+                        videoId,
+                        thumbnail: resource.thumbnail || 'https://via.placeholder.com/120', 
+                    };
+                });
+    
+                const statuses = await Promise.all(videoData.map(data => fetchVideoStatus(data.videoId)));
+    
+                const statusMap = videoData.reduce((acc, data, index) => {
+                    acc[data.link] = {
+                        views: statuses[index].views,
+                        likes: statuses[index].likes,
+                        thumbnail: statuses[index].thumbnail || data.thumbnail
+                    };
+                    return acc;
+                }, {});
+    
+                setVideoStatuses(statusMap);
+            };
+    
+            fetchAndStoreVideoStatuses();
+        }
+    }, [parsedJson]);
+    
+    
+    const fetchVideoStatus = async (videoIds) => {
+        if (!videoIds) {
+            return { views: 'N/A', likes: 'N/A' };
+        }
+        try {
+            const response = await axios.post(`${API_BASE_URL}/video_stats`, { video_id: videoIds });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching video status:', error); 
+            return { views: 'N/A', likes: 'N/A' };
+        }
+        
+    };
+
+    const handleReferenceCheckClick = async (link) => {
+        const result = await checkAvailability(link);
+        if (result.exists) {
+            alert(`Video found: ${result.title}`);
+        } else {
+            alert(result.message);
+        }
+    };
 
     const handleResourcesClick = async (topic, type) => {
         if (type === 'YouTube') {
@@ -53,17 +209,25 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
                 const search_message = `${topic} in ${formData?.topic || ''}`;
                 const response = await axios.post(`${API_BASE_URL}/search`, { search_message: search_message });
                 const items = response.data.response.items || [];
-                const formattedResults = items.map(item => {
+                const videoIds = items.map(item => item.id.videoId);
+                const statusPromises = videoIds.map(videoId => fetchVideoStatus(videoId));
+                const statuses = await Promise.all(statusPromises);
+                const formattedResults = items.map((item, index) => {
+                    const videoId = item.id.videoId;
+                    const status = statuses[index];
                     const thumbnailUrl = item.snippet.thumbnails?.default?.url || 'https://via.placeholder.com/120'; // Fallback URL
                     return {
                         url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
                         thumbnail: thumbnailUrl,
                         title: item.snippet.title,
                         description: item.snippet.description,
+                        views: status.views,
+                        likes: status.likes
                     };
                 });
-                setSearchResults(formattedResults.length > 0 ? formattedResults : [{ title: 'No resources found', description: '', url: '', thumbnail: '' }]);
+                setSearchResults(formattedResults.length > 0 ? formattedResults : [{ title: 'No resources found', description: '', url: '', thumbnail: '', views: 'N/A', likes: 'N/A'}]);
                 setResourcesModalIsOpen(true);
+
             } catch (error) {
                 alert('Error fetching additional resources');
             }
@@ -72,14 +236,39 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
         }
     };
 
-    const handleCheckboxChange = (week, index) => {
-        setCompletedItems(prevState => ({
-            ...prevState,
-            [week]: {
-                ...prevState[week],
-                [index]: !prevState[week]?.[index]
+    const fetchExplanation = async (topic, week, day) => {
+        try {
+            const reasonResponse = await axios.post(`${API_BASE_URL}/topic-explanations`, { user_message: topic });
+            const objectivesResponse = await axios.post(`${API_BASE_URL}/generate-objectives`, { user_message: topic });
+            
+            let combinedContent = '';
+            if (reasonResponse.data && reasonResponse.data.explanation) {
+                combinedContent += `### Reason for studying '${topic}':\n${reasonResponse.data.explanation}\n\n`;
+            } else {
+                combinedContent += `### Reason for studying '${topic}':\nNo reasons available for this topic.\n\n`;
             }
-        }));
+            if (objectivesResponse.data && objectivesResponse.data.objectives) {
+                combinedContent += `### Learning Objectives for '${topic}':\n${objectivesResponse.data.objectives}\n\n`;
+            } else {
+                combinedContent += `### Learning Objectives for '${topic}':\nNo objectives available for this topic.\n\n`;
+            }
+            setExplanationContent(prevState => ({
+                ...prevState,
+                [week]: {
+                    ...prevState[week],
+                    [day]: combinedContent
+                }
+            }));
+        } catch (error) {
+            console.error('API Error:', error);
+            setExplanationContent(prevState => ({
+                ...prevState,
+                [week]: {
+                    ...prevState[week],
+                    [day]: 'Error fetching information for this topic. Please try again later.'
+                }
+            }));
+        }
     };
 
     const handleUpdateStudyPlan = (updatedPlan) => {
@@ -89,16 +278,17 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
         }));
       };
     
-    const renderResources = (resources, topic) => {
+    const renderResources = (resources, topic, week, dayIndex) => {
         if (typeof resources === 'object' && resources !== null) {
             return Object.keys(resources).map((type, index) => {
                 const resource = resources[type];
+                const resourceStatus = videoStatuses[resource.link] || { views: 'N/A', likes: 'N/A', thumbnail: 'https://via.placeholder.com/120' };
                 return (
                     <div key={index} style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#F3F7F3', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
                             <h4 style={{ fontSize: '1rem', margin: '0 0.5rem', color: '#333' }}>{type}</h4>
                             <button 
-                                onClick={() => handleResourcesClick(topic, type)}
+                                onClick={() => handleResourcesClick(topic, type, week, dayIndex)}
                                 style={{ 
                                     fontSize: '1rem', 
                                     marginLeft: '1rem',
@@ -114,52 +304,62 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
                             >
                                 🎦 Additional Resources
                             </button>
-                            <button 
-                            onClick={async () => {
-                                const result = await checkAvailability(resource.link);
-                                if (result.exists) {
-                                    alert(`Video found: ${result.title}`);
-                                } else {
-                                    alert(result.message);
-                                }
-                            }} 
-                            style={{ 
-                                fontSize: '1rem', 
-                                marginLeft: '1rem',
-                                padding: '0.5rem 1rem', 
-                                backgroundColor: '#AFD0BF', 
-                                color: '#4F5452', 
-                                border: 'none', 
-                                borderRadius: '4px', 
-                                alignItems: 'center',
-                                cursor: 'pointer',
-                                lineHeight: '1',
-                            }}
-                        >
-                            Reference Check
-                        </button>
                         </div>
-                        <p style={{ fontSize: '1rem', margin: '0.5rem 0', marginLeft: '1rem' }}>
-                            <strong>Title:</strong> {resource.title}
-                        </p>
-                        <p style={{ fontSize: '1rem', margin: '0.5rem 0', marginLeft: '1rem' }}>
-                            <strong>Link: </strong> 
-                            <a 
-                                href={resource.link} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                style={{ color: '#3855A7', textDecoration: 'none' }}
-                            >
-                                {resource.link}
-                            </a>
-                            {resource && (
-                            <img 
-                                src={resource.thumbnail} 
-                                alt={resource.thumbnail} 
-                                style={{ width: '120px', height: 'auto' }} 
-                            />
+                        <div style={{ display: 'flex', alignItems: 'center', marginTop: '0.5rem' }}>
+                            {resourceStatus.thumbnail && (
+                                <img 
+                                    src={resourceStatus.thumbnail} 
+                                    alt={resource.title} 
+                                    style={{ width: '120px', height: 'auto', borderRadius: '4px', marginRight: '1rem' }} 
+                                />
                             )}
-                        </p>
+                            <p style={{ fontSize: '1rem', margin: '0.5rem 0', marginLeft: '1rem' }}>
+                                    <FontAwesomeIcon icon={faThumbsUp} style={{ marginRight: '0.5rem' }} />
+                                    {formatNumber(resourceStatus.likes)}
+                                    <span style={{ margin: '0 0.5rem' }}>|</span>
+                                    <FontAwesomeIcon icon={faEye} style={{ marginRight: '0.5rem' }} />
+                                    {formatNumber(resourceStatus.views)}
+                                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                                        <button 
+                                            onMouseOver={() => handleMouseOver(resource.link)}
+                                            onMouseOut={() => handleMouseOut(resource.link)}
+                                            style={{ 
+                                                fontSize: '1rem', 
+                                                padding: '0.5rem 1rem', 
+                                                backgroundColor: 'transparent', 
+                                                color: buttonStyles[resource.link]?.backgroundColor || '#4F5452',
+                                                border: 'none', 
+                                                borderRadius: '4px', 
+                                                alignItems: 'center',
+                                                cursor: 'pointer',
+                                                lineHeight: '1',
+                                            }}
+                                        >
+                                            <FontAwesomeIcon icon={faCircleCheck} />
+                                            {tooltipVisible[resource.link] && (
+                                                <strong>
+                                                    {buttonStyles[resource.link]?.backgroundColor === '#AFD0BF' ? ' Valid Resource' : ' Invalid Resource'}
+                                                </strong>
+                                            )}
+                                        </button>
+                                    </div>
+                                <br></br>
+                                <p style={{ fontSize: '1rem', margin: '0.5rem 0'}}>
+                                    <strong>Title:</strong> {resource.title}
+                                </p>
+                                <p style={{ fontSize: '1rem', margin: '0.5rem 0'}}>
+                                    <strong>Link: </strong> 
+                                    <a 
+                                        href={resource.link} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer" 
+                                        style={{ color: '#3855A7', textDecoration: 'none' }}
+                                    >
+                                        {resource.link}
+                                    </a>
+                                </p>
+                            </p>
+                        </div>
                     </div>
                 );
             });
@@ -167,20 +367,31 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
             return <p>No resources available</p>;
         }
     };
-
+    
     const renderStudyPlan = (plan) => {
         return Object.keys(plan).map(week => (
             <div key={week} style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '1rem', marginBottom: '1rem', backgroundColor: '#f9f9f9' }}>
-                <h3 style={{ borderBottom: '2px solid #ddd', paddingBottom: '0.5rem' }}>{week}</h3>
-                {plan[week].map((entry, index) => (
+                <div
+                    style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+                    onClick={() => handleToggleWeek(week)}
+                >
+                    <FontAwesomeIcon
+                        icon={weekVisibility[week] ? faCaretDown : faCaretRight}
+                        style={{ marginRight: '0.5rem' }}
+                    />
+                    <h3 style={{ borderBottom: '2px solid #ddd', paddingBottom: '0.5rem' }}>{week}</h3>
+                </div>
+                {weekVisibility[week] && plan[week].map((entry, index) => (
                     <div key={index} style={{ marginBottom: '1rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
-                            <input 
-                                type="checkbox" 
-                                style={{ marginRight: '0.5rem' }} 
-                                checked={completedItems[week]?.[index] || false}
-                                onChange={() => handleCheckboxChange(week, index)}
+                        <div
+                            style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem', cursor: 'pointer' }}
+                            onClick={() => handleToggleDay(week, entry.day, entry.topic)}
+                        >
+                            <FontAwesomeIcon
+                                icon={dayVisibility[week]?.[index] ? faCaretDown : faCaretRight}
+                                style={{ marginRight: '0.5rem' }}
                             />
+                            
                             <p style={{ 
                                 fontSize: '1.1rem', 
                                 fontWeight: 'bold', 
@@ -188,36 +399,25 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
                                 textDecoration: completedItems[week]?.[index] ? 'line-through' : 'none',
                                 color: completedItems[week]?.[index] ? '#aaa' : '#000' 
                             }}>
-                                [{entry.day}]
+                                {entry.day}: {entry.topic} 
                             </p>
-                        </div>
-                        <div style={{ marginLeft: '1rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
-                            <p style={{ 
-                                fontSize: '1rem', 
-                                fontWeight: 'bold', 
-                                margin: '0 0.5rem 0 0' // Adjusted margin to space the text and button
+                            <p style={{
+                                marginLeft: '1rem',  
+                                fontSize: '1rem',  
+                                color: '#888'
                             }}>
-                                Topic:
+                                for {entry.Time}
                             </p>
-                            <button 
-                                onClick={() => handleResourcesClick(entry.topic, 'YouTube')}
-                                style={{ 
-                                    fontSize: '1rem', 
-                                    padding: '0.3rem 0.6rem', 
-                                    backgroundColor: '#EAEBEB', 
-                                    color: 'black', 
-                                    border: 'none', 
-                                    borderRadius: '4px', 
-                                    cursor: 'pointer', 
-                                    textDecoration: 'none'
-                                }}
-                            >
-                                {entry.topic}
-                            </button>
                         </div>
+                        {/* Place toggle message here */}
+                        {dayVisibility[week]?.[entry.day] && (
+                            <div style={{ marginLeft: '1.5rem', marginTop: '0.5rem' }}>
+                                    <ReactMarkdown>{explanationContent[week]?.[entry.day]}</ReactMarkdown>
+                            </div>
+                        )}
+                        <div style={{ marginLeft: '1rem' }}>
                             <div>
-                                {renderResources(entry.resources, entry.topic)}
+                                {renderResources(entry.resources, entry.topic, week, index)}
                             </div>
                         </div>
                     </div>
@@ -233,11 +433,32 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
     return (
         <div>
             <h2>Study Plan Overview </h2>
+            <FAQIconStudyPlan />
             <Editable formData={formData} setResponsePlan={setParsedJson}  setStudyPlan={handleUpdateStudyPlan}/>
             {parsedJson.studyPlan_Overview && Object.keys(parsedJson.studyPlan_Overview).map(week => (
-                <div key={week} style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center' }}>
+                <div key={week} style={{ marginBottom: '1rem' }}>
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        userSelect: 'none'  // Prevents text selection while clicking
+                    }}
+                    onClick={() => handleToggleWeek(week)}
+                >
+                    <FontAwesomeIcon
+                        icon={weekVisibility[week] ? faCaretDown : faCaretRight}
+                        style={{ marginRight: '0.5rem' }}
+                    />
                     <h3 style={{ margin: '0 1rem 0 0' }}>{week}:</h3>
                     <p style={{ margin: 0 }}>{parsedJson.studyPlan_Overview[week]}</p>
+                </div>
+                {weekVisibility[week] && (
+                    <div style={{ marginLeft: '1.5rem', marginTop: '0.5rem' }}>
+                        {/* Content to be toggled */}
+                        <p>Explanation for {week}</p>
+                    </div>
+                    )}
                 </div>
             ))}
             <br />
@@ -251,14 +472,35 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
                         <div style={{ flex: '1', overflowY: 'auto', marginTop: '1rem' }}>
                             {searchResults.map((result, index) => (
                                 <div key={index} style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center' }}>
+                                    <div style={{ 
+                                        fontSize: '1rem', 
+                                        fontWeight: 'bold', 
+                                        textAlign: 'center',
+                                        marginRight: '0.5rem'
+                                    }}>
+                                        {index + 1}.
+                                    </div>
                                     <img src={result.thumbnail} alt={result.title} style={{ width: '120px', height: '90px', marginRight: '1rem' }} />
                                     <div>
-                                        <a href={result.url} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{result.title}</a>
+                                        <p style={{ 
+                                            fontSize: '1rem', 
+                                            margin: '0'
+                                        }}>
+                                            
+                                            <FontAwesomeIcon icon={faThumbsUp} style={{ marginRight: '0.5rem' }} />
+                                            {formatNumber(result.likes)}
+                                            <span style={{ margin: '0 0.5rem' }}>|</span>
+                                            <FontAwesomeIcon icon={faEye} style={{ marginRight: '0.5rem' }} />
+                                            {formatNumber(result.views)}
+                                        </p>
+                                        <a href={result.url} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
+                                            {result.title}
+                                        </a>
                                         <p>{result.description}</p>
                                     </div>
                                 </div>
                             ))}
-                        </div>
+                        </div>                        
                         <button 
                             onClick={() => setResourcesModalIsOpen(false)} 
                             style={{ 

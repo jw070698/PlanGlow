@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import Spinner from './Spinner';
+
 const API_BASE_URL = "https://ai-curriculum-pi.vercel.app";
 
 const Editable = ({ formData, setResponsePlan , setStudyPlan}) => {
+
+    const [originalPlan, setOriginalPlan] = useState(null);
+    const [updatedPlan, setUpdatedPlan] = useState(null);
     const initialEditableData = {
         background: formData.background,
         topic: formData.topic,
@@ -19,6 +24,7 @@ const Editable = ({ formData, setResponsePlan , setStudyPlan}) => {
         background: false,
         studyMaterials: false
     });
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         setEditableData(initialEditableData);
@@ -26,10 +32,12 @@ const Editable = ({ formData, setResponsePlan , setStudyPlan}) => {
 
     // Function to update the API with the new data
     const updateAPI = async (updatedData) => {
+        setLoading(true);
         try {
             const { topic, background, studyMaterials, duration, availableTime } = updatedData;
-            const updated_userMessage = `Create a study plan for a ${background} student on ${topic} using ${studyMaterials.join(', ')} over ${duration.months} months, ${duration.weeks} weeks, and ${duration.days} days with ${availableTime} hours available per week.`;
+            const updated_userMessage = `Create a study plan for a ${background} student on ${topic} using ${studyMaterials.join(', ')} over ${duration.months} months, ${duration.weeks} weeks, and ${duration.days} days with ${availableTime} hours available per day.`;
             const response = await axios.post(`${API_BASE_URL}/response`, {user_message: updated_userMessage});
+            
             if (response.data?.response) {
                 const markdownText = response.data.response;
                 const jsonMatch = markdownText.match(/```json([\s\S]*?)```/);
@@ -37,10 +45,17 @@ const Editable = ({ formData, setResponsePlan , setStudyPlan}) => {
                 if (jsonMatch && jsonMatch[1]) {
                     try {
                         const jsonData = JSON.parse(jsonMatch[1].trim());
-                        // Update the plan
-                        setResponsePlan(jsonData); 
+    
+                        // Store the original plan only if it's not set yet
+                        if (!originalPlan) {
+                            setOriginalPlan(jsonData);
+                        }
+    
+                        // Update the plan with the new response
+                        setResponsePlan(jsonData);
                         setStudyPlan(jsonData);
-                        console.log('setstudyPlan in editable.js',jsonData);
+                        setUpdatedPlan(jsonData); // Store the updated plan
+    
                     } catch (jsonError) {
                         console.error('Error parsing JSON:', jsonError);
                     }
@@ -52,8 +67,10 @@ const Editable = ({ formData, setResponsePlan , setStudyPlan}) => {
             }
         } catch (error) {
             console.error('Error updating API:', error);
+        } finally {
+            setLoading(false);
         }
-    };
+    };    
 
     const handleEdit = (key, subkey = null) => {
         if (key === 'background') {
@@ -159,9 +176,9 @@ const Editable = ({ formData, setResponsePlan , setStudyPlan}) => {
                 >
                     {editableData.availableTime}
                 </button> 
-                hour available per week
+                hour available per day
             </h3>
-
+            {loading && <Spinner />}
             {dropdownVisible.background && (
                 <div style={{ ...dropdownStyle, top: '2rem', left: '25px' }}>
                     {backgroundOptions.map(option => (

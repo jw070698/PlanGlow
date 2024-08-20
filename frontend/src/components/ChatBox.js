@@ -8,7 +8,10 @@ import remarkBreaks from 'remark-breaks';
 import './ChatBox.css';
 import InputForm from './InputForm';
 import CustomMarkdown from './CustomMarkdown';
+import Spinner from './Spinner';
+
 const API_BASE_URL = "https://ai-curriculum-pi.vercel.app";
+
 const ChatBox = () => {
   const [formData, setFormData] = useState({
     topic: '',
@@ -28,6 +31,7 @@ const ChatBox = () => {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [resourcesModalIsOpen, setResourcesModalIsOpen] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
+  const [loading, setLoading] = useState(false); 
 
   useEffect(() => {
     animateScroll.scrollToBottom({
@@ -73,8 +77,9 @@ const ChatBox = () => {
   };
 
   const handleFormSubmit = async () => {
+    setLoading(true);
     const { topic, background, studyMaterials, duration, availableTime } = formData;
-    const userMessage = `Create a study plan for a ${background} student on ${topic} using ${studyMaterials.join(', ')} over ${duration.months} months, ${duration.weeks} weeks, and ${duration.days} days with ${availableTime} hours available per week.`;
+    const userMessage = `Create a study plan for a ${background} student on ${topic} using ${studyMaterials.join(', ')} over ${duration.months} months, ${duration.weeks} weeks, and ${duration.days} days with ${availableTime} hours available per day.`;
     setMessages((prevMessages) => [
       ...prevMessages,
       { type: 'user', text: userMessage }
@@ -106,6 +111,8 @@ const ChatBox = () => {
         ...prevMessages,
         { type: 'bot', text: 'Error fetching response from OpenAI.', isForm: false }
       ]);
+    } finally {
+      setLoading(false); // complete
     }
   };
 
@@ -120,6 +127,7 @@ const ChatBox = () => {
       { type: 'user', text: userInput },
     ]);
     setUserInput('');
+    setLoading(true);
     try {
       const response = await axios.post(`${API_BASE_URL}/response`, { user_message: userInput });
       setResponsePlan(response.data.response);
@@ -132,10 +140,13 @@ const ChatBox = () => {
         ...prevMessages,
         { type: 'bot', text: 'Error fetching response from OpenAI.', isForm: false },
       ]);
+    } finally {
+      setLoading(false); 
     }
   };
 
   const handleInfoClick = async () => {
+    setLoading(true);
     const infoMessage = `Can you explain more about the background knowledge levels for the topic: ${formData.topic}?`;
     try {
       if (formData.topic) {
@@ -147,6 +158,8 @@ const ChatBox = () => {
       }
     } catch (error) {
       alert('Error fetching response from OpenAI');
+    } finally {
+      setLoading(false); 
     }
   };
 
@@ -155,7 +168,7 @@ const ChatBox = () => {
       alert('Please input a topic first');
       return;
     }
-
+    setLoading(true);
     try {
       const response = await axios.post(`${API_BASE_URL}/search`, { search_message: formData.topic });
 
@@ -180,6 +193,8 @@ const ChatBox = () => {
     } catch (error) {
       alert('Error fetching additional resources');
       console.error('API Error:', error);
+    }finally {
+      setLoading(false);
     }
   };
 
@@ -204,6 +219,7 @@ const ChatBox = () => {
             )}
           </div>
         ))}
+        {loading && <Spinner />}
       </div>
       {!isFormVisible && (
         <div style={styles.userInputContainer}>
