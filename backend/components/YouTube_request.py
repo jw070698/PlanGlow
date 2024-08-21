@@ -128,3 +128,18 @@ def check_resource_availability(url):
             "exists": False,
             "message": f"An error occurred: {e}"
         }
+
+def get_video_stats(video_id): # Count of views and likes    
+    request = youtube.videos().list(
+        part="statistics",
+        id=video_id
+    )
+    response = request.execute()
+    
+    if "items" in response and len(response["items"]) > 0:
+        stats = response["items"][0]["statistics"]
+        view_count = stats.get("viewCount", "N/A")
+        like_count = stats.get("likeCount", "N/A")
+        return {"views": view_count, "likes": like_count}
+    else:
+        return {"views": "N/A", "likes": "N/A"}
