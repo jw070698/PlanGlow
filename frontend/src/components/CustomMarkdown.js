@@ -9,28 +9,23 @@ import Editable from './Editable';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faThumbsUp, faEye, faCircleCheck, faCaretDown, faCaretRight } from '@fortawesome/free-solid-svg-icons';
 import { replaceVideoInStudyPlan } from './VideoReplacement'; 
-
-const API_BASE_URL = "https://ai-curriculum-pi.vercel.app";
+const API_BASE_URL = "http://localhost:1350";
 
 const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
-    // formData: topic, background, studyMaterials, duration, availableTime 
     const [parsedJson, setParsedJson] =  useState(null);
     const [searchResults, setSearchResults] = useState([]);
     const [resourcesModalIsOpen, setResourcesModalIsOpen] = useState(false);
-    const [isReasonsModalOpen, setIsReasonsModalOpen] = useState(false);
-    const [reasonsModalContent, setReasonsModalContent] = useState('');
     const [completedItems, setCompletedItems] = useState({});
-    const [originalPlan, setOriginalPlan] = useState(null);
-    const [updatedPlan, setUpdatedPlan] = useState(null);
     const [studyPlan, setStudyPlan] = useState({} || parsedJson.studyPlan); 
     const [videoStatuses, setVideoStatuses] = useState({});
     const [buttonStyles, setButtonStyles] = useState({});
-    const [selectedWeek, setSelectedWeek] = useState(null);
+    const [selectedWeekIndex, setSelectedWeekIndex] = useState(null);
     const [selectedDayIndex, setSelectedDayIndex] = useState(null);
     const [tooltipVisible, setTooltipVisible] = useState(false);
     const [explanationContent, setExplanationContent] = useState({}); 
     const [weekVisibility, setWeekVisibility] = useState({});  
     const [dayVisibility, setDayVisibility] = useState({});   
+
     const handleToggleWeek = (week) => {
         setWeekVisibility(prevState => ({
             ...prevState,
@@ -60,11 +55,69 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
         }
         return num.toString();
     };
+
     const handleMouseOver = (link) => {
         setTooltipVisible((prevState) => ({
             ...prevState,
             [link]: true
         }));
+    };
+
+    const handleSelectVideo = (weekIndex, dayIndex, selectedVideo) => {
+        const weeks = Object.keys(studyPlan); // Get all week keys
+        const week = weeks[weekIndex];
+        
+        console.log('Selected week:', week, 'Selected day index:', dayIndex); 
+
+        if (!week || !studyPlan[week]) {
+            console.error('Week is not defined in studyPlan:', week);
+            return;
+        }
+
+        if (dayIndex < 0 || dayIndex >= studyPlan[week].length) {
+            console.error('Day index is out of bounds:', dayIndex);
+            return;
+        }
+
+        // Clone the existing study plan to avoid mutating the original one directly
+        const updatedPlan = { ...studyPlan };
+
+        if (!updatedPlan[week][dayIndex].resources) {
+            updatedPlan[week][dayIndex].resources = {};
+        }
+
+        // Replace the YouTube resource with the selected video details
+        updatedPlan[week][dayIndex].resources.YouTube = {
+            link: selectedVideo.url,
+            title: selectedVideo.title,
+            thumbnail: selectedVideo.thumbnail,
+            views: selectedVideo.views,
+            likes: selectedVideo.likes,
+        };
+
+        console.log('After Update:', updatedPlan);
+        setStudyPlan(updatedPlan); // Update the study plan with the new video
+
+        // Also update the parsedJson if needed to reflect the change in the UI
+        setParsedJson((prevState) => {
+            const newStudyPlan = { ...prevState.studyPlan };
+            newStudyPlan[week] = [...prevState.studyPlan[week]]; // Clone the week array
+
+            // Update the specific day with the new video details
+            newStudyPlan[week][dayIndex].resources.YouTube = {
+                link: selectedVideo.url,
+                title: selectedVideo.title,
+                thumbnail: selectedVideo.thumbnail,
+                views: selectedVideo.views,
+                likes: selectedVideo.likes,
+            };
+
+            console.log('Updated parsedJson:', newStudyPlan);
+
+            return { ...prevState, studyPlan: newStudyPlan };
+        });
+
+        setResourcesModalIsOpen(false); // Close the modal after selection
     };
 
     const handleMouseOut = (link) => {
@@ -106,7 +159,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
                         Object.values(day.resources || {})
                     )
                 );
-    
+
                 const linkStatuses = await Promise.all(resources.map(async resource => {
                     const result = await checkAvailability(resource.link);
                     return {
@@ -121,7 +174,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
                 }, {});
                 setButtonStyles(updatedButtonStyles);
             };
-    
+
             updateButtonStyles();
         }
     }, [parsedJson]);
@@ -146,7 +199,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
                         Object.values(day.resources || {})
                     )
                 );
-    
+
                 const videoData = resources.map(resource => {
                     const videoId = extractVideoId(resource.link);
                     return {
@@ -155,9 +208,9 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
                         thumbnail: resource.thumbnail || 'https://via.placeholder.com/120', 
                     };
                 });
-    
+
                 const statuses = await Promise.all(videoData.map(data => fetchVideoStatus(data.videoId)));
-    
+
                 const statusMap = videoData.reduce((acc, data, index) => {
                     acc[data.link] = {
                         views: statuses[index].views,
@@ -166,15 +219,14 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
                     };
                     return acc;
                 }, {});
-    
+
                 setVideoStatuses(statusMap);
             };
-    
+
             fetchAndStoreVideoStatuses();
         }
     }, [parsedJson]);
-    
-    
+
     const fetchVideoStatus = async (videoIds) => {
         if (!videoIds) {
             return { views: 'N/A', likes: 'N/A' };
@@ -186,7 +238,6 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
             console.error('Error fetching video status:', error); 
             return { views: 'N/A', likes: 'N/A' };
         }
-        
     };
 
     const handleReferenceCheckClick = async (link) => {
@@ -198,12 +249,17 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
         }
     };
 
-    const handleResourcesClick = async (topic, type) => {
+    const handleResourcesClick = async (topic, type, weekIndex, dayIndex) => {
         if (type === 'YouTube') {
             if (!topic) {
                 alert('Please provide a topic');
                 return;
             }
+            setSelectedWeekIndex(weekIndex);
+            setSelectedDayIndex(dayIndex);
+
+            console.log('Setting Selected Week Index:', weekIndex);
+            console.log('Setting Selected Day Index:', dayIndex);
 
             try {
                 const search_message = `${topic} in ${formData?.topic || ''}`;
@@ -276,9 +332,9 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
             ...prevState,
             studyPlan_Overview: updatedPlan.studyPlan_Overview 
         }));
-      };
-    
-    const renderResources = (resources, topic, week, dayIndex) => {
+    };
+
+    const renderResources = (resources, topic, weekIndex, dayIndex) => {
         if (typeof resources === 'object' && resources !== null) {
             return Object.keys(resources).map((type, index) => {
                 const resource = resources[type];
@@ -288,7 +344,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
                         <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
                             <h4 style={{ fontSize: '1rem', margin: '0 0.5rem', color: '#333' }}>{type}</h4>
                             <button 
-                                onClick={() => handleResourcesClick(topic, type, week, dayIndex)}
+                                onClick={() => handleResourcesClick(topic, type, weekIndex, dayIndex)}
                                 style={{ 
                                     fontSize: '1rem', 
                                     marginLeft: '1rem',
@@ -367,9 +423,9 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
             return <p>No resources available</p>;
         }
     };
-    
+
     const renderStudyPlan = (plan) => {
-        return Object.keys(plan).map(week => (
+        return Object.keys(plan).map((week, weekIndex) => (
             <div key={week} style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '1rem', marginBottom: '1rem', backgroundColor: '#f9f9f9' }}>
                 <div
                     style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
@@ -417,7 +473,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
                         )}
                         <div style={{ marginLeft: '1rem' }}>
                             <div>
-                                {renderResources(entry.resources, entry.topic, week, index)}
+                                {renderResources(entry.resources, entry.topic, weekIndex, index)}
                             </div>
                         </div>
                     </div>
@@ -433,7 +489,6 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
     return (
         <div>
             <h2>Study Plan Overview </h2>
-            <FAQIconStudyPlan />
             <Editable formData={formData} setResponsePlan={setParsedJson}  setStudyPlan={handleUpdateStudyPlan}/>
             {parsedJson.studyPlan_Overview && Object.keys(parsedJson.studyPlan_Overview).map(week => (
                 <div key={week} style={{ marginBottom: '1rem' }}>
@@ -456,7 +511,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
                 {weekVisibility[week] && (
                     <div style={{ marginLeft: '1.5rem', marginTop: '0.5rem' }}>
                         {/* Content to be toggled */}
-                        <p>Explanation for {week}</p>
+                        <FAQIconStudyPlan />
                     </div>
                     )}
                 </div>
@@ -485,18 +540,39 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
                                         <p style={{ 
                                             fontSize: '1rem', 
                                             margin: '0'
-                                        }}>
+                                        }}></p>
                                             
                                             <FontAwesomeIcon icon={faThumbsUp} style={{ marginRight: '0.5rem' }} />
                                             {formatNumber(result.likes)}
                                             <span style={{ margin: '0 0.5rem' }}>|</span>
                                             <FontAwesomeIcon icon={faEye} style={{ marginRight: '0.5rem' }} />
                                             {formatNumber(result.views)}
-                                        </p>
+                                            <br></br>
                                         <a href={result.url} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
                                             {result.title}
                                         </a>
                                         <p>{result.description}</p>
+                                    </div>
+                                    <div style={{ 
+                                        display: 'flex', 
+                                        justifyContent: 'flex-end', 
+                                        alignItems: 'center', 
+                                        flex: '0 0 auto', 
+                                        marginLeft: 'auto' 
+                                    }}>
+                                    <button
+                                        onClick={() => handleSelectVideo(selectedWeekIndex, selectedDayIndex, result)} 
+                                        style={{ 
+                                            fontSize: '1rem', 
+                                            backgroundColor: '#C0C4C2', 
+                                            color: 'white', 
+                                            border: 'none', 
+                                            borderRadius: '4px', 
+                                            cursor: 'pointer', 
+                                            
+                                        }}>
+                                        Select
+                                    </button>
                                     </div>
                                 </div>
                             ))}
@@ -515,19 +591,6 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
                             }}
                         >
                             Close
-                        </button>
-                        <button
-                        style={{ 
-                            fontSize: '1rem', 
-                            padding: '0.3rem 0.6rem', 
-                            backgroundColor: '#C0C4C2', 
-                            color: 'black', 
-                            border: 'none', 
-                            borderRadius: '4px', 
-                            cursor: 'pointer', 
-                            textDecoration: 'none'
-                        }}>
-                            Select
                         </button>
                     </div>
                 </div>
