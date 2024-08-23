@@ -1,77 +1,92 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCircleQuestion } from '@fortawesome/free-solid-svg-icons';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
-import Modal from 'react-modal';
 
 const API_BASE_URL = "https://ai-curriculum-pi.vercel.app";
 
-const FAQIconStudyPlan = () => {
-  const [modalIsOpen, setModalIsOpen] = useState(false);
-  const [modalContent, setModalContent] = useState('');
+const FAQIconStudyPlan = ({ week }) => {
+  const [explanationContent, setExplanationContent] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handlePlanReasoningClick = async () => {
-    try {
-      const response = await axios.post(`${API_BASE_URL}/plan-reasoning`, {
-        info_message: "You have suggested a study plan of a sequence of topics. Why do you divide the topics in this way?"
-      });
-      setModalContent(response.data.response); // Store the fetched data in the state
-      setModalIsOpen(true); // Open the modal
-    } catch (error) {
-      console.error('Error fetching info from backend', error);
-      setModalContent('Error fetching data from the server.');
-      setModalIsOpen(true); // Open the modal even if there's an error, to show the error message
+  useEffect(() => {
+    const fetchExplanation = async () => {
+      try {
+        // Check if the explanation for the week already exists
+        if (explanationContent[week]) {
+          console.log(`Explanation for ${week} is already fetched.`);
+          return; // If it exists, skip the API call
+        }
+
+        setLoading(true);
+
+        // Fetch the explanation from the API
+        const response = await axios.post(`${API_BASE_URL}/plan-reasoning`, {
+          info_message: "You have suggested a study plan of a sequence of topics. Please give explanations of why you divided the topics this way. Start directly with the explanation of each week, using bullet points."
+        });
+
+        const data = response.data.response;
+
+        // Split the content into weeks
+        const splitData = splitExplanationsByWeek(data);
+        // Save the fetched content in the state
+        setExplanationContent(prevState => ({
+          ...prevState,
+          [week]: splitData[week] || 'No explanation available for this week.'
+        }));
+
+        setLoading(false);
+      } catch (error) {
+        console.error('API Error:', error);
+        setError('Error fetching data from the server.');
+        setLoading(false);
+        setExplanationContent(prevState => ({
+          ...prevState,
+          [week]: 'Error fetching information for this week. Please try again later.'
+        }));
+      }
+    };
+
+    fetchExplanation();
+  }, [week, explanationContent]);
+
+  const splitExplanationsByWeek = (data) => {
+    const splitData = {};
+    const weekPattern = /Week\s+(\d+):/g;
+    let match;
+
+    while ((match = weekPattern.exec(data)) !== null) {
+      const weekNum = `Week ${match[1]}`;
+      const start = match.index;
+      const end = weekPattern.lastIndex;
+      const nextMatch = weekPattern.exec(data);
+      const explanation = nextMatch ? data.slice(start, nextMatch.index).trim() : data.slice(start).trim();
+      splitData[weekNum] = explanation;
+      weekPattern.lastIndex = end;
     }
+
+    return splitData;
   };
 
   return (
-    <>
-      {/* The FAQ icon that will trigger the modal */}
-      <FontAwesomeIcon 
-        icon={faCircleQuestion} 
-        style={{ cursor: 'pointer', color: '#007bff', marginLeft: '10px' }} 
-        onClick={handlePlanReasoningClick}
-      />
-                                    
-      {/* Modal to display the fetched content */}
-      <Modal
-        isOpen={modalIsOpen}
-        onRequestClose={() => setModalIsOpen(false)}
-        contentLabel="Study Plan Details"
-        style={{
-          content: {
-            top: '50%',
-            left: '50%',
-            right: 'auto',
-            bottom: 'auto',
-            marginRight: '-50%',
-            transform: 'translate(-50%, -50%)',
-            maxWidth: '600px',
-            width: '90%',
-            borderRadius: '10px',
-            padding: '20px',
-            maxHeight: '400px', // Limit the height of the modal
-            overflowY: 'auto' // Enable scrolling when content exceeds the height
-          },
-        }}
-      >
-        <button onClick={() => setModalIsOpen(false)} style={{ float: 'right', backgroundColor: '#007bff', color: 'white', border: 'none', padding: '5px 10px', cursor: 'pointer' }}>Close</button>
-        <div style={{ 
-          maxHeight: '500px', // Increased content area height
-          overflowY: 'auto', 
-          fontSize: '18px', // Increased font size for content
-          lineHeight: '1.6', // Adjusted line height for readability
-          color: '#333' // Darker text color for better readability
-        }}>
+    <div>
+      {loading ? (
+        <p>Loading...</p>
+      ) : error ? (
+        <p>{error}</p>
+      ) : explanationContent[week] ? (
+        <div style={{ marginTop: '1rem' }}>
+          <h3>{week}</h3>
           <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
-            {modalContent}
+            {explanationContent[week]}
           </ReactMarkdown>
         </div>
-      </Modal>
-    </>
+      ) : (
+        <p>No explanation available for this week.</p>
+      )}
+    </div>
   );
 };
 

@@ -9,6 +9,8 @@ import Editable from './Editable';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faThumbsUp, faEye, faCircleCheck, faCaretDown, faCaretRight } from '@fortawesome/free-solid-svg-icons';
 import { replaceVideoInStudyPlan } from './VideoReplacement'; 
+import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 const API_BASE_URL = "http://localhost:1350";
 
 const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
@@ -95,15 +97,12 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
             likes: selectedVideo.likes,
         };
 
-        console.log('After Update:', updatedPlan);
-        setStudyPlan(updatedPlan); // Update the study plan with the new video
+        setStudyPlan(updatedPlan); 
 
-        // Also update the parsedJson if needed to reflect the change in the UI
         setParsedJson((prevState) => {
             const newStudyPlan = { ...prevState.studyPlan };
-            newStudyPlan[week] = [...prevState.studyPlan[week]]; // Clone the week array
+            newStudyPlan[week] = [...prevState.studyPlan[week]]; 
 
-            // Update the specific day with the new video details
             newStudyPlan[week][dayIndex].resources.YouTube = {
                 link: selectedVideo.url,
                 title: selectedVideo.title,
@@ -112,12 +111,10 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
                 likes: selectedVideo.likes,
             };
 
-            console.log('Updated parsedJson:', newStudyPlan);
-
             return { ...prevState, studyPlan: newStudyPlan };
         });
 
-        setResourcesModalIsOpen(false); // Close the modal after selection
+        setResourcesModalIsOpen(false); 
     };
 
     const handleMouseOut = (link) => {
@@ -240,15 +237,6 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
         }
     };
 
-    const handleReferenceCheckClick = async (link) => {
-        const result = await checkAvailability(link);
-        if (result.exists) {
-            alert(`Video found: ${result.title}`);
-        } else {
-            alert(result.message);
-        }
-    };
-
     const handleResourcesClick = async (topic, type, weekIndex, dayIndex) => {
         if (type === 'YouTube') {
             if (!topic) {
@@ -257,9 +245,6 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
             }
             setSelectedWeekIndex(weekIndex);
             setSelectedDayIndex(dayIndex);
-
-            console.log('Setting Selected Week Index:', weekIndex);
-            console.log('Setting Selected Day Index:', dayIndex);
 
             try {
                 const search_message = `${topic} in ${formData?.topic || ''}`;
@@ -294,9 +279,16 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
 
     const fetchExplanation = async (topic, week, day) => {
         try {
+            // Check if the explanation already exists
+            if (explanationContent[week] && explanationContent[week][day]) {
+                console.log(`Explanation for ${topic} on ${week} ${day} is already fetched.`);
+                return; // If it exists, skip the API call
+            }
+    
             const reasonResponse = await axios.post(`${API_BASE_URL}/topic-explanations`, { user_message: topic });
             const objectivesResponse = await axios.post(`${API_BASE_URL}/generate-objectives`, { user_message: topic });
             
+            // Combine the content
             let combinedContent = '';
             if (reasonResponse.data && reasonResponse.data.explanation) {
                 combinedContent += `### Reason for studying '${topic}':\n${reasonResponse.data.explanation}\n\n`;
@@ -308,6 +300,8 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
             } else {
                 combinedContent += `### Learning Objectives for '${topic}':\nNo objectives available for this topic.\n\n`;
             }
+    
+            // Save the fetched content in the state
             setExplanationContent(prevState => ({
                 ...prevState,
                 [week]: {
@@ -326,6 +320,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
             }));
         }
     };
+    
 
     const handleUpdateStudyPlan = (updatedPlan) => {
         setParsedJson(prevState => ({
@@ -468,7 +463,9 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
                         {/* Place toggle message here */}
                         {dayVisibility[week]?.[entry.day] && (
                             <div style={{ marginLeft: '1.5rem', marginTop: '0.5rem' }}>
-                                    <ReactMarkdown>{explanationContent[week]?.[entry.day]}</ReactMarkdown>
+                                    <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
+                                        {explanationContent[week]?.[entry.day] || "Loading explanation..."}
+                                    </ReactMarkdown>
                             </div>
                         )}
                         <div style={{ marginLeft: '1rem' }}>
@@ -511,7 +508,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
                 {weekVisibility[week] && (
                     <div style={{ marginLeft: '1.5rem', marginTop: '0.5rem' }}>
                         {/* Content to be toggled */}
-                        <FAQIconStudyPlan />
+                        <FAQIconStudyPlan week={week} />
                     </div>
                     )}
                 </div>
