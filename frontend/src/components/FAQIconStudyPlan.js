@@ -4,7 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 
-const API_BASE_URL = "https://ai-curriculum-pi.vercel.app";
+const API_BASE_URL = "http://localhost:1350";
 
 const FAQIconStudyPlan = ({ week }) => {
   const [explanationContent, setExplanationContent] = useState({});
@@ -60,6 +60,7 @@ const FAQIconStudyPlan = ({ week }) => {
     while ((match = weekPattern.exec(data)) !== null) {
       const weekNum = `Week ${match[1]}`;
       const start = match.index;
+      console.log(start);
       const end = weekPattern.lastIndex;
       const nextMatch = weekPattern.exec(data);
       const explanation = nextMatch ? data.slice(start, nextMatch.index).trim() : data.slice(start).trim();
@@ -78,7 +79,6 @@ const FAQIconStudyPlan = ({ week }) => {
         <p>{error}</p>
       ) : explanationContent[week] ? (
         <div style={{ marginTop: '1rem' }}>
-          <h3>{week}</h3>
           <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
             {explanationContent[week]}
           </ReactMarkdown>
