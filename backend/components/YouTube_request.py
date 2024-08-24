@@ -17,6 +17,8 @@ def get_search_response(query):
         q = query,
         order = "relevance",
         part = "snippet",
+        type="video",
+        regionCode="US",
         maxResults = 10
     ).execute()
     return search_response
