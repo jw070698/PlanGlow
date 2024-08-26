@@ -157,7 +157,7 @@ async def recent_messages():
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.get("/plan-reasoning")
+@app.post("/plan-reasoning")
 async def generate_plan_reasoning(request: InfoRequest):
     try:
         # Retrieve the most recent study plan from storage
