@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Spinner from './Spinner';
-
-const API_BASE_URL = "https://ai-curriculum-pi.vercel.app";
+const API_BASE_URL = "http://localhost:1350";
 
 const Editable = ({ formData, setResponsePlan , setStudyPlan}) => {
 
@@ -129,7 +128,7 @@ const Editable = ({ formData, setResponsePlan , setStudyPlan}) => {
     return (
         <div style={{ position: 'relative' }}>
             <h3>
-                For a 
+                For a/an
                 <button 
                     onClick={() => handleEdit('background')} 
                     style={buttonStyle}
@@ -144,12 +143,7 @@ const Editable = ({ formData, setResponsePlan , setStudyPlan}) => {
                     {editableData.topic}
                 </button> 
                 using 
-                <button 
-                    onClick={() => handleEdit('studyMaterials')} 
-                    style={buttonStyle}
-                >
-                    {editableData.studyMaterials}
-                </button> 
+                YouTube
                 over 
                 <button 
                     onClick={() => handleEdit('duration', 'months')} 
@@ -194,37 +188,21 @@ const Editable = ({ formData, setResponsePlan , setStudyPlan}) => {
                     ))}    
                 </div>
             )}
-
-            {dropdownVisible.studyMaterials && (
-                <div style={{ ...dropdownStyle, top: '2rem', left: '360px' }}>
-                    {studyMaterialsOptions.map(option => (
-                        <div 
-                            key={option} 
-                            style={dropdownItemStyle}
-                            onClick={() => handleSelect('studyMaterials', option)}
-                            onMouseEnter={handleMouseEnter}
-                            onMouseLeave={handleMouseLeave}
-                        >
-                            {option}
-                        </div>
-                    ))}
-                </div>
-            )}
             
         </div>
     );
 };
 
 const buttonStyle = {
-    backgroundColor: '#C0C4C2',
-    color: '#FFF',
+    background: 'none',
     border: 'none',
-    padding: '5px 10px',
-    borderRadius: '4px',
+    borderBottom: '1px dashed #007bff',
+    color: '#007bff',
     cursor: 'pointer',
-    margin: '0 5px',
-    fontSize: '1rem',
-    transition: 'background-color 0.3s ease',
+    padding: '2px 5px',
+    fontSize: '16px',
+    display: 'inline-flex',
+    alignItems: 'center'
 };
 
 const dropdownStyle = {

@@ -26,13 +26,6 @@ const InputForm = ({ formData, handleInputChange, handleFormSubmit, handleInfoCl
       </button>}
     />
     <InputGroup 
-      label="Study Materials:" 
-      type="checkbox" 
-      options={["YouTube"]} 
-      selectedOptions={formData.studyMaterials} 
-      onChange={handleInputChange} 
-    />
-    <InputGroup 
       label="Duration:" 
       type="duration" 
       duration={formData.duration} 
@@ -81,19 +74,41 @@ const InputGroup = ({ label, name, value, onChange, type = "text", options = [],
       <div>
         {["months", "weeks", "days"].map((timeUnit, index) => (
           <label key={index}>
-            <input
-              type="number"
-              name={timeUnit}
-              placeholder={timeUnit.charAt(0).toUpperCase() + timeUnit.slice(1)}
-              value={duration[timeUnit] || ''}
-              onChange={onChange}
-              style={styles.input}
-              min='0'
-              onFocus={(e) => e.target.select()}
-            />
-            <span> {timeUnit.charAt(0).toUpperCase() + timeUnit.slice(1)} </span>
-          </label>
+          <input
+            type="number"
+            name={timeUnit}
+            placeholder={timeUnit.charAt(0).toUpperCase() + timeUnit.slice(1)}
+            value={duration[timeUnit] !== undefined ? duration[timeUnit] : ''}
+            onChange={(e) => {
+              const value = e.target.value === '' ? '' : parseInt(e.target.value, 10);
+              onChange({
+                target: {
+                  name: timeUnit,
+                  value: value,
+                },
+              });
+            }}
+            style={styles.input}
+            min="0"
+            onFocus={(e) => e.target.select()}
+        />
+          <span> {timeUnit.charAt(0).toUpperCase() + timeUnit.slice(1)} </span>
+        </label>
         ))}
+      </div>
+    ) : name === "availableTime" ? (
+      <div>
+        <input
+          type="number"
+          name={name}
+          value={value}
+          onChange={onChange}
+          style={styles.input}
+          placeholder={placeholder}
+          min="0"
+          onFocus={(e) => e.target.select()}
+        />
+        <span> hour(s) </span>
       </div>
     ) : (
       <input
@@ -103,10 +118,10 @@ const InputGroup = ({ label, name, value, onChange, type = "text", options = [],
         onChange={onChange}
         style={styles.input}
         placeholder={placeholder}
-        min='0'
+        min="0"
       />
     )}
-  </div>
+    </div>
 );
 
 const styles = {

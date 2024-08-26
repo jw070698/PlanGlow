@@ -1,11 +1,10 @@
-/* Spinner.css */
-
 .spinner-container {
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
     padding-top: 100px;
+    /* Adjust this value to move it higher */
 }
 
 

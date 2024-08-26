@@ -198,11 +198,13 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
                 );
 
                 const videoData = resources.map(resource => {
-                    const videoId = extractVideoId(resource.link);
+                    const videoId = resource ? extractVideoId(resource.link) : null;
+                    const thumbnail = resource && resource.thumbnail ? resource.thumbnail : 'https://via.placeholder.com/120';
+    
                     return {
-                        link: resource.link,
+                        link: resource?.link || '#',  // Default to '#' if resource or link is undefined
                         videoId,
-                        thumbnail: resource.thumbnail || 'https://via.placeholder.com/120', 
+                        thumbnail,
                     };
                 });
 
@@ -508,7 +510,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
                 {weekVisibility[week] && (
                     <div style={{ marginLeft: '1.5rem', marginTop: '0.5rem' }}>
                         {/* Content to be toggled */}
-                        <FAQIconStudyPlan week={week} />
+                        <FAQIconStudyPlan week={week}/>
                     </div>
                     )}
                 </div>
@@ -597,4 +599,3 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
 };
 
 export default CustomMarkdown;
-

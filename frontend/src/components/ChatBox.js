@@ -10,8 +10,7 @@ import InputForm from './InputForm';
 import CustomMarkdown from './CustomMarkdown';
 import Spinner from './Spinner';
 
-const API_BASE_URL = "https://ai-curriculum-pi.vercel.app";
-
+const API_BASE_URL = "http://localhost:1350";
 const ChatBox = () => {
   const [formData, setFormData] = useState({
     topic: '',
@@ -79,7 +78,7 @@ const ChatBox = () => {
   const handleFormSubmit = async () => {
     setLoading(true);
     const { topic, background, studyMaterials, duration, availableTime } = formData;
-    const userMessage = `Create a study plan for a ${background} student on ${topic} using ${studyMaterials.join(', ')} over ${duration.months} months, ${duration.weeks} weeks, and ${duration.days} days with ${availableTime} hours available per day.`;
+    const userMessage = `Create a study plan for a ${background} student on ${topic} using YouTube over ${duration.months} months, ${duration.weeks} weeks, and ${duration.days} days with ${availableTime} hours available per day.`;
     setMessages((prevMessages) => [
       ...prevMessages,
       { type: 'user', text: userMessage }
