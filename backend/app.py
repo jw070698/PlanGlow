@@ -148,15 +148,6 @@ async def generate_check_response(request: CheckRequest):
         print(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@app.get("/recent-messages")
-async def recent_messages():
-    try:
-        messages = get_recent_messages()
-        return {"messages": messages}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-
 @app.post("/plan-reasoning")
 async def generate_plan_reasoning(request: InfoRequest):
     try:
