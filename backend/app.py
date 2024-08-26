@@ -61,9 +61,6 @@ class CheckRequest(BaseModel):
 class UserMessageRequest(BaseModel):
     user_message: str
 
-# A dictionary to store the most recent study plan
-stored_plans = {}
-
 def extract_topic(user_message):
     match = re.search(r'Create a study plan for a .* student on (.+?) using', user_message)
     if match:
@@ -75,15 +72,12 @@ async def generate_response(request: MessageRequest):
     if request.user_message:
         response_text = chat_app.chat(request.user_message)
         store_messages(request.user_message, response_text)  # Store user message & study plan
-        stored_plans['last_plan'] = response_text  # Store the most recent plan
     elif request.user_input:
         response_text = chat_app.chat(request.user_input) 
         store_messages(request.user_input, response_text)  # Store user input & study plan
-        stored_plans['last_plan'] = response_text  # Store the most recent plan
     else:
         response_text = 'No message'
     return {"response": response_text}
-
 
 @app.post("/info")
 async def generate_info_response(request: InfoRequest):
@@ -185,22 +179,23 @@ async def generate_plan_reasoning(request: InfoRequest):
 async def generate_topic_explanation(request: UserMessageRequest):
     try:
         # Retrieve the most recent study plan
-        recent_plan = stored_plans.get('last_plan', None)        
-        if not recent_plan:
+        recent_messages = get_recent_messages()
+        if not recent_messages:
             raise HTTPException(status_code=404, detail="No study plan found")
+
+        recent_plan = recent_messages[-1]['content']
+
         # Extract the topic from the request
-        print("request",request)
         topic = request.user_message
         if not topic:
             raise HTTPException(status_code=400, detail="No topic provided in the request")
+
         # Generate the prompt for GPT-4o
         prompt = (
-            f"You are a helpful assistant. Below is a study plan. Please explain why the topic '{topic}' is important. Please give concise answers with using 3 bullet points."
-            f"in the context of this study plan.\n\nStudy Plan: {recent_plan}. Just give the explanation. Do not give the study plan" 
+            f"You are a helpful assistant. Below is a study plan. Please explain why the topic '{topic}' is important. Please give concise answers using 3 bullet points."
+            f"in the context of this study plan.\n\nStudy Plan: {recent_plan}. Just give the explanation. Do not give the study plan"
         )
-        # Use GPT to generate an explanation for the topic in the study plan
-        response = chat_app.chat(prompt)         
-        # Return the generated explanation
+        response = chat_app.chat(prompt)
         return {"explanation": response}
     except Exception as e:
         print(f"Error: {str(e)}")
@@ -209,23 +204,23 @@ async def generate_topic_explanation(request: UserMessageRequest):
 @app.post("/generate-objectives")
 async def generate_learning_objectives(request: UserMessageRequest):
     try:
-        # Retrieve the most recent study plan
-        recent_plan = stored_plans.get('last_plan', None)
-        if not recent_plan:
+        recent_messages = get_recent_messages()
+        if not recent_messages:
             raise HTTPException(status_code=404, detail="No study plan found")
+
+        recent_plan = recent_messages[-1]['content']
+
         # Extract the topic from the request
         topic = request.user_message
         if not topic:
             raise HTTPException(status_code=400, detail="No topic provided in the request")
+
         # Generate the prompt for GPT-4o
         prompt = (
-            f"You are a helpful assistant. Below is a study plan. Please generate clear and concise learning objectives one by one at most 3. Please start directly with the objectives. Begin with the objectives immediately. Do not say 'Objectives for the topic 'xxx':'"
-            f"for the topic '{topic}' in the context of this study plan.\n\nStudy Plan: {recent_plan}"
+            f"You are a helpful assistant. Below is a study plan. Please generate clear and concise learning objectives (at most 3). "
+            f"Begin with the objectives immediately. Do not say 'Objectives for the topic 'xxx':' for the topic '{topic}' in the context of this study plan.\n\nStudy Plan: {recent_plan}"
         )
-        # Use GPT to generate learning objectives for the topic in the study plan
         response = chat_app.chat(prompt)
-        
-        # Return the generated learning objectives
         return {"objectives": response}
     except Exception as e:
         print(f"Error: {str(e)}")
