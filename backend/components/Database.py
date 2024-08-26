@@ -1,50 +1,55 @@
-# components/Backend/Database.py
+import json
+from firebase_admin import firestore
+db = firestore.client()
+# TODO: Define the session
+update_time, session_ref = db.collection("messages").add({"history": []})
 
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from datetime import datetime
+# Get recent messages 
+def get_recent_messages():
 
-# Define the Base for our ORM models
-Base = declarative_base()
-
-# Define the Message model
-class Message(Base):
-    __tablename__ = 'messages'
-    id = Column(Integer, primary_key=True, index=True)
-    user_message = Column(Text, nullable=False)
-    response_message = Column(Text, nullable=False)
-    timestamp = Column(DateTime, default=datetime.utcnow)
-
-# Database connection setup
-DATABASE_URL = "sqlite:///./test.db"  # Change this URL if you use another database
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Create the tables in the database
-Base.metadata.create_all(bind=engine)
-
-# Function to store messages in the database
-def store_messages(user_message: str, response_message: str):
-    session = SessionLocal()
+    # Define file name 
+    file_name = "stored_data.json"
+    instructions = {"role": "system", "content": "You are suggesting study plan based on user's needs and preference. \
+             Try to suggest best possible fit in terms of time limitation, type of resources, their base knowledge. Return the result in json format. \
+              Each day title as key, the topic and related resources as values.Do not put anything else in your response. \
+             Example of result:{'Day 1': {'topic': 'Variables','content title':'introduction to variables in python', 'link':'link to content'}"}
+    
+    # Initialize messages
+    messages = []
+    messages.append(instructions)
+    
+    #Get last messages
     try:
-        message = Message(user_message=user_message, response_message=response_message)
-        session.add(message)
-        session.commit()
+       with open(file_name, "r") as user_file:
+            data = json.load(user_file)
+            if data:
+                for item in data:
+                    messages.append(item)
     except Exception as e:
-        session.rollback()
-        print(f"Error storing message: {e}")
-    finally:
-        session.close()
+        print(e)
 
-# Function to get the most recent messages from the database
-def get_recent_messages(limit: int = 10):
-    session = SessionLocal()
-    try:
-        messages = session.query(Message).order_by(Message.timestamp.desc()).limit(limit).all()
-        return messages
-    except Exception as e:
-        print(f"Error retrieving recent messages: {e}")
-        return []
-    finally:
-        session.close()
+    return messages
+
+
+# Store Messages 
+def store_messages(request_message, response_message):
+    # Add messages to data
+    user_message = {"role": "user", "content": request_message}
+    assistant_message = {"role": "assistant", "content": response_message}
+    session_ref.update({"history": firestore.ArrayUnion([user_message, assistant_message])})
+
+#   # Define the file name
+#   file_name = "stored_data.json"
+
+#   # Get recent messages
+#   messages = get_recent_messages()[1:]
+
+#   # Add messages to data
+#   user_message = {"role": "user", "content": request_message}
+#   assistant_message = {"role": "assistant", "content": response_message}
+#   messages.append(user_message)
+#   messages.append(assistant_message)
+
+#   # Save the updated file
+#   with open(file_name, "w") as f:
+#     json.dump(messages, f)
