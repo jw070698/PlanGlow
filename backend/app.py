@@ -14,7 +14,7 @@ cred = credentials.Certificate("serviceAccountKey.json")
 firebase_admin.initialize_app(cred)
 
 from components.OpenAI_request import ChatApp
-from components.Database import get_recent_messages, store_messages
+from components.Database import generate_custom_id, create_session, store_messages, get_recent_messages
 from components.YouTube_request import get_search_response, get_video_info, info_to_dict, extract_video_id, get_video_thumbnail, check_resource_availability, get_video_stats
 from components.GoogleSearch_request import google_search_availability
 
@@ -45,21 +45,27 @@ class MessageRequest(BaseModel):
 
 class InfoRequest(BaseModel):
     info_message: str
+    custom_id: str
 
 class SearchRequest(BaseModel):
     search_message: str
+    custom_id: str
 
 class YouTubeVideoID(BaseModel):
     video_id: str
+    custom_id: str
 
 class YouTubeLink(BaseModel):
     url: str
+    custom_id: str
 
 class CheckRequest(BaseModel):
     check_message: str
+    custom_id: str
 
 class UserMessageRequest(BaseModel):
     user_message: str
+    custom_id: str
 
 def extract_topic(user_message):
     match = re.search(r'Create a study plan for a .* student on (.+?) using', user_message)
@@ -67,14 +73,20 @@ def extract_topic(user_message):
         return match.group(1)
     return None
 
+@app.post("/start_session")
+async def start_session():
+    custom_id = generate_custom_id()
+    create_session(custom_id)
+    return {"custom_id": custom_id}
+
 @app.post("/response")
 async def generate_response(request: MessageRequest):
     if request.user_message:
         response_text = chat_app.chat(request.user_message)
-        store_messages(request.user_message, response_text)  # Store user message & study plan
+        store_messages(request.custom_id, request.user_message, response_text)  # Store user message & study plan
     elif request.user_input:
         response_text = chat_app.chat(request.user_input) 
-        store_messages(request.user_input, response_text)  # Store user input & study plan
+        store_messages(request.custom_id, request.input, response_text) # Store user input & study plan
     else:
         response_text = 'No message'
     return {"response": response_text}
@@ -156,7 +168,7 @@ async def generate_check_response(request: CheckRequest):
 async def generate_plan_reasoning(request: InfoRequest):
     try:
         # Retrieve the most recent study plan from storage
-        recent_messages = get_recent_messages()
+        recent_messages = get_recent_messages(request.custom_id)
         if not recent_messages:
             raise HTTPException(status_code=404, detail="No recent messages found")
 
@@ -179,7 +191,7 @@ async def generate_plan_reasoning(request: InfoRequest):
 async def generate_topic_explanation(request: UserMessageRequest):
     try:
         # Retrieve the most recent study plan
-        recent_messages = get_recent_messages()
+        recent_messages = get_recent_messages(request.custom_id)
         if not recent_messages:
             raise HTTPException(status_code=404, detail="No study plan found")
 
@@ -204,7 +216,7 @@ async def generate_topic_explanation(request: UserMessageRequest):
 @app.post("/generate-objectives")
 async def generate_learning_objectives(request: UserMessageRequest):
     try:
-        recent_messages = get_recent_messages()
+        recent_messages = get_recent_messages(request.custom_id)
         if not recent_messages:
             raise HTTPException(status_code=404, detail="No study plan found")
 

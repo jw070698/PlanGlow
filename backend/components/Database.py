@@ -9,9 +9,10 @@ def generate_custom_id():
     custom_id = f"session-{uuid.uuid4().hex[:8]}"
     return custom_id
 
-custom_id = generate_custom_id()
-session_ref = db.collection("messages").document(custom_id)
-session_ref.set({"history": []})
+def create_session(custom_id):
+    session_ref = db.collection("messages").document(custom_id)
+    session_ref.set({"history": []})
+    return session_ref
 
 # Get recent messages 
 '''def get_recent_messages():
@@ -41,12 +42,15 @@ session_ref.set({"history": []})
 
 
 # Store Messages 
-def store_messages(request_message, response_message):
-    # Add messages to data
+def store_messages(custom_id, request_message, response_message):
+    # Get session reference
+    session_ref = db.collection("messages").document(custom_id)
+
+    # Add messages to session
     user_message = {"role": "user", "content": request_message}
     assistant_message = {"role": "assistant", "content": response_message}
     session_ref.update({"history": firestore.ArrayUnion([user_message, assistant_message])})
-  
+
 #   # Define the file name
 #   file_name = "stored_data.json"
 
@@ -64,17 +68,18 @@ def store_messages(request_message, response_message):
 #     json.dump(messages, f)
 
 # Get recent messages
-def get_recent_messages():
+def get_recent_messages(custom_id):
     try:
-        # Assuming that `session_ref` refers to the current session, and history is an array of messages
+        # Get session reference
+        session_ref = db.collection("messages").document(custom_id)
         session_doc = session_ref.get()
         session_data = session_doc.to_dict()
-        
+
         if 'history' in session_data:
             # Get the last few messages (you can specify how many, here I get the last 10)
             recent_messages = session_data['history'][-10:]
             return recent_messages
-        
+
         return []
     
     except Exception as e:

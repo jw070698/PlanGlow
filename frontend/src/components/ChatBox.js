@@ -9,6 +9,7 @@ import './ChatBox.css';
 import InputForm from './InputForm';
 import CustomMarkdown from './CustomMarkdown';
 import Spinner from './Spinner';
+import { v4 as uuidv4 } from 'uuid';
 
 const API_BASE_URL = "https://ai-curriculum-pi.vercel.app";
 const ChatBox = () => {
@@ -33,6 +34,10 @@ const ChatBox = () => {
   const [loading, setLoading] = useState(false); 
 
   useEffect(() => {
+    startNewSession(); // user id
+  }, []);
+
+  useEffect(() => {
     animateScroll.scrollToBottom({
       containerId: 'messagesContainer',
       duration: 300,
@@ -55,6 +60,12 @@ const ChatBox = () => {
       window.removeEventListener('keydown', handleKeyPress);
     };
   }, [messages, formData, userInput, isFormVisible]);
+
+  const startNewSession = () => {
+    const newSessionId = `session-${uuidv4().slice(0, 8)}`;
+    setSessionId(newSessionId);
+    localStorage.setItem('session_id', newSessionId);
+  };
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -85,7 +96,9 @@ const ChatBox = () => {
     ]);
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/response`, { user_message: userMessage });
+      const response = await axios.post(`${API_BASE_URL}/response`, { 
+        user_message: userMessage,
+        custom_id: sessionId });
       const newResponsePlan = response.data.response;
       console.log('API Response:', newResponsePlan);
       setResponsePlan(newResponsePlan);
@@ -128,7 +141,9 @@ const ChatBox = () => {
     setUserInput('');
     setLoading(true);
     try {
-      const response = await axios.post(`${API_BASE_URL}/response`, { user_message: userInput });
+      const response = await axios.post(`${API_BASE_URL}/response`, { 
+        user_message: userInput,
+        custom_id: sessionId });
       setResponsePlan(response.data.response);
       setMessages((prevMessages) => [
         ...prevMessages,
@@ -149,7 +164,9 @@ const ChatBox = () => {
     const infoMessage = `Can you explain more about the background knowledge levels for the topic: ${formData.topic}?`;
     try {
       if (formData.topic) {
-        const response = await axios.post(`${API_BASE_URL}/info`, { info_message: infoMessage });
+        const response = await axios.post(`${API_BASE_URL}/info`, { 
+          info_message: infoMessage,
+          custom_id: sessionId });
         setInfoInput(response.data.response);
         setModalIsOpen(true);
       } else {
@@ -169,7 +186,9 @@ const ChatBox = () => {
     }
     setLoading(true);
     try {
-      const response = await axios.post(`${API_BASE_URL}/search`, { search_message: formData.topic });
+      const response = await axios.post(`${API_BASE_URL}/search`, { 
+        search_message: formData.topic, 
+        custom_id: sessionId});
 
       const items = response.data.response.items || [];
       console.log('Extracted Items Array:', items);
