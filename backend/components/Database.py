@@ -5,7 +5,7 @@ db = firestore.client()
 update_time, session_ref = db.collection("messages").add({"history": []})
 
 # Get recent messages 
-def get_recent_messages():
+'''def get_recent_messages():
 
     # Define file name 
     file_name = "stored_data.json"
@@ -28,7 +28,7 @@ def get_recent_messages():
     except Exception as e:
         print(e)
 
-    return messages
+    return messages'''
 
 
 # Store Messages 
@@ -53,3 +53,21 @@ def store_messages(request_message, response_message):
 #   # Save the updated file
 #   with open(file_name, "w") as f:
 #     json.dump(messages, f)
+
+# Get recent messages
+def get_recent_messages():
+    try:
+        # Assuming that `session_ref` refers to the current session, and history is an array of messages
+        session_doc = session_ref.get()
+        session_data = session_doc.to_dict()
+        
+        if 'history' in session_data:
+            # Get the last few messages (you can specify how many, here I get the last 10)
+            recent_messages = session_data['history'][-10:]
+            return recent_messages
+        
+        return []
+    
+    except Exception as e:
+        print(f"Error retrieving recent messages: {e}")
+        return []
