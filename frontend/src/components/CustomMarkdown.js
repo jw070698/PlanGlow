@@ -242,14 +242,24 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
 
     const fetchVideoStatus = async (videoIds) => {
         if (!videoIds) {
-            return { views: 'N/A', likes: 'N/A' };
+            return { views: 'N/A', likes: 'N/A' , chapters: []};
         }
         try {
-            const response = await axios.post(`${API_BASE_URL}/video_stats`, { video_id: videoIds });
-            return response.data;
+            // Fetch video statistics
+            const statsResponse = await axios.post(`${API_BASE_URL}/video_stats`, { video_id: videoIds });
+            const statsData = statsResponse.data;
+
+            // Fetch video chapters
+            const chaptersData = [];
+
+            return {
+                views: statsData.views,
+                likes: statsData.likes,
+                chapters: chaptersData
+            };
         } catch (error) {
             console.error('Error fetching video status:', error); 
-            return { views: 'N/A', likes: 'N/A' };
+            return { views: 'N/A', likes: 'N/A', chapters: [] };
         }
     };
 
