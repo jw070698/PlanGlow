@@ -43,19 +43,10 @@ session_ref.set({"history": []})
 # Store Messages 
 def store_messages(request_message, response_message):
     # Add messages to data
-    '''user_message = {"role": "user", "content": request_message}
+    user_message = {"role": "user", "content": request_message}
     assistant_message = {"role": "assistant", "content": response_message}
-    session_ref.update({"history": firestore.ArrayUnion([user_message, assistant_message])})'''
-
-    try:
-        # Add messages to data
-        user_message = {"role": "user", "content": request_message}
-        assistant_message = {"role": "assistant", "content": response_message}
-        session_ref.update({"history": firestore.ArrayUnion([user_message, assistant_message])})
-        print("Messages stored successfully.")
-    except Exception as e:
-        print(f"Error storing messages: {e}")
-
+    session_ref.update({"history": firestore.ArrayUnion([user_message, assistant_message])})
+  
 #   # Define the file name
 #   file_name = "stored_data.json"
 
