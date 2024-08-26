@@ -311,6 +311,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
                     [day]: combinedContent
                 }
             }));
+        
         } catch (error) {
             console.error('API Error:', error);
             setExplanationContent(prevState => ({
