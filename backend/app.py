@@ -152,12 +152,26 @@ async def generate_check_response(request: CheckRequest):
         print(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+@app.get("/recent-messages")
+async def recent_messages():
+    try:
+        messages = get_recent_messages()
+        return {"messages": messages}
+    except Exception as e:
+        logger.error(f"Error in /recent-messages: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
 @app.post("/plan-reasoning")
 async def generate_plan_reasoning(request: InfoRequest):
     try:
         # Retrieve the most recent study plan from storage
-        recent_plan = stored_plans.get('last_plan', None)
-        # Combine the retrieved study plan with the request's info message
+        recent_messages = get_recent_messages()
+        if not recent_messages:
+            raise HTTPException(status_code=404, detail="No recent messages found")
+
+        recent_plan = recent_messages[-1]['content']
+
         prompt = (
             f"You are a helpful assistant. Please review the study plan provided and explain how you selected the content for each week. "
             f"Do not show me the study plan in your answer. Just explain how you select and mention the connections between the content for each week."

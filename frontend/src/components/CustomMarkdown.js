@@ -8,10 +8,9 @@ import FAQIconStudyPlan from './FAQIconStudyPlan';
 import Editable from './Editable';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faThumbsUp, faEye, faCircleCheck, faCaretDown, faCaretRight } from '@fortawesome/free-solid-svg-icons';
-import { replaceVideoInStudyPlan } from './VideoReplacement'; 
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
-const API_BASE_URL = "http://localhost:1350";
+const API_BASE_URL = "https://ai-curriculum-pi.vercel.app";
 
 const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
     const [parsedJson, setParsedJson] =  useState(null);
