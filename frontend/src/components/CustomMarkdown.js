@@ -281,7 +281,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
     const fetchExplanation = async (topic, week, day) => {
         try {
             // Check if the explanation already exists
-            if (explanationContent[week] && explanationContent[week][day]) {
+            if (explanationContent[week]?.[day]) {
                 console.log(`Explanation for ${topic} on ${week} ${day} is already fetched.`);
                 return; // If it exists, skip the API call
             }
@@ -314,7 +314,15 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
             }));
         
         } catch (error) {
-            console.error('API Error:', error);
+            if (error.code === 'ERR_CONNECTION_REFUSED') {
+                console.error('Connection Refused: Unable to reach the server.');
+            } else if (error.response) {
+                // Server responded with a status other than 2xx
+                console.error(`API Error: ${error.response.status} - ${error.response.data.detail || error.response.statusText}`);
+            } else {
+                // Something else happened
+                console.error('An unexpected error occurred:', error.message);
+            }
             setExplanationContent(prevState => ({
                 ...prevState,
                 [week]: {
