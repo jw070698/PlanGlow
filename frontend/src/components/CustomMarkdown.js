@@ -286,9 +286,11 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
                 return; // If it exists, skip the API call
             }
     
-            const reasonResponse = await axios.post(`${API_BASE_URL}/topic-explanations`, { user_message: topic });
-            const objectivesResponse = await axios.post(`${API_BASE_URL}/generate-objectives`, { user_message: topic });
-            
+            const [reasonResponse, objectivesResponse] = await Promise.all([
+                axios.post(`${API_BASE_URL}/topic-explanations`, { user_message: topic }),
+                axios.post(`${API_BASE_URL}/generate-objectives`, { user_message: topic })
+            ]);
+    
             // Combine the content
             let combinedContent = '';
             if (reasonResponse.data && reasonResponse.data.explanation) {
