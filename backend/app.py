@@ -73,20 +73,25 @@ def extract_topic(user_message):
 @app.post("/response")
 async def generate_response(request: MessageRequest):
     print("Entering response function")
-    print(request.user_message)
-    print(request.user_input)
+    print(f"User message: {request.user_message}")
+    print(f"User input: {request.user_input}")
+    
     if request.user_message:
         response_text = chat_app.chat(request.user_message)
-        store_messages(request.user_message,response_text) # Store user message & study plan
+        store_messages(request.user_message, response_text)  # Store user message & study plan
         stored_plans['last_plan'] = response_text  # Store the most recent plan
+        print("Stored last plan from user_message")
     elif request.user_input:
         response_text = chat_app.chat(request.user_input) 
-        store_messages(request.user_input,response_text) # Store user input & study plan
+        store_messages(request.user_input, response_text)  # Store user input & study plan
         stored_plans['last_plan'] = response_text  # Store the most recent plan
-        print("Received user_input")
+        print("Stored last plan from user_input")
     else:
         response_text = 'No message'
+    
+    print(f"Current stored plans: {stored_plans}")
     return {"response": response_text}
+
 
 @app.post("/info")
 async def generate_info_response(request: InfoRequest):
