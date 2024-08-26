@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Spinner from './Spinner';
-const API_BASE_URL = "http://localhost:1350";
+const API_BASE_URL = "https://ai-curriculum-pi.vercel.app";
 
 const Editable = ({ formData, setResponsePlan , setStudyPlan}) => {
 

@@ -164,7 +164,7 @@ async def generate_plan_reasoning(request: InfoRequest):
             f"\n\nStudy Plan: {recent_plan}"
         )
         # Call the GPT-4 API with the prompt
-        response = chat_app.chat(prompt) #add temperature here 
+        response = chat_app.chat(prompt)  
         # Return the GPT-4 response
         return {"response": response}
     except Exception as e:
