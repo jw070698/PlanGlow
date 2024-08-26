@@ -198,7 +198,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
 
                 const videoData = resources.map(resource => {
                     const videoId = resource ? extractVideoId(resource.link) : null;
-                    const thumbnail = resource && resource.thumbnail ? resource.thumbnail : 'https://via.placeholder.com/120';
+                    const thumbnail = resource && resource.thumbnail ? resource.thumbnail : null;
     
                     return {
                         link: resource?.link || '#',  // Default to '#' if resource or link is undefined
@@ -207,8 +207,23 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
                     };
                 });
 
-                const statuses = await Promise.all(videoData.map(data => fetchVideoStatus(data.videoId)));
-
+                const statuses = await Promise.all(videoData.map(async (data) => {
+                    let thumbnail = data.thumbnail;
+    
+                    if (!thumbnail && data.videoId) {
+                        // Call your backend API to get the thumbnail if it's not already present
+                        const response = await axios.post(`${API_BASE_URL}/get_thumbnail`, { url: data.link });
+                        thumbnail = response.data.thumbnail || 'https://via.placeholder.com/120';
+                    }
+    
+                    const status = await fetchVideoStatus(data.videoId);
+    
+                    return {
+                        views: status.views,
+                        likes: status.likes,
+                        thumbnail: thumbnail,
+                    };
+                }));
                 const statusMap = videoData.reduce((acc, data, index) => {
                     acc[data.link] = {
                         views: statuses[index].views,

@@ -85,7 +85,8 @@ def get_video_thumbnail(url): # Returns the thumbnail URL for a given YouTube vi
             return thumbnail_url
         else:
             print(f"No thumbnail found for ID: {video_id}")
-            return None
+            thumbnail_url = 'https://via.placeholder.com/120'
+            return thumbnail_url
 
     except Exception as e:
         print(f"An error occurred: {e}")

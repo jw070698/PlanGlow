@@ -1,6 +1,6 @@
 #app.py
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import re, os
@@ -53,7 +53,7 @@ class YouTubeVideoID(BaseModel):
     video_id: str
 
 class YouTubeLink(BaseModel):
-    link_message: str
+    url: str
 
 class CheckRequest(BaseModel):
     check_message: str
@@ -122,6 +122,20 @@ async def generate_search_response(request: SearchRequest):
     search_message = request.search_message
     response_resources = get_search_response(search_message)
     return {"response": response_resources}
+
+@app.post('/get_thumbnail')
+async def get_thumbnail(request: YouTubeLink):
+    video_url = request.url
+    if not video_url:
+        raise HTTPException(status_code=400, detail="No URL provided")
+
+    # Assuming get_video_thumbnail is your function to retrieve the thumbnail
+    thumbnail_url = get_video_thumbnail(video_url)
+    if thumbnail_url:
+        print(thumbnail_url)
+        return {"thumbnail": thumbnail_url}
+    else:
+        raise HTTPException(status_code=404, detail="Thumbnail not found")
 
 @app.post("/video_stats")
 async def get_video_statistics(request: YouTubeVideoID):
