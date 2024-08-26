@@ -76,16 +76,12 @@ async def generate_response(request: MessageRequest):
         response_text = chat_app.chat(request.user_message)
         store_messages(request.user_message, response_text)  # Store user message & study plan
         stored_plans['last_plan'] = response_text  # Store the most recent plan
-        print("Stored last plan from user_message")
     elif request.user_input:
         response_text = chat_app.chat(request.user_input) 
         store_messages(request.user_input, response_text)  # Store user input & study plan
         stored_plans['last_plan'] = response_text  # Store the most recent plan
-        print("Stored last plan from user_input")
     else:
         response_text = 'No message'
-    
-    print(f"Current stored plans: {stored_plans}")
     return {"response": response_text}
 
 

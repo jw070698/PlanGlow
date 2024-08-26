@@ -1,8 +1,17 @@
 import json
+import uuid
 from firebase_admin import firestore
 db = firestore.client()
 # TODO: Define the session
-update_time, session_ref = db.collection("messages").add({"history": []})
+# update_time, session_ref = db.collection("messages").add({"history": []})
+def generate_custom_id():
+    # Example custom ID 
+    custom_id = f"session-{uuid.uuid4().hex[:8]}"
+    return custom_id
+
+custom_id = generate_custom_id()
+session_ref = db.collection("messages").document(custom_id)
+session_ref.set({"history": []})
 
 # Get recent messages 
 '''def get_recent_messages():
@@ -34,9 +43,18 @@ update_time, session_ref = db.collection("messages").add({"history": []})
 # Store Messages 
 def store_messages(request_message, response_message):
     # Add messages to data
-    user_message = {"role": "user", "content": request_message}
+    '''user_message = {"role": "user", "content": request_message}
     assistant_message = {"role": "assistant", "content": response_message}
-    session_ref.update({"history": firestore.ArrayUnion([user_message, assistant_message])})
+    session_ref.update({"history": firestore.ArrayUnion([user_message, assistant_message])})'''
+
+    try:
+        # Add messages to data
+        user_message = {"role": "user", "content": request_message}
+        assistant_message = {"role": "assistant", "content": response_message}
+        session_ref.update({"history": firestore.ArrayUnion([user_message, assistant_message])})
+        print("Messages stored successfully.")
+    except Exception as e:
+        print(f"Error storing messages: {e}")
 
 #   # Define the file name
 #   file_name = "stored_data.json"
