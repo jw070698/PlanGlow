@@ -10,7 +10,6 @@ export const checkAvailability = async(url) => {
         });
         const result = response.data.response;
         if (result.title) {
-            console.log(`Video found: ${result.title}`);
             return {
                 exists: true,
                 videoId: result.videoId,

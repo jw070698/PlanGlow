@@ -72,10 +72,6 @@ def extract_topic(user_message):
 
 @app.post("/response")
 async def generate_response(request: MessageRequest):
-    print("Entering response function")
-    print(f"User message: {request.user_message}")
-    print(f"User input: {request.user_input}")
-    
     if request.user_message:
         response_text = chat_app.chat(request.user_message)
         store_messages(request.user_message, response_text)  # Store user message & study plan
@@ -158,11 +154,10 @@ async def recent_messages():
         messages = get_recent_messages()
         return {"messages": messages}
     except Exception as e:
-        logger.error(f"Error in /recent-messages: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.post("/plan-reasoning")
+@app.get("/plan-reasoning")
 async def generate_plan_reasoning(request: InfoRequest):
     try:
         # Retrieve the most recent study plan from storage
