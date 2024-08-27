@@ -129,6 +129,7 @@ async def generate_info_response(request: InfoRequest):
 @app.post("/search")
 async def generate_search_response(request: SearchRequest):
     search_message = request.search_message
+    custom_id = request.custom_id
     response_resources = get_search_response(search_message)
     return {"response": response_resources}
 
