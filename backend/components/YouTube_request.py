@@ -6,9 +6,22 @@ from googleapiclient.discovery import build
 from dotenv import load_dotenv
 import os
 import re
+import random
 load_dotenv()
+# Get all environment variables
+env_vars = os.environ
+env_vars_dict = dict(env_vars)
 
-youtube = build('youtube', 'v3', developerKey = os.getenv('API_KEY2'))
+# Filter keys that start with 'YOUTUBE_API_KEY'
+youtube_api_keys = [k for k in env_vars_dict if k.startswith("YOUTUBE_API_KEY")]
+
+# Sort keys by the numerical suffix
+sorted_keys = sorted(youtube_api_keys)
+
+selected_key = random.choice(sorted_keys)
+YOUTUBE_API_KEY = os.environ[selected_key]
+
+youtube = build('youtube', 'v3', developerKey = os.getenv(YOUTUBE_API_KEY))
 # youtube = None
 # pylint: disable=maybe-no-member
 
