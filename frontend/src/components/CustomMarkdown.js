@@ -12,6 +12,7 @@ import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1350';
 
+
 const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) => {
     const [parsedJson, setParsedJson] = useState(null);
     const [searchResults, setSearchResults] = useState([]);
@@ -65,22 +66,21 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
     };
 
     const handleSelectVideo = (weekIndex, dayIndex, selectedVideo, resourceIndex) => {
+        const updatedPlan = { ...studyPlan };
         const weeks = Object.keys(studyPlan); 
         const week = weeks[weekIndex];
     
-        if (!week || !studyPlan[week]) {
+        if (!week || !updatedPlan[week]) {
             console.error('Week is not defined in studyPlan:', week);
             return;
         }
     
-        if (dayIndex < 0 || dayIndex >= studyPlan[week].length) {
+        if (dayIndex < 0 || dayIndex >= updatedPlan[week].length) {
             console.error('Day index is out of bounds:', dayIndex);
             return;
         }
     
-        const updatedPlan = { ...studyPlan };
-    
-        // Ensure the YouTube resources are treated as an array
+        // Ensure the resources are treated as an array
         if (!updatedPlan[week][dayIndex].resources) {
             updatedPlan[week][dayIndex].resources = { YouTube: [] };
         } else if (!Array.isArray(updatedPlan[week][dayIndex].resources.YouTube)) {
@@ -88,7 +88,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
         }
     
         // Ensure the resourceIndex is within bounds and replace the resource
-        if (resourceIndex < updatedPlan[week][dayIndex].resources.YouTube.length) {
+        if (resourceIndex >= 0 && resourceIndex < updatedPlan[week][dayIndex].resources.YouTube.length) {
             updatedPlan[week][dayIndex].resources.YouTube[resourceIndex] = {
                 link: selectedVideo.url,
                 title: selectedVideo.title,
@@ -97,40 +97,23 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
                 likes: selectedVideo.likes,
             };
         } else {
-            console.error('Resource index out of bounds:', resourceIndex);
-            return;
+            updatedPlan[week][dayIndex].resources.YouTube.push({
+                link: selectedVideo.url,
+                title: selectedVideo.title,
+                thumbnail: selectedVideo.thumbnail,
+                views: selectedVideo.views,
+                likes: selectedVideo.likes,
+            });
         }
     
-        setStudyPlan(updatedPlan); 
-    
-        setParsedJson((prevState) => {
-            const newStudyPlan = { ...prevState.studyPlan };
-            newStudyPlan[week] = [...prevState.studyPlan[week]]; 
-    
-            if (!Array.isArray(newStudyPlan[week][dayIndex].resources.YouTube)) {
-                newStudyPlan[week][dayIndex].resources.YouTube = [newStudyPlan[week][dayIndex].resources.YouTube];
-            }
-    
-            if (resourceIndex < newStudyPlan[week][dayIndex].resources.YouTube.length) {
-                newStudyPlan[week][dayIndex].resources.YouTube[resourceIndex] = {
-                    link: selectedVideo.url,
-                    title: selectedVideo.title,
-                    thumbnail: selectedVideo.thumbnail,
-                    views: selectedVideo.views,
-                    likes: selectedVideo.likes,
-                };
-            } else {
-                console.error('Resource index out of bounds:', resourceIndex);
-                return;
-            }
-    
-            return { ...prevState, studyPlan: newStudyPlan };
-        });
+        setStudyPlan(updatedPlan);
+        setParsedJson((prevState) => ({
+            ...prevState,
+            studyPlan: updatedPlan,
+        }));
     
         setResourcesModalIsOpen(false); 
     };
-    
-    
 
     const handleMouseOut = (link) => {
         setTooltipVisible((prevState) => ({
