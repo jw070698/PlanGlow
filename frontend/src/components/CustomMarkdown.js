@@ -66,9 +66,16 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
     };
 
     const handleSelectVideo = (weekIndex, dayIndex, selectedVideo, resourceIndex) => {
+        console.log('Clicked Week Index:', weekIndex);
+        console.log('Clicked Day Index:', dayIndex);
+        console.log('Clicked Resource Index:', resourceIndex);
+    
         const updatedPlan = { ...studyPlan };
         const weeks = Object.keys(studyPlan); 
         const week = weeks[weekIndex];
+    
+        console.log('Week:', week);
+        console.log('Current Study Plan:', updatedPlan);
     
         if (!week || !updatedPlan[week]) {
             console.error('Week is not defined in studyPlan:', week);
@@ -86,7 +93,9 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
         } else if (!Array.isArray(updatedPlan[week][dayIndex].resources.YouTube)) {
             updatedPlan[week][dayIndex].resources.YouTube = [updatedPlan[week][dayIndex].resources.YouTube];
         }
-        console.log(resourceIndex);
+    
+        console.log('Resources before update:', updatedPlan[week][dayIndex].resources.YouTube);
+    
         // Check if resourceIndex is valid and replace the selected video
         if (resourceIndex >= 0 && resourceIndex < updatedPlan[week][dayIndex].resources.YouTube.length) {
             updatedPlan[week][dayIndex].resources.YouTube[resourceIndex] = {
@@ -96,7 +105,9 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
                 views: selectedVideo.views,
                 likes: selectedVideo.likes,
             };
-        }
+        } 
+    
+        console.log('Resources after update:', updatedPlan[week][dayIndex].resources.YouTube);
     
         setStudyPlan(updatedPlan);
         setParsedJson((prevState) => ({
@@ -106,6 +117,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
     
         setResourcesModalIsOpen(false); 
     };
+    
     
 
     const handleMouseOut = (link) => {
