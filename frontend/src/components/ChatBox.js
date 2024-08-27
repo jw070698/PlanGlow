@@ -171,8 +171,7 @@ const ChatBox = () => {
     try {
       if (formData.topic) {
         const response = await axios.post(`${API_BASE_URL}/info`, { 
-          info_message: infoMessage,
-          custom_id: sessionId });
+          info_message: infoMessage});
         setInfoInput(response.data.response);
         setModalIsOpen(true);
       } else {
