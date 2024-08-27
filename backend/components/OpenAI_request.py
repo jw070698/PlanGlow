@@ -28,14 +28,16 @@ class ChatApp:
                                 topic: something, \
                                 Time: x hours,\
                                 resources: {\
-                                    YouTube: {\
+                                    YouTube: [\
+                                        {\
                                         title: Advanced OOP Concepts in Python,\
                                         link: https://youtu.be/BJ-VvGyQxho\
-                                    },\
-                                    YouTube: {\
+                                        },\
+                                        {\
                                         title: ,\
                                         link: \
-                                    },\
+                                        },\
+                                    ]\
                             },"}
         ]
 
