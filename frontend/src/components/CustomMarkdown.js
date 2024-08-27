@@ -65,30 +65,27 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
     };
 
     const handleSelectVideo = (weekIndex, dayIndex, selectedVideo, resourceIndex) => {
-        const weeks = Object.keys(studyPlan);
+        const weeks = Object.keys(studyPlan); 
         const week = weeks[weekIndex];
-    
+
         if (!week || !studyPlan[week]) {
             console.error('Week is not defined in studyPlan:', week);
             return;
         }
-    
+
         if (dayIndex < 0 || dayIndex >= studyPlan[week].length) {
             console.error('Day index is out of bounds:', dayIndex);
             return;
         }
-    
-        // Clone the existing study plan to avoid direct mutations
+
         const updatedPlan = { ...studyPlan };
-    
-        // Ensure resources and YouTube array exist
+
         if (!updatedPlan[week][dayIndex].resources) {
-            updatedPlan[week][dayIndex].resources = { YouTube: [] };
+            updatedPlan[week][dayIndex].resources = {YouTube: []};
         } else if (!Array.isArray(updatedPlan[week][dayIndex].resources.YouTube)) {
             updatedPlan[week][dayIndex].resources.YouTube = [updatedPlan[week][dayIndex].resources.YouTube];
         }
-    
-        // Replace the specific video at the provided resourceIndex
+
         updatedPlan[week][dayIndex].resources.YouTube[resourceIndex] = {
             link: selectedVideo.url,
             title: selectedVideo.title,
@@ -96,18 +93,15 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
             views: selectedVideo.views,
             likes: selectedVideo.likes,
         };
-    
-        setStudyPlan(updatedPlan);
-    
-        // Update the parsedJson state as well
+
+        setStudyPlan(updatedPlan); 
+
         setParsedJson((prevState) => {
             const newStudyPlan = { ...prevState.studyPlan };
-            newStudyPlan[week] = [...prevState.studyPlan[week]];
-    
+            newStudyPlan[week] = [...prevState.studyPlan[week]]; 
             if (!Array.isArray(newStudyPlan[week][dayIndex].resources.YouTube)) {
                 newStudyPlan[week][dayIndex].resources.YouTube = [newStudyPlan[week][dayIndex].resources.YouTube];
             }
-    
             newStudyPlan[week][dayIndex].resources.YouTube[resourceIndex] = {
                 link: selectedVideo.url,
                 title: selectedVideo.title,
@@ -115,13 +109,12 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
                 views: selectedVideo.views,
                 likes: selectedVideo.likes,
             };
-    
+
             return { ...prevState, studyPlan: newStudyPlan };
         });
-    
-        setResourcesModalIsOpen(false);
+
+        setResourcesModalIsOpen(false); 
     };
-    
 
     const handleMouseOut = (link) => {
         setTooltipVisible((prevState) => ({
@@ -369,7 +362,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
             return Object.keys(resources).map((type) => {
                 const resourceArray = resources[type];
                 const normalizedResourceArray = Array.isArray(resourceArray) ? resourceArray : [resourceArray];
-    
+
                 return normalizedResourceArray.map((resource, resourceIndex) => {
                     const resourceStatus = videoStatuses[resource.link] || { views: 'N/A', likes: 'N/A', thumbnail: 'https://via.placeholder.com/120' };
                     return (
@@ -448,26 +441,6 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
                                         </a>
                                     </p>
                                 </p>
-                                <div style={{ 
-                                    display: 'flex', 
-                                    justifyContent: 'flex-end', 
-                                    alignItems: 'center', 
-                                    flex: '0 0 auto', 
-                                    marginLeft: 'auto' 
-                                }}>
-                                <button
-                                    onClick={() => handleSelectVideo(weekIndex, dayIndex, resource, resourceIndex)} 
-                                    style={{ 
-                                        fontSize: '1rem', 
-                                        backgroundColor: '#C0C4C2', 
-                                        color: 'white', 
-                                        border: 'none', 
-                                        borderRadius: '4px', 
-                                        cursor: 'pointer', 
-                                    }}>
-                                    Select
-                                </button>
-                                </div>
                             </div>
                         </div>
                     );
@@ -477,7 +450,6 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
             return <p>No resources available</p>;
         }
     };
-    
 
     const renderStudyPlan = (plan) => {
         return Object.keys(plan).map((week, weekIndex) => (
@@ -616,7 +588,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
                                         marginLeft: 'auto' 
                                     }}>
                                     <button
-                                        onClick={() => handleSelectVideo(selectedWeekIndex, selectedDayIndex, result)} 
+                                        onClick={() => handleSelectVideo(selectedWeekIndex, selectedDayIndex, result, index)} 
                                         style={{ 
                                             fontSize: '1rem', 
                                             backgroundColor: '#C0C4C2', 
