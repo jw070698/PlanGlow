@@ -86,8 +86,8 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
         } else if (!Array.isArray(updatedPlan[week][dayIndex].resources.YouTube)) {
             updatedPlan[week][dayIndex].resources.YouTube = [updatedPlan[week][dayIndex].resources.YouTube];
         }
-    
-        // Ensure the resourceIndex is within bounds and replace the resource
+        console.log(resourceIndex);
+        // Check if resourceIndex is valid and replace the selected video
         if (resourceIndex >= 0 && resourceIndex < updatedPlan[week][dayIndex].resources.YouTube.length) {
             updatedPlan[week][dayIndex].resources.YouTube[resourceIndex] = {
                 link: selectedVideo.url,
@@ -96,14 +96,6 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
                 views: selectedVideo.views,
                 likes: selectedVideo.likes,
             };
-        } else {
-            updatedPlan[week][dayIndex].resources.YouTube.push({
-                link: selectedVideo.url,
-                title: selectedVideo.title,
-                thumbnail: selectedVideo.thumbnail,
-                views: selectedVideo.views,
-                likes: selectedVideo.likes,
-            });
         }
     
         setStudyPlan(updatedPlan);
@@ -114,6 +106,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
     
         setResourcesModalIsOpen(false); 
     };
+    
 
     const handleMouseOut = (link) => {
         setTooltipVisible((prevState) => ({
