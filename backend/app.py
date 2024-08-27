@@ -58,7 +58,6 @@ class YouTubeVideoID(BaseModel):
 
 class YouTubeLink(BaseModel):
     url: str
-    custom_id: str
 
 class CheckRequest(BaseModel):
     check_message: str
