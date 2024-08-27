@@ -36,6 +36,11 @@ const ChatBox = () => {
   useEffect(() => {
     startNewSession(); // user id
   }, []);
+  
+  const [sessionId, setSessionId] = useState(() => {
+    const savedSessionId = localStorage.getItem('session_id');
+    return savedSessionId || `session-${uuidv4().slice(0, 8)}`;
+  });
 
   useEffect(() => {
     animateScroll.scrollToBottom({
