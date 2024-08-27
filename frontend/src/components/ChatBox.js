@@ -93,7 +93,7 @@ const ChatBox = () => {
 
   const handleFormSubmit = async () => {
     setLoading(true);
-    const { topic, background, studyMaterials, duration, availableTime } = formData;
+    const { topic, background, duration, availableTime } = formData;
     const userMessage = `Create a study plan for a ${background} student on ${topic} using YouTube over ${duration.months} months, ${duration.weeks} weeks, and ${duration.days} days with ${availableTime} hours available per day.`;
     setMessages((prevMessages) => [
       ...prevMessages,
@@ -108,9 +108,23 @@ const ChatBox = () => {
       const newResponsePlan = response.data.response;
       console.log('API Response:', newResponsePlan);
       setResponsePlan(newResponsePlan);
-      
+      //add bot message
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { type: 'bot', text: newResponsePlan, isForm: false }
+      ]);
+    
+      setIsFormVisible(false);
+      } catch (error) {
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { type: 'bot', text: 'Error fetching response from OpenAI.', isForm: false }
+        ]);
+      } finally {
+        setLoading(false);
+      }
       // Replace the last bot message with the new response plan
-      setMessages((prevMessages) => {
+      /*setMessages((prevMessages) => {
         const lastMessageIndex = prevMessages.length - 1;
         if (prevMessages[lastMessageIndex]?.type === 'bot') {
           return [
@@ -131,7 +145,7 @@ const ChatBox = () => {
       ]);
     } finally {
       setLoading(false); // complete
-    }
+    }*/
   };
 
   const handleUserInputChange = (e) => {
