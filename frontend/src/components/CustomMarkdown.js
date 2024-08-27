@@ -77,18 +77,18 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
             return;
         }
     
+        const updatedPlan = { ...studyPlan };
+
         if (dayIndex < 0 || dayIndex >= updatedPlan[week].length) {
             console.error('Day index is out of bounds:', dayIndex);
             return;
         }
-    
-        const updatedPlan = { ...studyPlan };
 
         if (!updatedPlan[week][dayIndex].resources) {
             updatedPlan[week][dayIndex].resources = {};
         }
     
-        updatedPlan[week][dayIndex].resources.YouTube = {
+        updatedPlan[week][dayIndex].resources = {
             link: selectedVideo.url,
             title: selectedVideo.title,
             thumbnail: selectedVideo.thumbnail,
@@ -96,18 +96,10 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
             likes: selectedVideo.likes,
         };
         setStudyPlan(updatedPlan); 
-        setParsedJson((prevState) => {
-            const newStudyPlan = { ...prevState.studyPlan };
-            newStudyPlan[week] = [...prevState.studyPlan[week]]; 
-            newStudyPlan[week][dayIndex].resources.YouTube = {
-                link: selectedVideo.url,
-                title: selectedVideo.title,
-                thumbnail: selectedVideo.thumbnail,
-                views: selectedVideo.views,
-                likes: selectedVideo.likes,
-            };
-            return { ...prevState, studyPlan: newStudyPlan };
-        });
+        setParsedJson((prevState) => ({
+            ...prevState,
+            studyPlan: updatedPlan,
+        }));
         setResourcesModalIsOpen(false); 
     };
 
