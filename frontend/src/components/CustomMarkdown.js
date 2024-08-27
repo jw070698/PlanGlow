@@ -64,7 +64,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
         }));
     };
 
-    const handleSelectVideo = (weekIndex, dayIndex, selectedVideo) => {
+    const handleSelectVideo = (weekIndex, dayIndex, selectedVideo, resourceIndex) => {
         const weeks = Object.keys(studyPlan); 
         const week = weeks[weekIndex];
 
@@ -86,7 +86,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
             updatedPlan[week][dayIndex].resources.YouTube = [updatedPlan[week][dayIndex].resources.YouTube];
         }
 
-        updatedPlan[week][dayIndex].resources.YouTube[0] = {
+        updatedPlan[week][dayIndex].resources.YouTube[resourceIndex] = {
             link: selectedVideo.url,
             title: selectedVideo.title,
             thumbnail: selectedVideo.thumbnail,
@@ -102,7 +102,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
             if (!Array.isArray(newStudyPlan[week][dayIndex].resources.YouTube)) {
                 newStudyPlan[week][dayIndex].resources.YouTube = [newStudyPlan[week][dayIndex].resources.YouTube];
             }
-            newStudyPlan[week][dayIndex].resources.YouTube[0] = {
+            newStudyPlan[week][dayIndex].resources.YouTube[resourceIndex] = {
                 link: selectedVideo.url,
                 title: selectedVideo.title,
                 thumbnail: selectedVideo.thumbnail,
@@ -362,11 +362,11 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
             return Object.keys(resources).map((type) => {
                 const resourceArray = resources[type];
                 const normalizedResourceArray = Array.isArray(resourceArray) ? resourceArray : [resourceArray];
-
-                return normalizedResourceArray.map((resource, index) => {
+    
+                return normalizedResourceArray.map((resource, resourceIndex) => {
                     const resourceStatus = videoStatuses[resource.link] || { views: 'N/A', likes: 'N/A', thumbnail: 'https://via.placeholder.com/120' };
                     return (
-                        <div key={`${type}-${index}`} style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#F3F7F3', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                        <div key={`${type}-${resourceIndex}`} style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#F3F7F3', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
                                 <h4 style={{ fontSize: '1rem', margin: '0 0.5rem', color: '#333' }}>{type}</h4>
                                 <button 
@@ -441,6 +441,26 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
                                         </a>
                                     </p>
                                 </p>
+                                <div style={{ 
+                                    display: 'flex', 
+                                    justifyContent: 'flex-end', 
+                                    alignItems: 'center', 
+                                    flex: '0 0 auto', 
+                                    marginLeft: 'auto' 
+                                }}>
+                                <button
+                                    onClick={() => handleSelectVideo(weekIndex, dayIndex, resource, resourceIndex)} 
+                                    style={{ 
+                                        fontSize: '1rem', 
+                                        backgroundColor: '#C0C4C2', 
+                                        color: 'white', 
+                                        border: 'none', 
+                                        borderRadius: '4px', 
+                                        cursor: 'pointer', 
+                                    }}>
+                                    Select
+                                </button>
+                                </div>
                             </div>
                         </div>
                     );
@@ -450,7 +470,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
             return <p>No resources available</p>;
         }
     };
-
+    
     const renderStudyPlan = (plan) => {
         return Object.keys(plan).map((week, weekIndex) => (
             <div key={week} style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '1rem', marginBottom: '1rem', backgroundColor: '#f9f9f9' }}>
@@ -588,7 +608,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
                                         marginLeft: 'auto' 
                                     }}>
                                     <button
-                                        onClick={() => handleSelectVideo(selectedWeekIndex, selectedDayIndex, result)} 
+                                        onClick={() => handleSelectVideo(selectedWeekIndex, selectedDayIndex, result, resourceIndex)} 
                                         style={{ 
                                             fontSize: '1rem', 
                                             backgroundColor: '#C0C4C2', 
