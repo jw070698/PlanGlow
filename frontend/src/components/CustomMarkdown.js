@@ -81,30 +81,34 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
         const updatedPlan = { ...studyPlan };
 
         if (!updatedPlan[week][dayIndex].resources) {
-            updatedPlan[week][dayIndex].resources = {};
+            updatedPlan[week][dayIndex].resources = {YouTube: []};
+        } else if (!Array.isArray(updatedPlan[week][dayIndex].resources.YouTube)) {
+            updatedPlan[week][dayIndex].resources.YouTube = [updatedPlan[week][dayIndex].resources.YouTube];
         }
 
-        updatedPlan[week][dayIndex].resources.YouTube = {
+        updatedPlan[week][dayIndex].resources.YouTube.push({
             link: selectedVideo.url,
             title: selectedVideo.title,
             thumbnail: selectedVideo.thumbnail,
             views: selectedVideo.views,
             likes: selectedVideo.likes,
-        };
+        });
 
         setStudyPlan(updatedPlan); 
 
         setParsedJson((prevState) => {
             const newStudyPlan = { ...prevState.studyPlan };
             newStudyPlan[week] = [...prevState.studyPlan[week]]; 
-
-            newStudyPlan[week][dayIndex].resources.YouTube = {
+            if (!Array.isArray(newStudyPlan[week][dayIndex].resources.YouTube)) {
+                newStudyPlan[week][dayIndex].resources.YouTube = [newStudyPlan[week][dayIndex].resources.YouTube];
+            }
+            newStudyPlan[week][dayIndex].resources.YouTube.push({
                 link: selectedVideo.url,
                 title: selectedVideo.title,
                 thumbnail: selectedVideo.thumbnail,
                 views: selectedVideo.views,
                 likes: selectedVideo.likes,
-            };
+            });
 
             return { ...prevState, studyPlan: newStudyPlan };
         });
