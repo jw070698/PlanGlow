@@ -86,13 +86,13 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
             updatedPlan[week][dayIndex].resources.YouTube = [updatedPlan[week][dayIndex].resources.YouTube];
         }
 
-        updatedPlan[week][dayIndex].resources.YouTube.push({
+        updatedPlan[week][dayIndex].resources.YouTube[0] = {
             link: selectedVideo.url,
             title: selectedVideo.title,
             thumbnail: selectedVideo.thumbnail,
             views: selectedVideo.views,
             likes: selectedVideo.likes,
-        });
+        };
 
         setStudyPlan(updatedPlan); 
 
@@ -102,13 +102,13 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
             if (!Array.isArray(newStudyPlan[week][dayIndex].resources.YouTube)) {
                 newStudyPlan[week][dayIndex].resources.YouTube = [newStudyPlan[week][dayIndex].resources.YouTube];
             }
-            newStudyPlan[week][dayIndex].resources.YouTube.push({
+            newStudyPlan[week][dayIndex].resources.YouTube[0] = {
                 link: selectedVideo.url,
                 title: selectedVideo.title,
                 thumbnail: selectedVideo.thumbnail,
                 views: selectedVideo.views,
                 likes: selectedVideo.likes,
-            });
+            };
 
             return { ...prevState, studyPlan: newStudyPlan };
         });
