@@ -10,7 +10,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faThumbsUp, faEye, faCircleCheck, faCaretDown, faCaretRight } from '@fortawesome/free-solid-svg-icons';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1350';
+const API_BASE_URL = "https://ai-curriculum-pi.vercel.app"
 
 
 const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) => {
