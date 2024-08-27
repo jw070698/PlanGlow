@@ -102,6 +102,7 @@ const ChatBox = () => {
     ]);
 
     try {
+      console.log(sessionId);
       const response = await axios.post(`${API_BASE_URL}/response`, { 
         user_message: userMessage,
         custom_id: sessionId });
