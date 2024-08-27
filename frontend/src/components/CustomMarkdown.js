@@ -10,6 +10,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faThumbsUp, faEye, faCircleCheck, faCaretDown, faCaretRight } from '@fortawesome/free-solid-svg-icons';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
+
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1350';
 
 const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) => {
@@ -64,8 +65,15 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
         }));
     };
 
+    const handleMouseOut = (link) => {
+        setTooltipVisible((prevState) => ({
+            ...prevState,
+            [link]: false
+        }));
+    };
+
     const handleSelectVideo = (weekIndex, dayIndex, selectedVideo, resourceIndex) => {
-        const weeks = Object.keys(studyPlan); 
+        const weeks = Object.keys(studyPlan);
         const week = weeks[weekIndex];
 
         if (!week || !studyPlan[week]) {
@@ -81,7 +89,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
         const updatedPlan = { ...studyPlan };
 
         if (!updatedPlan[week][dayIndex].resources) {
-            updatedPlan[week][dayIndex].resources = {YouTube: []};
+            updatedPlan[week][dayIndex].resources = { YouTube: [] };
         } else if (!Array.isArray(updatedPlan[week][dayIndex].resources.YouTube)) {
             updatedPlan[week][dayIndex].resources.YouTube = [updatedPlan[week][dayIndex].resources.YouTube];
         }
@@ -94,14 +102,16 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
             likes: selectedVideo.likes,
         };
 
-        setStudyPlan(updatedPlan); 
+        setStudyPlan(updatedPlan);
 
         setParsedJson((prevState) => {
             const newStudyPlan = { ...prevState.studyPlan };
-            newStudyPlan[week] = [...prevState.studyPlan[week]]; 
+            newStudyPlan[week] = [...prevState.studyPlan[week]];
+
             if (!Array.isArray(newStudyPlan[week][dayIndex].resources.YouTube)) {
                 newStudyPlan[week][dayIndex].resources.YouTube = [newStudyPlan[week][dayIndex].resources.YouTube];
             }
+
             newStudyPlan[week][dayIndex].resources.YouTube[resourceIndex] = {
                 link: selectedVideo.url,
                 title: selectedVideo.title,
@@ -113,14 +123,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
             return { ...prevState, studyPlan: newStudyPlan };
         });
 
-        setResourcesModalIsOpen(false); 
-    };
-
-    const handleMouseOut = (link) => {
-        setTooltipVisible((prevState) => ({
-            ...prevState,
-            [link]: false
-        }));
+        setResourcesModalIsOpen(false);
     };
 
     useEffect(() => {
@@ -362,7 +365,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
             return Object.keys(resources).map((type) => {
                 const resourceArray = resources[type];
                 const normalizedResourceArray = Array.isArray(resourceArray) ? resourceArray : [resourceArray];
-    
+
                 return normalizedResourceArray.map((resource, resourceIndex) => {
                     const resourceStatus = videoStatuses[resource.link] || { views: 'N/A', likes: 'N/A', thumbnail: 'https://via.placeholder.com/120' };
                     return (
@@ -470,7 +473,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
             return <p>No resources available</p>;
         }
     };
-    
+
     const renderStudyPlan = (plan) => {
         return Object.keys(plan).map((week, weekIndex) => (
             <div key={week} style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '1rem', marginBottom: '1rem', backgroundColor: '#f9f9f9' }}>
@@ -608,7 +611,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
                                         marginLeft: 'auto' 
                                     }}>
                                     <button
-                                        onClick={() => handleSelectVideo(selectedWeekIndex, selectedDayIndex, result, resourceIndex)} 
+                                        onClick={() => handleSelectVideo(selectedWeekIndex, selectedDayIndex, result, index)} 
                                         style={{ 
                                             fontSize: '1rem', 
                                             backgroundColor: '#C0C4C2', 
