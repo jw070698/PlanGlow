@@ -12,7 +12,7 @@ import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 const API_BASE_URL = "https://ai-curriculum-pi.vercel.app";
 
-const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
+const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) => {
     const [parsedJson, setParsedJson] =  useState(null);
     const [searchResults, setSearchResults] = useState([]);
     const [resourcesModalIsOpen, setResourcesModalIsOpen] = useState(false);
@@ -148,6 +148,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
     }, [parsedJson, setResponsePlan]);
 
     useEffect(() => {
+        console.log('sessionId in CustomMarkdown:', sessionId);
         if (parsedJson && parsedJson.studyPlan) {
             const updateButtonStyles = async () => {
                 const resources = Object.values(parsedJson.studyPlan).flatMap(item => 
@@ -264,6 +265,10 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
     };
 
     const handleResourcesClick = async (topic, type, weekIndex, dayIndex) => {
+        if (!sessionId) {
+            console.error('sessionId is missing.');
+            return;
+        }
         if (type === 'YouTube') {
             if (!topic) {
                 alert('Please provide a topic');
@@ -274,7 +279,9 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
 
             try {
                 const search_message = `${topic} in ${formData?.topic || ''}`;
-                const response = await axios.post(`${API_BASE_URL}/search`, { search_message: search_message });
+                const response = await axios.post(`${API_BASE_URL}/search`, { 
+                    search_message: search_message, 
+                    custom_id: sessionId});
                 const items = response.data.response.items || [];
                 const videoIds = items.map(item => item.id.videoId);
                 const statusPromises = videoIds.map(videoId => fetchVideoStatus(videoId));

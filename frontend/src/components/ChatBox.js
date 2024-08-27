@@ -240,7 +240,7 @@ const ChatBox = () => {
                 handleResourcesClick={handleResourcesClick}
               />
             ) : (
-              <CustomMarkdown markdownText={message.text} formData={formData} setResponsePlan={setResponsePlan} />
+              <CustomMarkdown markdownText={message.text} formData={formData} setResponsePlan={setResponsePlan} sessionID={sessionID}/>
             )}
           </div>
         ))}
