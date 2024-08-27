@@ -67,7 +67,6 @@ const ChatBox = () => {
       const response = await axios.post(`${API_BASE_URL}/start_session`);
       const newSessionId = response.data.custom_id;
       setSessionId(newSessionId);
-      localStorage.setItem('session_id', newSessionId);
     } catch (error) {
       console.error('Error starting a new session:', error);
     }
