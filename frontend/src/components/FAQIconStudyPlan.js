@@ -4,7 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 
-const API_BASE_URL = "https://ai-curriculum-pi.vercel.app"
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1350';
 
 const FAQIconStudyPlan = ({ week, sessionId }) => {
   const [explanationContent, setExplanationContent] = useState({});
