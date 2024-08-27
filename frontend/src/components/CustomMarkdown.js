@@ -85,7 +85,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
         } else if (!Array.isArray(updatedPlan[week][dayIndex].resources.YouTube)) {
             updatedPlan[week][dayIndex].resources.YouTube = [updatedPlan[week][dayIndex].resources.YouTube];
         }
-
+        console.log(resourceIndex);
         updatedPlan[week][dayIndex].resources.YouTube[resourceIndex] = {
             link: selectedVideo.url,
             title: selectedVideo.title,
