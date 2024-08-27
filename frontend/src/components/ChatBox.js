@@ -9,7 +9,6 @@ import './ChatBox.css';
 import InputForm from './InputForm';
 import CustomMarkdown from './CustomMarkdown';
 import Spinner from './Spinner';
-import { v4 as uuidv4 } from 'uuid';
 
 const API_BASE_URL = "https://ai-curriculum-pi.vercel.app";
 const ChatBox = () => {
@@ -32,14 +31,12 @@ const ChatBox = () => {
   const [resourcesModalIsOpen, setResourcesModalIsOpen] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false); 
-  const [sessionId, setSessionId] = useState(() => {
-    const savedSessionId = localStorage.getItem('session_id');
-    return savedSessionId || `session-${uuidv4().slice(0, 8)}`;
-  });
-  
+  const [sessionId, setSessionId] = useState('');
+
   useEffect(() => {
-    startNewSession(); // user id
+    startNewSession(); // id
   }, []);
+
 
   useEffect(() => {
     animateScroll.scrollToBottom({
@@ -65,10 +62,15 @@ const ChatBox = () => {
     };
   }, [messages, formData, userInput, isFormVisible]);
 
-  const startNewSession = () => {
-    const newSessionId = `session-${uuidv4().slice(0, 8)}`;
-    setSessionId(newSessionId);
-    localStorage.setItem('session_id', newSessionId);
+  const startNewSession = async () => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/start_session`);
+      const newSessionId = response.data.custom_id;
+      setSessionId(newSessionId);
+      localStorage.setItem('session_id', newSessionId);
+    } catch (error) {
+      console.error('Error starting a new session:', error);
+    }
   };
 
   const handleInputChange = (e) => {
