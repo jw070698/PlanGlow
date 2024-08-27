@@ -65,12 +65,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
         }));
     };
 
-    const handleSelectVideo = (weekIndex, dayIndex, selectedVideo, resourceIndex) => {
-        console.log('Clicked Week Index:', weekIndex);
-        console.log('Clicked Day Index:', dayIndex);
-        console.log('Clicked Resource Index:', resourceIndex);
-    
-        const updatedPlan = { ...studyPlan };
+    const handleSelectVideo = (weekIndex, dayIndex, selectedVideo) => {
         const weeks = Object.keys(studyPlan); 
         const week = weeks[weekIndex];
     
@@ -87,38 +82,34 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
             return;
         }
     
-        // Ensure the resources are treated as an array
+        const updatedPlan = { ...studyPlan };
+
         if (!updatedPlan[week][dayIndex].resources) {
-            updatedPlan[week][dayIndex].resources = { YouTube: [] };
-        } else if (!Array.isArray(updatedPlan[week][dayIndex].resources.YouTube)) {
-            updatedPlan[week][dayIndex].resources.YouTube = [updatedPlan[week][dayIndex].resources.YouTube];
+            updatedPlan[week][dayIndex].resources = {};
         }
     
-        console.log('Resources before update:', updatedPlan[week][dayIndex].resources.YouTube);
-    
-        // Check if resourceIndex is valid and replace the selected video
-        if (resourceIndex >= 0 && resourceIndex < updatedPlan[week][dayIndex].resources.YouTube.length) {
-            updatedPlan[week][dayIndex].resources.YouTube[resourceIndex] = {
+        updatedPlan[week][dayIndex].resources.YouTube = {
+            link: selectedVideo.url,
+            title: selectedVideo.title,
+            thumbnail: selectedVideo.thumbnail,
+            views: selectedVideo.views,
+            likes: selectedVideo.likes,
+        };
+        setStudyPlan(updatedPlan); 
+        setParsedJson((prevState) => {
+            const newStudyPlan = { ...prevState.studyPlan };
+            newStudyPlan[week] = [...prevState.studyPlan[week]]; 
+            newStudyPlan[week][dayIndex].resources.YouTube = {
                 link: selectedVideo.url,
                 title: selectedVideo.title,
                 thumbnail: selectedVideo.thumbnail,
                 views: selectedVideo.views,
                 likes: selectedVideo.likes,
             };
-        } 
-    
-        console.log('Resources after update:', updatedPlan[week][dayIndex].resources.YouTube);
-    
-        setStudyPlan(updatedPlan);
-        setParsedJson((prevState) => ({
-            ...prevState,
-            studyPlan: updatedPlan,
-        }));
-    
+            return { ...prevState, studyPlan: newStudyPlan };
+        });
         setResourcesModalIsOpen(false); 
     };
-    
-    
 
     const handleMouseOut = (link) => {
         setTooltipVisible((prevState) => ({
@@ -366,15 +357,14 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
             return Object.keys(resources).map((type) => {
                 const resourceArray = resources[type];
                 const normalizedResourceArray = Array.isArray(resourceArray) ? resourceArray : [resourceArray];
-
-                return normalizedResourceArray.map((resource, resourceIndex) => {
+                return normalizedResourceArray.map((resource, index) => {
                     const resourceStatus = videoStatuses[resource.link] || { views: 'N/A', likes: 'N/A', thumbnail: 'https://via.placeholder.com/120' };
                     return (
-                        <div key={`${type}-${resourceIndex}`} style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#F3F7F3', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                        <div key={`${type}-${index}`} style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#F3F7F3', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
                                 <h4 style={{ fontSize: '1rem', margin: '0 0.5rem', color: '#333' }}>{type}</h4>
                                 <button 
-                                    onClick={() => handleResourcesClick(topic, type, weekIndex, dayIndex, resourceIndex)}
+                                    onClick={() => handleResourcesClick(topic, type, weekIndex, dayIndex)}
                                     style={{ 
                                         fontSize: '1rem', 
                                         marginLeft: '1rem',
