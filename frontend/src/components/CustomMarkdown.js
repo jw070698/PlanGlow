@@ -379,9 +379,8 @@ const [parsedJson, setParsedJson] =  useState(null);
     };
 
     const renderResources = (resources, topic, weekIndex, dayIndex) => {
-        if (typeof resources === 'object' && resources !== null) {
-            return Object.keys(resources).map((type, index) => {
-                const resource = resources[type];
+        if (Array.isArray(resources)) {
+            return resources.map((resource, index) => {
                 const resourceStatus = videoStatuses[resource.link] || { views: 'N/A', likes: 'N/A', thumbnail: 'https://via.placeholder.com/120' };
                 return (
                     <div key={index} style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#F3F7F3', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
