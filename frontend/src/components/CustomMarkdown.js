@@ -7,7 +7,7 @@ import { checkAvailability } from './ReferenceCheck';
 import FAQIconStudyPlan from './FAQIconStudyPlan';
 import Editable from './Editable';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faThumbsUp, faEye, faCircleCheck, faCaretDown, faCaretRight } from '@fortawesome/free-solid-svg-icons';
+import { faThumbsUp, faEye, faCircleCheck, faCaretDown, faCaretRight, faCirclePlus } from '@fortawesome/free-solid-svg-icons';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1350';
@@ -380,7 +380,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
                                         lineHeight: '1',
                                     }}
                                 >
-                                    🎦 Additional Resources
+                                    <FontAwesomeIcon icon={faCirclePlus} />
                                 </button>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', marginTop: '0.5rem' }}>
