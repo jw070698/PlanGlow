@@ -10,7 +10,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faThumbsUp, faEye, faCircleCheck, faCaretDown, faCaretRight } from '@fortawesome/free-solid-svg-icons';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
-const API_BASE_URL = "https://ai-curriculum-pi.vercel.app";
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1350';
 
 const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) => {
     
@@ -319,8 +319,8 @@ const [parsedJson, setParsedJson] =  useState(null);
             }
     
             const [reasonResponse, objectivesResponse] = await Promise.all([
-                axios.post(`${API_BASE_URL}/topic-explanations`, { user_message: topic }),
-                axios.post(`${API_BASE_URL}/generate-objectives`, { user_message: topic })
+                axios.post(`${API_BASE_URL}/topic-explanations`, { user_message: topic, custom_id: sessionId }),
+                axios.post(`${API_BASE_URL}/generate-objectives`, { user_message: topic, custom_id: sessionId })
             ]);
     
             // Combine the content
@@ -552,7 +552,7 @@ const [parsedJson, setParsedJson] =  useState(null);
                 {weekVisibility[week] && (
                     <div style={{ marginLeft: '1.5rem', marginTop: '0.5rem' }}>
                         {/* Content to be toggled */}
-                        <FAQIconStudyPlan week={week}/>
+                        <FAQIconStudyPlan week={week} sessionId={sessionId}/>
                     </div>
                     )}
                 </div>

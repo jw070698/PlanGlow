@@ -46,6 +46,7 @@ class MessageRequest(BaseModel):
 
 class InfoRequest(BaseModel):
     info_message: str
+    custom_id: str
 
 class SearchRequest(BaseModel):
     search_message: str
@@ -61,6 +62,7 @@ class CheckRequest(BaseModel):
 
 class UserMessageRequest(BaseModel):
     user_message: str
+    custom_id: str
 
 def extract_topic(user_message):
     match = re.search(r'Create a study plan for a .* student on (.+?) using', user_message)

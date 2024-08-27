@@ -4,9 +4,9 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 
-const API_BASE_URL = "https://ai-curriculum-pi.vercel.app";
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1350';
 
-const FAQIconStudyPlan = ({ week }) => {
+const FAQIconStudyPlan = ({ week, sessionId }) => {
   const [explanationContent, setExplanationContent] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -31,7 +31,8 @@ const FAQIconStudyPlan = ({ week }) => {
         // Fetch the explanation from the API
         const response = await axios.post(`${API_BASE_URL}/plan-reasoning`, {
           info_message: "You have suggested a study plan of a sequence of topics. Please give explanations of why you divided the topics this way. \
-          Start directly with the explanation of each week, using bullet points."
+          Start directly with the explanation of each week, using bullet points.",
+          custom_id: sessionId
         });
 
         const data = response.data.response;

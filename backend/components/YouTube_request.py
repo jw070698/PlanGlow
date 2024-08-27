@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 import os
 import re
 load_dotenv()
-print("loading youtube api key")
+
 youtube = build('youtube', 'v3', developerKey = os.getenv('API_KEY2'))
 # youtube = None
 # pylint: disable=maybe-no-member
