@@ -152,11 +152,16 @@ const [parsedJson, setParsedJson] =  useState(null);
         console.log('sessionId in CustomMarkdown:', sessionId);
         if (parsedJson && parsedJson.studyPlan) {
             const updateButtonStyles = async () => {
-                const resources = Object.values(parsedJson.studyPlan).flatMap(item => 
-                    item.flatMap(day => 
-                        Object.values(day.resources || {})
+                const resources = Object.values(parsedJson.studyPlan).flatMap(week => 
+                    week.flatMap(day => 
+                        // If the resource is an array, flat map it
+                        // Else, just return the single resource
+                        Object.values(day.resources || {}).flatMap(resource =>
+                            Array.isArray(resource) ? resource : [resource]
+                        )
                     )
                 );
+    
 
                 const linkStatuses = await Promise.all(resources.map(async resource => {
                     const result = await checkAvailability(resource.link, sessionId);
