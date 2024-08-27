@@ -3,10 +3,11 @@ const API_BASE_URL = "https://ai-curriculum-pi.vercel.app";
 
 
 // YouTube 
-export const checkAvailability = async(url) => {
+export const checkAvailability = async(url, custom_id) => {
     try {
         const response = await axios.post(`${API_BASE_URL}/checkResource`, {
-            check_message: url
+            check_message: url,
+            custom_id: custom_id
         });
         const result = response.data.response;
         if (result.title) {

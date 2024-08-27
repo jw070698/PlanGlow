@@ -157,7 +157,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
                 );
 
                 const linkStatuses = await Promise.all(resources.map(async resource => {
-                    const result = await checkAvailability(resource.link);
+                    const result = await checkAvailability(resource.link, sessionId);
                     return {
                         link: resource.link,
                         backgroundColor: result.exists ? '#AFD0BF' : '#EB5353',
