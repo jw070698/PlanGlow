@@ -80,13 +80,14 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
     
         const updatedPlan = { ...studyPlan };
     
+        // Ensure the YouTube resources are treated as an array
         if (!updatedPlan[week][dayIndex].resources) {
             updatedPlan[week][dayIndex].resources = { YouTube: [] };
         } else if (!Array.isArray(updatedPlan[week][dayIndex].resources.YouTube)) {
             updatedPlan[week][dayIndex].resources.YouTube = [updatedPlan[week][dayIndex].resources.YouTube];
         }
     
-        console.log(resourceIndex);
+        // Ensure the resourceIndex is within bounds and replace the resource
         if (resourceIndex < updatedPlan[week][dayIndex].resources.YouTube.length) {
             updatedPlan[week][dayIndex].resources.YouTube[resourceIndex] = {
                 link: selectedVideo.url,
@@ -97,6 +98,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
             };
         } else {
             console.error('Resource index out of bounds:', resourceIndex);
+            return;
         }
     
         setStudyPlan(updatedPlan); 
@@ -119,6 +121,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
                 };
             } else {
                 console.error('Resource index out of bounds:', resourceIndex);
+                return;
             }
     
             return { ...prevState, studyPlan: newStudyPlan };
@@ -126,6 +129,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
     
         setResourcesModalIsOpen(false); 
     };
+    
     
 
     const handleMouseOut = (link) => {
@@ -382,7 +386,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
                             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
                                 <h4 style={{ fontSize: '1rem', margin: '0 0.5rem', color: '#333' }}>{type}</h4>
                                 <button 
-                                    onClick={() => handleResourcesClick(topic, type, weekIndex, dayIndex)}
+                                    onClick={() => handleResourcesClick(topic, type, weekIndex, dayIndex, resourceIndex)}
                                     style={{ 
                                         fontSize: '1rem', 
                                         marginLeft: '1rem',
