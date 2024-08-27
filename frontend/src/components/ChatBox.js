@@ -32,15 +32,14 @@ const ChatBox = () => {
   const [resourcesModalIsOpen, setResourcesModalIsOpen] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false); 
-
-  useEffect(() => {
-    startNewSession(); // user id
-  }, []);
-  
   const [sessionId, setSessionId] = useState(() => {
     const savedSessionId = localStorage.getItem('session_id');
     return savedSessionId || `session-${uuidv4().slice(0, 8)}`;
   });
+  
+  useEffect(() => {
+    startNewSession(); // user id
+  }, []);
 
   useEffect(() => {
     animateScroll.scrollToBottom({
