@@ -200,7 +200,9 @@ const [parsedJson, setParsedJson] =  useState(null);
             const fetchAndStoreVideoStatuses = async () => {
                 const resources = Object.values(parsedJson.studyPlan).flatMap(item => 
                     item.flatMap(day => 
-                        Object.values(day.resources || {})
+                        Object.values(day.resources || {}).flatMap(resourceArray => 
+                            Array.isArray(resourceArray) ? resourceArray : [resourceArray]
+                        )
                     )
                 );
 
