@@ -183,7 +183,6 @@ const [parsedJson, setParsedJson] =  useState(null);
     }, [parsedJson]);
 
     const extractVideoId = (url) => {
-        console.log(url);
         const urlObj = new URL(url);
         const searchParams = urlObj.searchParams;
         const videoId = searchParams.get('v');
@@ -213,6 +212,7 @@ const [parsedJson, setParsedJson] =  useState(null);
                     }
     
                     const videoId = extractVideoId(resource.link);
+                    console.log("videoID",videoId);
                     const thumbnail = resource.thumbnail || null;
     
                     if (!videoId) {
