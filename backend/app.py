@@ -11,7 +11,6 @@ from firebase_admin import credentials, firestore, auth
 
 # Initialize Firebase Admin SDK
 cred = credentials.Certificate("serviceAccountKey.json")
-#cred = credentials.Certificate("/Users/jeonjiwon/Desktop/AI-Curriculum/backend/serviceAccountKey.json")
 
 firebase_admin.initialize_app(cred)
 
