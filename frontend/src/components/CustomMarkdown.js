@@ -251,7 +251,7 @@ const [parsedJson, setParsedJson] =  useState(null);
                         thumbnail: thumbnail,
                     };
                 }));
-                console.log("status",statuses);
+                
                 const statusMap = videoData.reduce((acc, data, index) => {
                     acc[data.link] = {
                         views: statuses[index].views,
