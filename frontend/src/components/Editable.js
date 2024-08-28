@@ -3,7 +3,7 @@ import axios from 'axios';
 import Spinner from './Spinner';
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1350';
 
-const Editable = ({ formData, setResponsePlan , setStudyPlan}) => {
+const Editable = ({ formData, setResponsePlan , setStudyPlan, custom_id}) => {
 
     const [originalPlan, setOriginalPlan] = useState(null);
     const [updatedPlan, setUpdatedPlan] = useState(null);
@@ -36,7 +36,10 @@ const Editable = ({ formData, setResponsePlan , setStudyPlan}) => {
             const { topic, background, studyMaterials, duration, availableTime } = updatedData;
             const updated_userMessage = `Create a study plan for a ${background} student on ${topic} using ${studyMaterials.join(', ')} over ${duration.months} months, ${duration.weeks} weeks, and ${duration.days} days with ${availableTime} hours available per day.`;
             console.log(updated_userMessage);
-            const response = await axios.post(`${API_BASE_URL}/response`, {user_message: updated_userMessage});
+            const response = await axios.post(`${API_BASE_URL}/response`, {
+                user_message: updated_userMessage,
+                custom_id: custom_id
+            });
             
             if (response.data?.response) {
                 const markdownText = response.data.response;
