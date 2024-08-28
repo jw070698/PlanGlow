@@ -253,7 +253,7 @@ const [parsedJson, setParsedJson] =  useState(null);
                     };
                     return acc;
                 }, {});
-
+                console.log(statusMap);
                 setVideoStatuses(statusMap);
             };
 
