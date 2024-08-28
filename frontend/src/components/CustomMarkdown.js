@@ -231,19 +231,13 @@ const [parsedJson, setParsedJson] =  useState(null);
                     let thumbnail = data.thumbnail;
                     
                     if (!thumbnail && data.videoId) {
-                        try {
-                            // Call your backend API to get the thumbnail if it's not already present
-                            const response = await axios.post(`${API_BASE_URL}/get_thumbnail`, { video_id: data.videoId });
-                            thumbnail = response.data.thumbnail || 'https://via.placeholder.com/120';
-                        } catch (error) {
-                            console.error('Error fetching thumbnail for videoId:', data.videoId, error);
-                            thumbnail = 'https://via.placeholder.com/120';
-                        }
+                        console.log('call get_thumbnail');
+                        // Call your backend API to get the thumbnail if it's not already present
+                        const response = await axios.post(`${API_BASE_URL}/get_thumbnail`, { video_id: data.videoId });
+                        thumbnail = response.data.thumbnail || 'https://via.placeholder.com/120';
                     }
     
                     const status = await fetchVideoStatus(data.videoId);
-                    console.log('Fetched status for videoId:', data.videoId, status);
-
     
                     return {
                         views: status.views,
@@ -251,7 +245,6 @@ const [parsedJson, setParsedJson] =  useState(null);
                         thumbnail: thumbnail,
                     };
                 }));
-                
                 const statusMap = videoData.reduce((acc, data, index) => {
                     acc[data.link] = {
                         views: statuses[index].views,
@@ -260,7 +253,7 @@ const [parsedJson, setParsedJson] =  useState(null);
                     };
                     return acc;
                 }, {});
-                
+                console.log(statusMap);
                 setVideoStatuses(statusMap);
             };
 
