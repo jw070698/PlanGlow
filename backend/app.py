@@ -60,6 +60,10 @@ class YouTubeLink(BaseModel):
 class CheckRequest(BaseModel):
     check_message: str
 
+class PlanRequest(BaseModel):
+    info_message: str
+    custom_id: str
+
 class UserMessageRequest(BaseModel):
     user_message: str
     custom_id: str
@@ -164,7 +168,7 @@ async def generate_check_response(request: CheckRequest):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @app.post("/plan-reasoning")
-async def generate_plan_reasoning(request: InfoRequest):
+async def generate_plan_reasoning(request: PlanRequest):
     try:
         # Retrieve the most recent study plan from storage
         recent_messages = get_recent_messages(request.custom_id)
