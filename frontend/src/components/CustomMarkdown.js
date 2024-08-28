@@ -134,16 +134,19 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
     }, [parsedJson, setResponsePlan]);
 
     useEffect(() => {
+        console.log('sessionId in CustomMarkdown:', sessionId);
         if (parsedJson && parsedJson.studyPlan) {
             const updateButtonStyles = async () => {
                 const resources = Object.values(parsedJson.studyPlan).flatMap(week => 
                     week.flatMap(day => 
+                        // If the resource is an array, flat map it
+                        // Else, just return the single resource
                         Object.values(day.resources || {}).flatMap(resource =>
                             Array.isArray(resource) ? resource : [resource]
                         )
                     )
                 );
-
+    
                 const linkStatuses = await Promise.all(resources.map(async resource => {
                     const result = await checkAvailability(resource.link, sessionId);
                     return {
@@ -158,11 +161,11 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
                 }, {});
                 setButtonStyles(updatedButtonStyles);
             };
-
             updateButtonStyles();
         }
     }, [parsedJson]);
 
+    
     const extractVideoId = (url) => {
         const urlObj = new URL(url);
         const searchParams = urlObj.searchParams;
