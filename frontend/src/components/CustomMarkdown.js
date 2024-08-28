@@ -183,6 +183,7 @@ const [parsedJson, setParsedJson] =  useState(null);
     }, [parsedJson]);
 
     const extractVideoId = (url) => {
+        console.log(url);
         const urlObj = new URL(url);
         const searchParams = urlObj.searchParams;
         const videoId = searchParams.get('v');
