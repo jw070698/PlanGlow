@@ -229,7 +229,7 @@ const [parsedJson, setParsedJson] =  useState(null);
 
                 const statuses = await Promise.all(videoData.map(async (data) => {
                     let thumbnail = data.thumbnail;
-                    
+    
                     if (!thumbnail && data.videoId) {
                         console.log('call get_thumbnail');
                         // Call your backend API to get the thumbnail if it's not already present
@@ -253,7 +253,7 @@ const [parsedJson, setParsedJson] =  useState(null);
                     };
                     return acc;
                 }, {});
-                console.log(statusMap);
+
                 setVideoStatuses(statusMap);
             };
 
