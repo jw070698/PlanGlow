@@ -105,16 +105,13 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
             if (!Array.isArray(newStudyPlan[week][dayIndex].resources.YouTube)) {
                 newStudyPlan[week][dayIndex].resources.YouTube = [newStudyPlan[week][dayIndex].resources.YouTube];
             }
-            newStudyPlan[week][dayIndex].resources.YouTube = [
-                ...newStudyPlan[week][dayIndex].resources.YouTube,
-                {
-                    link: selectedVideo.url,
-                    title: selectedVideo.title,
-                    thumbnail: selectedVideo.thumbnail,
-                    views: selectedVideo.views,
-                    likes: selectedVideo.likes,
-                }
-            ];
+            newStudyPlan[week][dayIndex].resources.YouTube.push({
+                link: selectedVideo.url,
+                title: selectedVideo.title,
+                thumbnail: selectedVideo.thumbnail,
+                views: selectedVideo.views,
+                likes: selectedVideo.likes,
+            });
 
             return { ...prevState, studyPlan: newStudyPlan };
         });
