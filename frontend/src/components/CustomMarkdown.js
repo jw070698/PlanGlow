@@ -86,33 +86,52 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
             updatedPlan[week][dayIndex].resources.YouTube = [updatedPlan[week][dayIndex].resources.YouTube];
         }
 
-        updatedPlan[week][dayIndex].resources.YouTube.push({
-            link: selectedVideo.url,
-            title: selectedVideo.title,
-            thumbnail: selectedVideo.thumbnail,
-            views: selectedVideo.views,
-            likes: selectedVideo.likes,
-        });
-
-        setStudyPlan(updatedPlan); 
-
-        setParsedJson((prevState) => {
-            const newStudyPlan = { ...prevState.studyPlan };
-            newStudyPlan[week] = [...prevState.studyPlan[week]]; 
-            if (!Array.isArray(newStudyPlan[week][dayIndex].resources.YouTube)) {
-                newStudyPlan[week][dayIndex].resources.YouTube = [newStudyPlan[week][dayIndex].resources.YouTube];
-            }
-            newStudyPlan[week][dayIndex].resources.YouTube.push({
+        updatedPlan[week][dayIndex].resources.YouTube = [
+            ...updatedPlan[week][dayIndex].resources.YouTube,
+            {
                 link: selectedVideo.url,
                 title: selectedVideo.title,
                 thumbnail: selectedVideo.thumbnail,
                 views: selectedVideo.views,
                 likes: selectedVideo.likes,
-            });
+            }
+        ];
 
-            return { ...prevState, studyPlan: newStudyPlan };
-        });
-
+        try {
+            // Fetch and update the video status
+            const videoId = extractVideoId(selectedVideo.url);
+            const videoStatus = await fetchVideoStatus(videoId);
+    
+            if (videoStatus) {
+                const { views, likes, thumbnail } = videoStatus;
+    
+                // Update the video information in the state
+                setStudyPlan(updatedPlan);
+                setParsedJson((prevState) => {
+                    const newStudyPlan = { ...prevState.studyPlan };
+                    newStudyPlan[week] = [...prevState.studyPlan[week]]; 
+    
+                    if (!Array.isArray(newStudyPlan[week][dayIndex].resources.YouTube)) {
+                        newStudyPlan[week][dayIndex].resources.YouTube = [newStudyPlan[week][dayIndex].resources.YouTube];
+                    }
+    
+                    newStudyPlan[week][dayIndex].resources.YouTube.push({
+                        link: selectedVideo.url,
+                        title: selectedVideo.title,
+                        thumbnail: thumbnail || selectedVideo.thumbnail,
+                        views: views || selectedVideo.views,
+                        likes: likes || selectedVideo.likes,
+                    });
+    
+                    return { ...prevState, studyPlan: newStudyPlan };
+                });
+            } else {
+                console.error('Failed to fetch video status');
+            }
+        } catch (error) {
+            console.error('Error fetching video status:', error);
+        }
+    
         setResourcesModalIsOpen(false); 
     };
 
