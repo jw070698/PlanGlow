@@ -231,6 +231,7 @@ const [parsedJson, setParsedJson] =  useState(null);
                     let thumbnail = data.thumbnail;
     
                     if (!thumbnail && data.videoId) {
+                        console.log('call get_thumbnail');
                         // Call your backend API to get the thumbnail if it's not already present
                         const response = await axios.post(`${API_BASE_URL}/get_thumbnail`, { url: data.link });
                         thumbnail = response.data.thumbnail || 'https://via.placeholder.com/120';
