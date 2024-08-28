@@ -540,7 +540,7 @@ const [parsedJson, setParsedJson] =  useState(null);
     return (
         <div>
             <h2>Study Plan Overview </h2>
-            <Editable formData={formData} setResponsePlan={setParsedJson}  setStudyPlan={handleUpdateStudyPlan} custom_id={custom_id}/>
+            <Editable formData={formData} setResponsePlan={setParsedJson}  setStudyPlan={handleUpdateStudyPlan} custom_id={sessionId}/>
             {parsedJson.studyPlan_Overview && Object.keys(parsedJson.studyPlan_Overview).map(week => (
                 <div key={week} style={{ marginBottom: '1rem' }}>
                 <div
