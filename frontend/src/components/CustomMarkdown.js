@@ -199,6 +199,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
                         try {
                             let thumbnail = null;
                             if (data.videoId) {
+                                console.log(data.link);
                                 const response = await axios.post(`${API_BASE_URL}/get_thumbnail`, { url: data.link });
                                 thumbnail = response.data.thumbnail || 'https://via.placeholder.com/120';
                             }
@@ -363,94 +364,99 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
         if (typeof resources === 'object' && resources !== null) {
             return Object.keys(resources).map((type) => {
                 const resourceArray = resources[type];
-                const normalizedResourceArray = Array.isArray(resourceArray) ? resourceArray : [resourceArray];
-                return normalizedResourceArray.map((resource, index) => {
-                    const resourceStatus = videoStatuses[resource.link] || { views: 'N/A', likes: 'N/A', thumbnail: 'https://via.placeholder.com/120' };
-                    return (
-                        <div key={`${type}-${index}`} style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#F3F7F3', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
-                                <h4 style={{ fontSize: '1rem', margin: '0 0.5rem', color: '#333' }}>{type}</h4>
-                                <button 
-                                    onClick={() => handleResourcesClick(topic, type, weekIndex, dayIndex)}
-                                    style={{ 
-                                        fontSize: '1rem', 
-                                        marginLeft: '1rem',
-                                        padding: '0.5rem 1rem', 
-                                        backgroundColor: '#DAE7DA', 
-                                        color: '#4F5452', 
-                                        border: 'none', 
-                                        borderRadius: '4px', 
-                                        cursor: 'pointer',
-                                        alignItems: 'center',
-                                        lineHeight: '1',
-                                    }}
-                                >
-                                    🎦 Additional Resources
-                                </button>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', marginTop: '0.5rem' }}>
-                                {resourceStatus.thumbnail && (
-                                    <img 
-                                        src={resourceStatus.thumbnail} 
-                                        alt={resource.title} 
-                                        style={{ width: '120px', height: 'auto', borderRadius: '4px', marginRight: '1rem' }} 
-                                    />
-                                )}
-                                <p style={{ fontSize: '1rem', margin: '0.5rem 0', marginLeft: '1rem' }}>
-                                    <FontAwesomeIcon icon={faThumbsUp} style={{ marginRight: '0.5rem' }} />
-                                    {formatNumber(resourceStatus.likes)}
-                                    <span style={{ margin: '0 0.5rem' }}>|</span>
-                                    <FontAwesomeIcon icon={faEye} style={{ marginRight: '0.5rem' }} />
-                                    {formatNumber(resourceStatus.views)}
-                                    <div style={{ position: 'relative', display: 'inline-block' }}>
-                                        <button 
-                                            onMouseOver={() => handleMouseOver(resource.link)}
-                                            onMouseOut={() => handleMouseOut(resource.link)}
-                                            style={{ 
-                                                fontSize: '1rem', 
-                                                padding: '0.5rem 1rem', 
-                                                backgroundColor: 'transparent', 
-                                                color: buttonStyles[resource.link]?.backgroundColor || '#4F5452',
-                                                border: 'none', 
-                                                borderRadius: '4px', 
-                                                alignItems: 'center',
-                                                cursor: 'pointer',
-                                                lineHeight: '1',
-                                            }}
-                                        >
-                                            <FontAwesomeIcon icon={faCircleCheck} />
-                                            {tooltipVisible[resource.link] && (
-                                                <strong>
-                                                    {buttonStyles[resource.link]?.backgroundColor === '#AFD0BF' ? ' Valid Resource' : ' Invalid Resource'}
-                                                </strong>
-                                            )}
-                                        </button>
+                if (Array.isArray(resourceArray)) {
+                    return resourceArray.map((resource, index) => {
+                        const resourceStatus = videoStatuses[resource.link] || { views: 'N/A', likes: 'N/A', thumbnail: 'https://via.placeholder.com/120' };
+                        return (
+                            <div key={`${type}-${index}`} style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#F3F7F3', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                    <h4 style={{ fontSize: '1rem', margin: '0 0.5rem', color: '#333' }}>{type}</h4>
+                                    <button 
+                                        onClick={() => handleResourcesClick(topic, type, weekIndex, dayIndex)}
+                                        style={{ 
+                                            fontSize: '1rem', 
+                                            marginLeft: '1rem',
+                                            padding: '0.5rem 1rem', 
+                                            backgroundColor: '#DAE7DA', 
+                                            color: '#4F5452', 
+                                            border: 'none', 
+                                            borderRadius: '4px', 
+                                            cursor: 'pointer',
+                                            alignItems: 'center',
+                                            lineHeight: '1',
+                                        }}
+                                    >
+                                        🎦 Additional Resources
+                                    </button>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', marginTop: '0.5rem' }}>
+                                    {resourceStatus.thumbnail && (
+                                        <img 
+                                            src={resourceStatus.thumbnail} 
+                                            alt={resource.title} 
+                                            style={{ width: '120px', height: 'auto', borderRadius: '4px', marginRight: '1rem' }} 
+                                        />
+                                    )}
+                                    <div style={{ marginLeft: '1rem' }}>
+                                        <p style={{ fontSize: '1rem', margin: '0.5rem 0' }}>
+                                            <FontAwesomeIcon icon={faThumbsUp} style={{ marginRight: '0.5rem' }} />
+                                            {formatNumber(resourceStatus.likes)}
+                                            <span style={{ margin: '0 0.5rem' }}>|</span>
+                                            <FontAwesomeIcon icon={faEye} style={{ marginRight: '0.5rem' }} />
+                                            {formatNumber(resourceStatus.views)}
+                                        </p>
+                                        <div style={{ position: 'relative', display: 'inline-block' }}>
+                                            <button 
+                                                onMouseOver={() => handleMouseOver(resource.link)}
+                                                onMouseOut={() => handleMouseOut(resource.link)}
+                                                style={{ 
+                                                    fontSize: '1rem', 
+                                                    padding: '0.5rem 1rem', 
+                                                    backgroundColor: 'transparent', 
+                                                    color: buttonStyles[resource.link]?.backgroundColor || '#4F5452',
+                                                    border: 'none', 
+                                                    borderRadius: '4px', 
+                                                    alignItems: 'center',
+                                                    cursor: 'pointer',
+                                                    lineHeight: '1',
+                                                }}
+                                            >
+                                                <FontAwesomeIcon icon={faCircleCheck} />
+                                                {tooltipVisible[resource.link] && (
+                                                    <strong>
+                                                        {buttonStyles[resource.link]?.backgroundColor === '#AFD0BF' ? ' Valid Resource' : ' Invalid Resource'}
+                                                    </strong>
+                                                )}
+                                            </button>
+                                        </div>
+                                        <br />
+                                        <p style={{ fontSize: '1rem', margin: '0.5rem 0' }}>
+                                            <strong>Title:</strong> {resource.title}
+                                        </p>
+                                        <p style={{ fontSize: '1rem', margin: '0.5rem 0' }}>
+                                            <strong>Link:</strong> 
+                                            <a 
+                                                href={resource.link} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer" 
+                                                style={{ color: '#3855A7', textDecoration: 'none' }}
+                                            >
+                                                {resource.link}
+                                            </a>
+                                        </p>
                                     </div>
-                                    <br />
-                                    <p style={{ fontSize: '1rem', margin: '0.5rem 0'}}>
-                                        <strong>Title:</strong> {resource.title}
-                                    </p>
-                                    <p style={{ fontSize: '1rem', margin: '0.5rem 0'}}>
-                                        <strong>Link: </strong> 
-                                        <a 
-                                            href={resource.link} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer" 
-                                            style={{ color: '#3855A7', textDecoration: 'none' }}
-                                        >
-                                            {resource.link}
-                                        </a>
-                                    </p>
-                                </p>
+                                </div>
                             </div>
-                        </div>
-                    );
-                });
+                        );
+                    });
+                } else {
+                    return null;  // Return null if resourceArray is not an array (handles the case gracefully)
+                }
             });
         } else {
             return <p>No resources available</p>;
         }
-    };
+    };    
 
     const renderStudyPlan = (plan) => {
         return Object.keys(plan).map((week, weekIndex) => (
