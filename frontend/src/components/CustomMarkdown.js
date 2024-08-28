@@ -205,15 +205,25 @@ const [parsedJson, setParsedJson] =  useState(null);
                 );
 
                 const videoData = resources.map(resource => {
-                    const videoId = resource ? extractVideoId(resource.link) : null;
-                    const thumbnail = resource && resource.thumbnail ? resource.thumbnail : null;
+                    if (!resource || !resource.link) {
+                        console.warn('Invalid resource or missing link:', resource);
+                        return null;
+                    }
+    
+                    const videoId = extractVideoId(resource.link);
+                    const thumbnail = resource.thumbnail || null;
+    
+                    if (!videoId) {
+                        console.warn('Failed to extract video ID from URL:', resource.link);
+                        return null;
+                    }
     
                     return {
-                        link: resource?.link || '#',  // Default to '#' if resource or link is undefined
+                        link: resource.link,
                         videoId,
                         thumbnail,
                     };
-                });
+                }).filter(video => video !== null);
 
                 const statuses = await Promise.all(videoData.map(async (data) => {
                     let thumbnail = data.thumbnail;
