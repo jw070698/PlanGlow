@@ -13,7 +13,8 @@ import remarkBreaks from 'remark-breaks';
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1350';
 
 const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) => {
-    const [parsedJson, setParsedJson] = useState(null);
+    
+const [parsedJson, setParsedJson] =  useState(null);
     const [searchResults, setSearchResults] = useState([]);
     const [resourcesModalIsOpen, setResourcesModalIsOpen] = useState(false);
     const [completedItems, setCompletedItems] = useState({});
@@ -65,8 +66,10 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
     };
 
     const handleSelectVideo = (weekIndex, dayIndex, selectedVideo) => {
-        const weeks = Object.keys(studyPlan); 
+        const weeks = Object.keys(studyPlan); // Get all week keys
         const week = weeks[weekIndex];
+        
+        console.log('Selected week:', week, 'Selected day index:', dayIndex); 
 
         if (!week || !studyPlan[week]) {
             console.error('Week is not defined in studyPlan:', week);
@@ -78,60 +81,39 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
             return;
         }
 
+        // Clone the existing study plan to avoid mutating the original one directly
         const updatedPlan = { ...studyPlan };
 
         if (!updatedPlan[week][dayIndex].resources) {
-            updatedPlan[week][dayIndex].resources = {YouTube: []};
-        } else if (!Array.isArray(updatedPlan[week][dayIndex].resources.YouTube)) {
-            updatedPlan[week][dayIndex].resources.YouTube = [updatedPlan[week][dayIndex].resources.YouTube];
+            updatedPlan[week][dayIndex].resources = {};
         }
 
-        updatedPlan[week][dayIndex].resources.YouTube = [
-            ...updatedPlan[week][dayIndex].resources.YouTube,
-            {
+        // Replace the YouTube resource with the selected video details
+        updatedPlan[week][dayIndex].resources.YouTube = {
+            link: selectedVideo.url,
+            title: selectedVideo.title,
+            thumbnail: selectedVideo.thumbnail,
+            views: selectedVideo.views,
+            likes: selectedVideo.likes,
+        };
+
+        setStudyPlan(updatedPlan); 
+
+        setParsedJson((prevState) => {
+            const newStudyPlan = { ...prevState.studyPlan };
+            newStudyPlan[week] = [...prevState.studyPlan[week]]; 
+
+            newStudyPlan[week][dayIndex].resources.YouTube = {
                 link: selectedVideo.url,
                 title: selectedVideo.title,
                 thumbnail: selectedVideo.thumbnail,
                 views: selectedVideo.views,
                 likes: selectedVideo.likes,
-            }
-        ];
+            };
 
-        try {
-            // Fetch and update the video status
-            const videoId = extractVideoId(selectedVideo.url);
-            const videoStatus = await fetchVideoStatus(videoId);
-    
-            if (videoStatus) {
-                const { views, likes, thumbnail } = videoStatus;
-    
-                // Update the video information in the state
-                setStudyPlan(updatedPlan);
-                setParsedJson((prevState) => {
-                    const newStudyPlan = { ...prevState.studyPlan };
-                    newStudyPlan[week] = [...prevState.studyPlan[week]]; 
-    
-                    if (!Array.isArray(newStudyPlan[week][dayIndex].resources.YouTube)) {
-                        newStudyPlan[week][dayIndex].resources.YouTube = [newStudyPlan[week][dayIndex].resources.YouTube];
-                    }
-    
-                    newStudyPlan[week][dayIndex].resources.YouTube.push({
-                        link: selectedVideo.url,
-                        title: selectedVideo.title,
-                        thumbnail: thumbnail || selectedVideo.thumbnail,
-                        views: views || selectedVideo.views,
-                        likes: likes || selectedVideo.likes,
-                    });
-    
-                    return { ...prevState, studyPlan: newStudyPlan };
-                });
-            } else {
-                console.error('Failed to fetch video status');
-            }
-        } catch (error) {
-            console.error('Error fetching video status:', error);
-        }
-    
+            return { ...prevState, studyPlan: newStudyPlan };
+        });
+
         setResourcesModalIsOpen(false); 
     };
 
@@ -151,6 +133,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
         try {
             const jsonData = JSON.parse(jsonMatch[1].trim());
             setParsedJson(jsonData);
+            console.log(jsonData);
         } catch (error) {
             console.error("JSON parsing error:", error);
         }
@@ -158,23 +141,27 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
 
     useEffect(() => {
         if (parsedJson) {
-            setStudyPlan(parsedJson.studyPlan);  
+            setStudyPlan(parsedJson.studyPlan);  // Update study plan when parsedJson changes
             if (setResponsePlan) {
-                setResponsePlan(parsedJson.studyPlan); 
+                setResponsePlan(parsedJson.studyPlan); // Notify parent component of the updated study plan
             }
         }
     }, [parsedJson, setResponsePlan]);
 
     useEffect(() => {
+        console.log('sessionId in CustomMarkdown:', sessionId);
         if (parsedJson && parsedJson.studyPlan) {
             const updateButtonStyles = async () => {
                 const resources = Object.values(parsedJson.studyPlan).flatMap(week => 
                     week.flatMap(day => 
+                        // If the resource is an array, flat map it
+                        // Else, just return the single resource
                         Object.values(day.resources || {}).flatMap(resource =>
                             Array.isArray(resource) ? resource : [resource]
                         )
                     )
                 );
+    
 
                 const linkStatuses = await Promise.all(resources.map(async resource => {
                     const result = await checkAvailability(resource.link, sessionId);
@@ -210,31 +197,48 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
     useEffect(() => {
         if (parsedJson && parsedJson.studyPlan) {
             const fetchAndStoreVideoStatuses = async () => {
-                const resources = Object.values(parsedJson.studyPlan).flatMap(week => 
-                    week.flatMap(day => 
-                        Object.values(day.resources || {}).flatMap(resource =>
-                            Array.isArray(resource) ? resource : [resource]
+                const resources = Object.values(parsedJson.studyPlan).flatMap(item => 
+                    item.flatMap(day => 
+                        Object.values(day.resources || {}).flatMap(resourceArray => 
+                            Array.isArray(resourceArray) ? resourceArray : [resourceArray]
                         )
                     )
                 );
 
                 const videoData = resources.map(resource => {
+                    if (!resource || !resource.link) {
+                        console.warn('Invalid resource or missing link:', resource);
+                        return null;
+                    }
+    
                     const videoId = extractVideoId(resource.link);
+                    console.log("videoID",videoId);
+                    const thumbnail = resource.thumbnail || null;
+    
+                    if (!videoId) {
+                        console.warn('Failed to extract video ID from URL:', resource.link);
+                        return null;
+                    }
+    
                     return {
                         link: resource.link,
                         videoId,
+                        thumbnail,
                     };
-                });
+                }).filter(video => video !== null);
 
                 const statuses = await Promise.all(videoData.map(async (data) => {
-                    let thumbnail = null;
-                    if (data.videoId) {
-                        const response = await axios.post(`${API_BASE_URL}/get_thumbnail`, { url: data.videoId });
+                    let thumbnail = data.thumbnail;
+    
+                    if (!thumbnail && data.videoId) {
+                        console.log('call get_thumbnail');
+                        // Call your backend API to get the thumbnail if it's not already present
+                        const response = await axios.post(`${API_BASE_URL}/get_thumbnail`, { video_id: data.videoId });
                         thumbnail = response.data.thumbnail || 'https://via.placeholder.com/120';
                     }
-
+    
                     const status = await fetchVideoStatus(data.videoId);
-
+    
                     return {
                         views: status.views,
                         likes: status.likes,
@@ -245,11 +249,11 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
                     acc[data.link] = {
                         views: statuses[index].views,
                         likes: statuses[index].likes,
-                        thumbnail: statuses[index].thumbnail,
+                        thumbnail: statuses[index].thumbnail || data.thumbnail
                     };
                     return acc;
                 }, {});
-
+                console.log(statusMap);
                 setVideoStatuses(statusMap);
             };
 
@@ -259,19 +263,20 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
 
     const fetchVideoStatus = async (videoId) => {
         if (!videoId) {
-            return { views: 'N/A', likes: 'N/A', chapters: [] };
+            return { views: 'N/A', likes: 'N/A'};
         }
         try {
+            // Fetch video statistics
             const statsResponse = await axios.post(`${API_BASE_URL}/video_stats`, { video_id: videoId });
             const statsData = statsResponse.data;
 
             return {
                 views: statsData.views,
-                likes: statsData.likes,
+                likes: statsData.likes
             };
         } catch (error) {
             console.error('Error fetching video status:', error); 
-            return { views: 'N/A', likes: 'N/A', chapters: [] };
+            return { views: 'N/A', likes: 'N/A'};
         }
     };
 
@@ -322,15 +327,18 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
 
     const fetchExplanation = async (topic, week, day) => {
         try {
+            // Check if the explanation already exists
             if (explanationContent[week]?.[day]) {
-                return;
+                console.log(`Explanation for ${topic} on ${week} ${day} is already fetched.`);
+                return; // If it exists, skip the API call
             }
-            
+    
             const [reasonResponse, objectivesResponse] = await Promise.all([
                 axios.post(`${API_BASE_URL}/topic-explanations`, { user_message: topic, custom_id: sessionId }),
                 axios.post(`${API_BASE_URL}/generate-objectives`, { user_message: topic, custom_id: sessionId })
             ]);
     
+            // Combine the content
             let combinedContent = '';
             if (reasonResponse.data && reasonResponse.data.explanation) {
                 combinedContent += `### Reason for studying '${topic}':\n${reasonResponse.data.explanation}\n\n`;
@@ -343,6 +351,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
                 combinedContent += `### Learning Objectives for '${topic}':\nNo objectives available for this topic.\n\n`;
             }
     
+            // Save the fetched content in the state
             setExplanationContent(prevState => ({
                 ...prevState,
                 [week]: {
@@ -355,8 +364,10 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
             if (error.code === 'ERR_CONNECTION_REFUSED') {
                 console.error('Connection Refused: Unable to reach the server.');
             } else if (error.response) {
+                // Server responded with a status other than 2xx
                 console.error(`API Error: ${error.response.status} - ${error.response.data.detail || error.response.statusText}`);
             } else {
+                // Something else happened
                 console.error('An unexpected error occurred:', error.message);
             }
             setExplanationContent(prevState => ({
@@ -368,6 +379,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
             }));
         }
     };
+    
 
     const handleUpdateStudyPlan = (updatedPlan) => {
         setParsedJson(prevState => ({
@@ -469,6 +481,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
             return <p>No resources available</p>;
         }
     };
+    
 
     const renderStudyPlan = (plan) => {
         return Object.keys(plan).map((week, weekIndex) => (
@@ -511,6 +524,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
                                 for {entry.Time}
                             </p>
                         </div>
+                        {/* Place toggle message here */}
                         {dayVisibility[week]?.[entry.day] && (
                             <div style={{ marginLeft: '1.5rem', marginTop: '0.5rem' }}>
                                     <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
@@ -536,7 +550,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
     return (
         <div>
             <h2>Study Plan Overview </h2>
-            <Editable formData={formData} setResponsePlan={setParsedJson}  setStudyPlan={handleUpdateStudyPlan}/>
+            <Editable formData={formData} setResponsePlan={setParsedJson}  setStudyPlan={handleUpdateStudyPlan} custom_id={sessionId}/>
             {parsedJson.studyPlan_Overview && Object.keys(parsedJson.studyPlan_Overview).map(week => (
                 <div key={week} style={{ marginBottom: '1rem' }}>
                 <div
@@ -544,7 +558,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
                         display: 'flex',
                         alignItems: 'center',
                         cursor: 'pointer',
-                        userSelect: 'none'
+                        userSelect: 'none'  // Prevents text selection while clicking
                     }}
                     onClick={() => handleToggleWeek(week)}
                 >
@@ -557,6 +571,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
                 </div>
                 {weekVisibility[week] && (
                     <div style={{ marginLeft: '1.5rem', marginTop: '0.5rem' }}>
+                        {/* Content to be toggled */}
                         <FAQIconStudyPlan week={week} sessionId={sessionId}/>
                     </div>
                     )}
