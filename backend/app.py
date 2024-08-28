@@ -48,7 +48,6 @@ class MessageRequest(BaseModel):
 
 class InfoRequest(BaseModel):
     info_message: str
-    custom_id: str
 
 class SearchRequest(BaseModel):
     search_message: str
