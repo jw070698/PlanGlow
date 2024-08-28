@@ -13,8 +13,8 @@ import remarkBreaks from 'remark-breaks';
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1350';
 
 
-const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) => {
-    const [parsedJson, setParsedJson] = useState(null);
+const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
+    const [parsedJson, setParsedJson] =  useState(null);
     const [searchResults, setSearchResults] = useState([]);
     const [resourcesModalIsOpen, setResourcesModalIsOpen] = useState(false);
     const [completedItems, setCompletedItems] = useState({});
@@ -66,40 +66,54 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
     };
 
     const handleSelectVideo = (weekIndex, dayIndex, selectedVideo) => {
-        const weeks = Object.keys(studyPlan); 
+        const weeks = Object.keys(studyPlan); // Get all week keys
         const week = weeks[weekIndex];
-    
-        console.log('Week:', week);
-        console.log('Current Study Plan:', updatedPlan);
-    
-        if (!week || !updatedPlan[week]) {
+        
+        console.log('Selected week:', week, 'Selected day index:', dayIndex); 
+
+        if (!week || !studyPlan[week]) {
             console.error('Week is not defined in studyPlan:', week);
             return;
         }
-    
-        const updatedPlan = { ...studyPlan };
 
-        if (dayIndex < 0 || dayIndex >= updatedPlan[week].length) {
+        if (dayIndex < 0 || dayIndex >= studyPlan[week].length) {
             console.error('Day index is out of bounds:', dayIndex);
             return;
         }
 
+        // Clone the existing study plan to avoid mutating the original one directly
+        const updatedPlan = { ...studyPlan };
+
         if (!updatedPlan[week][dayIndex].resources) {
             updatedPlan[week][dayIndex].resources = {};
         }
-    
-        updatedPlan[week][dayIndex].resources = {
+
+        // Replace the YouTube resource with the selected video details
+        updatedPlan[week][dayIndex].resources.YouTube = {
             link: selectedVideo.url,
             title: selectedVideo.title,
             thumbnail: selectedVideo.thumbnail,
             views: selectedVideo.views,
             likes: selectedVideo.likes,
         };
+
         setStudyPlan(updatedPlan); 
-        setParsedJson((prevState) => ({
-            ...prevState,
-            studyPlan: updatedPlan,
-        }));
+
+        setParsedJson((prevState) => {
+            const newStudyPlan = { ...prevState.studyPlan };
+            newStudyPlan[week] = [...prevState.studyPlan[week]]; 
+
+            newStudyPlan[week][dayIndex].resources.YouTube = {
+                link: selectedVideo.url,
+                title: selectedVideo.title,
+                thumbnail: selectedVideo.thumbnail,
+                views: selectedVideo.views,
+                likes: selectedVideo.likes,
+            };
+
+            return { ...prevState, studyPlan: newStudyPlan };
+        });
+
         setResourcesModalIsOpen(false); 
     };
 
@@ -119,6 +133,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
         try {
             const jsonData = JSON.parse(jsonMatch[1].trim());
             setParsedJson(jsonData);
+            console.log(jsonData);
         } catch (error) {
             console.error("JSON parsing error:", error);
         }
@@ -126,29 +141,24 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
 
     useEffect(() => {
         if (parsedJson) {
-            setStudyPlan(parsedJson.studyPlan);  
+            setStudyPlan(parsedJson.studyPlan);  // Update study plan when parsedJson changes
             if (setResponsePlan) {
-                setResponsePlan(parsedJson.studyPlan); 
+                setResponsePlan(parsedJson.studyPlan); // Notify parent component of the updated study plan
             }
         }
     }, [parsedJson, setResponsePlan]);
 
     useEffect(() => {
-        console.log('sessionId in CustomMarkdown:', sessionId);
         if (parsedJson && parsedJson.studyPlan) {
             const updateButtonStyles = async () => {
-                const resources = Object.values(parsedJson.studyPlan).flatMap(week => 
-                    week.flatMap(day => 
-                        // If the resource is an array, flat map it
-                        // Else, just return the single resource
-                        Object.values(day.resources || {}).flatMap(resource =>
-                            Array.isArray(resource) ? resource : [resource]
-                        )
+                const resources = Object.values(parsedJson.studyPlan).flatMap(item => 
+                    item.flatMap(day => 
+                        Object.values(day.resources || {})
                     )
                 );
-    
+
                 const linkStatuses = await Promise.all(resources.map(async resource => {
-                    const result = await checkAvailability(resource.link, sessionId);
+                    const result = await checkAvailability(resource.link);
                     return {
                         link: resource.link,
                         backgroundColor: result.exists ? '#AFD0BF' : '#EB5353',
@@ -161,10 +171,10 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
                 }, {});
                 setButtonStyles(updatedButtonStyles);
             };
+
             updateButtonStyles();
         }
     }, [parsedJson]);
-
 
     const extractVideoId = (url) => {
         const urlObj = new URL(url);
@@ -181,75 +191,63 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
     useEffect(() => {
         if (parsedJson && parsedJson.studyPlan) {
             const fetchAndStoreVideoStatuses = async () => {
-                try {
-                    const resources = Object.values(parsedJson.studyPlan).flatMap(week => 
-                        week.flatMap(day => 
-                            Object.values(day.resources || {}).flatMap(resource =>
-                                Array.isArray(resource) ? resource : [resource]
-                            )
-                        )
-                    );
+                const resources = Object.values(parsedJson.studyPlan).flatMap(item => 
+                    item.flatMap(day => 
+                        Object.values(day.resources || {})
+                    )
+                );
+
+                const videoData = resources.map(resource => {
+                    const videoId = resource ? extractVideoId(resource.link) : null;
+                    const thumbnail = resource && resource.thumbnail ? resource.thumbnail : null;
     
-                    const videoData = resources.map(resource => {
-                        const videoId = extractVideoId(resource.link);
-                        return {
-                            link: resource.link,
-                            videoId,
-                        };
-                    });
+                    return {
+                        link: resource?.link || '#',  // Default to '#' if resource or link is undefined
+                        videoId,
+                        thumbnail,
+                    };
+                });
+
+                const statuses = await Promise.all(videoData.map(async (data) => {
+                    let thumbnail = data.thumbnail;
     
-                    const statuses = await Promise.all(videoData.map(async (data) => {
-                        try {
-                            let thumbnail = null;
-                            if (data.videoId) {
-                                console.log(data.link);
-                                const response = await axios.post(`${API_BASE_URL}/get_thumbnail`, { url: data.link });
-                                thumbnail = response.data.thumbnail || 'https://via.placeholder.com/120';
-                            }
+                    if (!thumbnail && data.videoId) {
+                        // Call your backend API to get the thumbnail if it's not already present
+                        const response = await axios.post(`${API_BASE_URL}/get_thumbnail`, { url: data.link });
+                        thumbnail = response.data.thumbnail || 'https://via.placeholder.com/120';
+                    }
     
-                            const status = await fetchVideoStatus(data.videoId);
+                    const status = await fetchVideoStatus(data.videoId);
     
-                            return {
-                                views: status.views,
-                                likes: status.likes,
-                                thumbnail: thumbnail,
-                            };
-                        } catch (error) {
-                            console.error(`Error fetching video status for ${data.link}:`, error);
-                            return {
-                                views: 'N/A',
-                                likes: 'N/A',
-                                thumbnail: 'https://via.placeholder.com/120',
-                            };
-                        }
-                    }));
-    
-                    const statusMap = videoData.reduce((acc, data, index) => {
-                        acc[data.link] = {
-                            views: statuses[index].views,
-                            likes: statuses[index].likes,
-                            thumbnail: statuses[index].thumbnail,
-                        };
-                        return acc;
-                    }, {});
-    
-                    setVideoStatuses(statusMap);
-                } catch (error) {
-                    console.error('Error fetching and storing video statuses:', error);
-                }
+                    return {
+                        views: status.views,
+                        likes: status.likes,
+                        thumbnail: thumbnail,
+                    };
+                }));
+                const statusMap = videoData.reduce((acc, data, index) => {
+                    acc[data.link] = {
+                        views: statuses[index].views,
+                        likes: statuses[index].likes,
+                        thumbnail: statuses[index].thumbnail || data.thumbnail
+                    };
+                    return acc;
+                }, {});
+
+                setVideoStatuses(statusMap);
             };
-    
+
             fetchAndStoreVideoStatuses();
         }
     }, [parsedJson]);
-    
-    
-    const fetchVideoStatus = async (videoId) => {
-        if (!videoId) {
-            return { views: 'N/A', likes: 'N/A', chapters: [] };
+
+    const fetchVideoStatus = async (videoIds) => {
+        if (!videoIds) {
+            return { views: 'N/A', likes: 'N/A'};
         }
         try {
-            const statsResponse = await axios.post(`${API_BASE_URL}/video_stats`, { video_id: videoId });
+            // Fetch video statistics
+            const statsResponse = await axios.post(`${API_BASE_URL}/video_stats`, { video_id: videoIds });
             const statsData = statsResponse.data;
 
             return {
@@ -258,15 +256,11 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
             };
         } catch (error) {
             console.error('Error fetching video status:', error); 
-            return { views: 'N/A', likes: 'N/A', chapters: [] };
+            return { views: 'N/A', likes: 'N/A'};
         }
     };
 
     const handleResourcesClick = async (topic, type, weekIndex, dayIndex) => {
-        if (!sessionId) {
-            console.error('sessionId is missing.');
-            return;
-        }
         if (type === 'YouTube') {
             if (!topic) {
                 alert('Please provide a topic');
@@ -277,8 +271,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
 
             try {
                 const search_message = `${topic} in ${formData?.topic || ''}`;
-                const response = await axios.post(`${API_BASE_URL}/search`, { 
-                    search_message: search_message});
+                const response = await axios.post(`${API_BASE_URL}/search`, { search_message: search_message });
                 const items = response.data.response.items || [];
                 const videoIds = items.map(item => item.id.videoId);
                 const statusPromises = videoIds.map(videoId => fetchVideoStatus(videoId));
@@ -309,15 +302,18 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
 
     const fetchExplanation = async (topic, week, day) => {
         try {
+            // Check if the explanation already exists
             if (explanationContent[week]?.[day]) {
-                return;
+                console.log(`Explanation for ${topic} on ${week} ${day} is already fetched.`);
+                return; // If it exists, skip the API call
             }
     
             const [reasonResponse, objectivesResponse] = await Promise.all([
-                axios.post(`${API_BASE_URL}/topic-explanations`, { user_message: topic, custom_id: sessionId }),
-                axios.post(`${API_BASE_URL}/generate-objectives`, { user_message: topic, custom_id: sessionId })
+                axios.post(`${API_BASE_URL}/topic-explanations`, { user_message: topic }),
+                axios.post(`${API_BASE_URL}/generate-objectives`, { user_message: topic })
             ]);
     
+            // Combine the content
             let combinedContent = '';
             if (reasonResponse.data && reasonResponse.data.explanation) {
                 combinedContent += `### Reason for studying '${topic}':\n${reasonResponse.data.explanation}\n\n`;
@@ -330,6 +326,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
                 combinedContent += `### Learning Objectives for '${topic}':\nNo objectives available for this topic.\n\n`;
             }
     
+            // Save the fetched content in the state
             setExplanationContent(prevState => ({
                 ...prevState,
                 [week]: {
@@ -342,8 +339,10 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
             if (error.code === 'ERR_CONNECTION_REFUSED') {
                 console.error('Connection Refused: Unable to reach the server.');
             } else if (error.response) {
+                // Server responded with a status other than 2xx
                 console.error(`API Error: ${error.response.status} - ${error.response.data.detail || error.response.statusText}`);
             } else {
+                // Something else happened
                 console.error('An unexpected error occurred:', error.message);
             }
             setExplanationContent(prevState => ({
@@ -355,6 +354,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
             }));
         }
     };
+    
 
     const handleUpdateStudyPlan = (updatedPlan) => {
         setParsedJson(prevState => ({
@@ -365,102 +365,93 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
 
     const renderResources = (resources, topic, weekIndex, dayIndex) => {
         if (typeof resources === 'object' && resources !== null) {
-            return Object.keys(resources).map((type) => {
-                const resourceArray = resources[type];
-                if (Array.isArray(resourceArray)) {
-                    return resourceArray.map((resource, index) => {
-                        const resourceStatus = videoStatuses[resource.link] || { views: 'N/A', likes: 'N/A', thumbnail: 'https://via.placeholder.com/120' };
-                        return (
-                            <div key={`${type}-${index}`} style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#F3F7F3', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
-                                    <h4 style={{ fontSize: '1rem', margin: '0 0.5rem', color: '#333' }}>{type}</h4>
-                                    <button 
-                                        onClick={() => handleResourcesClick(topic, type, weekIndex, dayIndex)}
-                                        style={{ 
-                                            fontSize: '1rem', 
-                                            marginLeft: '1rem',
-                                            padding: '0.5rem 1rem', 
-                                            backgroundColor: '#DAE7DA', 
-                                            color: '#4F5452', 
-                                            border: 'none', 
-                                            borderRadius: '4px', 
-                                            cursor: 'pointer',
-                                            alignItems: 'center',
-                                            lineHeight: '1',
-                                        }}
-                                    >
-                                        🎦 Additional Resources
-                                    </button>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', marginTop: '0.5rem' }}>
-                                    {resourceStatus.thumbnail && (
-                                        <img 
-                                            src={resourceStatus.thumbnail} 
-                                            alt={resource.title} 
-                                            style={{ width: '120px', height: 'auto', borderRadius: '4px', marginRight: '1rem' }} 
-                                        />
-                                    )}
-                                    <div style={{ marginLeft: '1rem' }}>
-                                        <p style={{ fontSize: '1rem', margin: '0.5rem 0' }}>
-                                            <FontAwesomeIcon icon={faThumbsUp} style={{ marginRight: '0.5rem' }} />
-                                            {formatNumber(resourceStatus.likes)}
-                                            <span style={{ margin: '0 0.5rem' }}>|</span>
-                                            <FontAwesomeIcon icon={faEye} style={{ marginRight: '0.5rem' }} />
-                                            {formatNumber(resourceStatus.views)}
-
-                                            <button 
-                                                onMouseOver={() => handleMouseOver(resource.link)}
-                                                onMouseOut={() => handleMouseOut(resource.link)}
-                                                style={{ 
-                                                    fontSize: '1rem', 
-                                                    padding: '0.5rem 1rem', 
-                                                    backgroundColor: 'transparent', 
-                                                    color: buttonStyles[resource.link]?.backgroundColor || '#4F5452',
-                                                    border: 'none', 
-                                                    borderRadius: '4px', 
-                                                    alignItems: 'center',
-                                                    cursor: 'pointer',
-                                                    lineHeight: '1',
-                                                }}
-                                            >
-                                                <FontAwesomeIcon icon={faCircleCheck} />
-                                                {tooltipVisible[resource.link] && (
-                                                    <strong>
-                                                        {buttonStyles[resource.link]?.backgroundColor === '#AFD0BF' ? ' Valid Resource' : ' Invalid Resource'}
-                                                    </strong>
-                                                )}
-                                            </button>
-
-
-                                        </p>
-                                        <br />
-                                        <p style={{ fontSize: '1rem', margin: '0.5rem 0' }}>
-                                            <strong>Title:</strong> {resource.title}
-                                        </p>
-                                        <p style={{ fontSize: '1rem', margin: '0.5rem 0' }}>
-                                            <strong>Link:</strong> 
-                                            <a 
-                                                href={resource.link} 
-                                                target="_blank" 
-                                                rel="noopener noreferrer" 
-                                                style={{ color: '#3855A7', textDecoration: 'none' }}
-                                            >
-                                                {resource.link}
-                                            </a>
-                                        </p>
+            return Object.keys(resources).map((type, index) => {
+                const resource = resources[type];
+                const resourceStatus = videoStatuses[resource.link] || { views: 'N/A', likes: 'N/A', thumbnail: 'https://via.placeholder.com/120' };
+                return (
+                    <div key={index} style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#F3F7F3', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
+                            <h4 style={{ fontSize: '1rem', margin: '0 0.5rem', color: '#333' }}>{type}</h4>
+                            <button 
+                                onClick={() => handleResourcesClick(topic, type, weekIndex, dayIndex)}
+                                style={{ 
+                                    fontSize: '1rem', 
+                                    marginLeft: '1rem',
+                                    padding: '0.5rem 1rem', 
+                                    backgroundColor: '#DAE7DA', 
+                                    color: '#4F5452', 
+                                    border: 'none', 
+                                    borderRadius: '4px', 
+                                    cursor: 'pointer',
+                                    alignItems: 'center',
+                                    lineHeight: '1',
+                                }}
+                            >
+                                🎦 Additional Resources
+                            </button>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', marginTop: '0.5rem' }}>
+                            {resourceStatus.thumbnail && (
+                                <img 
+                                    src={resourceStatus.thumbnail} 
+                                    alt={resource.title} 
+                                    style={{ width: '120px', height: 'auto', borderRadius: '4px', marginRight: '1rem' }} 
+                                />
+                            )}
+                            <p style={{ fontSize: '1rem', margin: '0.5rem 0', marginLeft: '1rem' }}>
+                                    <FontAwesomeIcon icon={faThumbsUp} style={{ marginRight: '0.5rem' }} />
+                                    {formatNumber(resourceStatus.likes)}
+                                    <span style={{ margin: '0 0.5rem' }}>|</span>
+                                    <FontAwesomeIcon icon={faEye} style={{ marginRight: '0.5rem' }} />
+                                    {formatNumber(resourceStatus.views)}
+                                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                                        <button 
+                                            onMouseOver={() => handleMouseOver(resource.link)}
+                                            onMouseOut={() => handleMouseOut(resource.link)}
+                                            style={{ 
+                                                fontSize: '1rem', 
+                                                padding: '0.5rem 1rem', 
+                                                backgroundColor: 'transparent', 
+                                                color: buttonStyles[resource.link]?.backgroundColor || '#4F5452',
+                                                border: 'none', 
+                                                borderRadius: '4px', 
+                                                alignItems: 'center',
+                                                cursor: 'pointer',
+                                                lineHeight: '1',
+                                            }}
+                                        >
+                                            <FontAwesomeIcon icon={faCircleCheck} />
+                                            {tooltipVisible[resource.link] && (
+                                                <strong>
+                                                    {buttonStyles[resource.link]?.backgroundColor === '#AFD0BF' ? ' Valid Resource' : ' Invalid Resource'}
+                                                </strong>
+                                            )}
+                                        </button>
                                     </div>
-                                </div>
-                            </div>
-                        );
-                    });
-                } else {
-                    return null;  // Return null if resourceArray is not an array (handles the case gracefully)
-                }
+                                <br></br>
+                                <p style={{ fontSize: '1rem', margin: '0.5rem 0'}}>
+                                    <strong>Title:</strong> {resource.title}
+                                </p>
+                                <p style={{ fontSize: '1rem', margin: '0.5rem 0'}}>
+                                    <strong>Link: </strong> 
+                                    <a 
+                                        href={resource.link} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer" 
+                                        style={{ color: '#3855A7', textDecoration: 'none' }}
+                                    >
+                                        {resource.link}
+                                    </a>
+                                </p>
+                            </p>
+                        </div>
+                    </div>
+                );
             });
         } else {
             return <p>No resources available</p>;
         }
-    };    
+    };
 
     const renderStudyPlan = (plan) => {
         return Object.keys(plan).map((week, weekIndex) => (
@@ -503,6 +494,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
                                 for {entry.Time}
                             </p>
                         </div>
+                        {/* Place toggle message here */}
                         {dayVisibility[week]?.[entry.day] && (
                             <div style={{ marginLeft: '1.5rem', marginTop: '0.5rem' }}>
                                     <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
@@ -536,7 +528,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
                         display: 'flex',
                         alignItems: 'center',
                         cursor: 'pointer',
-                        userSelect: 'none'
+                        userSelect: 'none'  // Prevents text selection while clicking
                     }}
                     onClick={() => handleToggleWeek(week)}
                 >
@@ -549,7 +541,8 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
                 </div>
                 {weekVisibility[week] && (
                     <div style={{ marginLeft: '1.5rem', marginTop: '0.5rem' }}>
-                        <FAQIconStudyPlan week={week} sessionId={sessionId}/>
+                        {/* Content to be toggled */}
+                        <FAQIconStudyPlan week={week}/>
                     </div>
                     )}
                 </div>
@@ -599,7 +592,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
                                         marginLeft: 'auto' 
                                     }}>
                                     <button
-                                        onClick={() => handleSelectVideo(selectedWeekIndex, selectedDayIndex, result, index)} 
+                                        onClick={() => handleSelectVideo(selectedWeekIndex, selectedDayIndex, result)} 
                                         style={{ 
                                             fontSize: '1rem', 
                                             backgroundColor: '#C0C4C2', 
