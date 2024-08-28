@@ -21,7 +21,7 @@ sorted_keys = sorted(youtube_api_keys)
 selected_key = random.choice(sorted_keys)
 YOUTUBE_API_KEY = os.environ[selected_key]
 
-youtube = build('youtube', 'v3', developerKey = os.getenv(YOUTUBE_API_KEY))
+youtube = build('youtube', 'v3', developerKey = YOUTUBE_API_KEY)
 # youtube = None
 # pylint: disable=maybe-no-member
 
