@@ -130,13 +130,13 @@ async def generate_search_response(request: SearchRequest):
     return {"response": response_resources}
 
 @app.post('/get_thumbnail')
-async def get_thumbnail(request: YouTubeLink):
-    video_url = request.url
-    if not video_url:
+async def get_thumbnail(request: YouTubeVideoID):
+    video_id = request.video_id
+    if not video_id:
         raise HTTPException(status_code=400, detail="No URL provided")
 
     # Assuming get_video_thumbnail is your function to retrieve the thumbnail
-    thumbnail_url = get_video_thumbnail(video_url)
+    thumbnail_url = get_video_thumbnail(video_id)
     if thumbnail_url:
         print(thumbnail_url)
         return {"thumbnail": thumbnail_url}

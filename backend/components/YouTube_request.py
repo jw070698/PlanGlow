@@ -81,9 +81,8 @@ def extract_video_id(url): # Extracts video ID from a YouTube URL.
         raise ValueError("Invalid YouTube URL")
 
 
-def get_video_thumbnail(url): # Returns the thumbnail URL for a given YouTube video URL.
+def get_video_thumbnail(video_id): # Returns the thumbnail URL for a given YouTube video URL.
     try:
-        video_id = extract_video_id(url)
         if not video_id:
             raise ValueError("Invalid YouTube URL")
 
