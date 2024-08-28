@@ -178,53 +178,68 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
     useEffect(() => {
         if (parsedJson && parsedJson.studyPlan) {
             const fetchAndStoreVideoStatuses = async () => {
-                const resources = Object.values(parsedJson.studyPlan).flatMap(week => 
-                    week.flatMap(day => 
-                        Object.values(day.resources || {}).flatMap(resource =>
-                            Array.isArray(resource) ? resource : [resource]
+                try {
+                    const resources = Object.values(parsedJson.studyPlan).flatMap(week => 
+                        week.flatMap(day => 
+                            Object.values(day.resources || {}).flatMap(resource =>
+                                Array.isArray(resource) ? resource : [resource]
+                            )
                         )
-                    )
-                );
-
-                const videoData = resources.map(resource => {
-                    const videoId = extractVideoId(resource.link);
-                    return {
-                        link: resource.link,
-                        videoId,
-                    };
-                });
-
-                const statuses = await Promise.all(videoData.map(async (data) => {
-                    let thumbnail = null;
-                    if (data.videoId) {
-                        const response = await axios.post(`${API_BASE_URL}/get_thumbnail`, { url: data.link });
-                        thumbnail = response.data.thumbnail || 'https://via.placeholder.com/120';
-                    }
-
-                    const status = await fetchVideoStatus(data.videoId);
-
-                    return {
-                        views: status.views,
-                        likes: status.likes,
-                        thumbnail: thumbnail,
-                    };
-                }));
-                const statusMap = videoData.reduce((acc, data, index) => {
-                    acc[data.link] = {
-                        views: statuses[index].views,
-                        likes: statuses[index].likes,
-                        thumbnail: statuses[index].thumbnail,
-                    };
-                    return acc;
-                }, {});
-
-                setVideoStatuses(statusMap);
+                    );
+    
+                    const videoData = resources.map(resource => {
+                        const videoId = extractVideoId(resource.link);
+                        return {
+                            link: resource.link,
+                            videoId,
+                        };
+                    });
+    
+                    const statuses = await Promise.all(videoData.map(async (data) => {
+                        try {
+                            let thumbnail = null;
+                            if (data.videoId) {
+                                const response = await axios.post(`${API_BASE_URL}/get_thumbnail`, { url: data.link });
+                                thumbnail = response.data.thumbnail || 'https://via.placeholder.com/120';
+                            }
+    
+                            const status = await fetchVideoStatus(data.videoId);
+    
+                            return {
+                                views: status.views,
+                                likes: status.likes,
+                                thumbnail: thumbnail,
+                            };
+                        } catch (error) {
+                            console.error(`Error fetching video status for ${data.link}:`, error);
+                            return {
+                                views: 'N/A',
+                                likes: 'N/A',
+                                thumbnail: 'https://via.placeholder.com/120',
+                            };
+                        }
+                    }));
+    
+                    const statusMap = videoData.reduce((acc, data, index) => {
+                        acc[data.link] = {
+                            views: statuses[index].views,
+                            likes: statuses[index].likes,
+                            thumbnail: statuses[index].thumbnail,
+                        };
+                        return acc;
+                    }, {});
+    
+                    setVideoStatuses(statusMap);
+                } catch (error) {
+                    console.error('Error fetching and storing video statuses:', error);
+                }
             };
-
+    
             fetchAndStoreVideoStatuses();
         }
     }, [parsedJson]);
-
+    
+    
     const fetchVideoStatus = async (videoId) => {
         if (!videoId) {
             return { views: 'N/A', likes: 'N/A', chapters: [] };
