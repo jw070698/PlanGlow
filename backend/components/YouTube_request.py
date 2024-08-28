@@ -82,27 +82,19 @@ def extract_video_id(url): # Extracts video ID from a YouTube URL.
 
 
 def get_video_thumbnail(video_id): # Returns the thumbnail URL for a given YouTube video URL.
-    try:
-        if not video_id:
-            raise ValueError("Invalid YouTube URL")
+    video_response = youtube.videos().list(
+        part="snippet",
+        id=video_id
+    ).execute()
 
-        video_response = youtube.videos().list(
-            part="snippet",
-            id=video_id
-        ).execute()
-
-        if 'items' in video_response and len(video_response['items']) > 0:
-            video_details = video_response['items'][0]['snippet']
-            thumbnail_url = video_details.get('thumbnails', {}).get('high', {}).get('url', 'No Thumbnail')
-            return thumbnail_url
-        else:
-            print(f"No thumbnail found for ID: {video_id}")
-            thumbnail_url = 'https://via.placeholder.com/120'
-            return thumbnail_url
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        return None
+    if 'items' in video_response and len(video_response['items']) > 0:
+        video_details = video_response['items'][0]['snippet']
+        thumbnail_url = video_details.get('thumbnails', {}).get('high', {}).get('url', 'No Thumbnail')
+        return thumbnail_url
+    else:
+        print(f"No thumbnail found for ID: {video_id}")
+        thumbnail_url = 'https://via.placeholder.com/120'
+        return thumbnail_url
 
 def check_resource_availability(url):
     try:
