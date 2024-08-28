@@ -165,7 +165,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
         }
     }, [parsedJson]);
 
-    
+
     const extractVideoId = (url) => {
         const urlObj = new URL(url);
         const searchParams = urlObj.searchParams;
@@ -407,8 +407,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
                                             <span style={{ margin: '0 0.5rem' }}>|</span>
                                             <FontAwesomeIcon icon={faEye} style={{ marginRight: '0.5rem' }} />
                                             {formatNumber(resourceStatus.views)}
-                                        </p>
-                                        <div style={{ position: 'relative', display: 'inline-block' }}>
+
                                             <button 
                                                 onMouseOver={() => handleMouseOver(resource.link)}
                                                 onMouseOut={() => handleMouseOut(resource.link)}
@@ -431,7 +430,9 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
                                                     </strong>
                                                 )}
                                             </button>
-                                        </div>
+
+
+                                        </p>
                                         <br />
                                         <p style={{ fontSize: '1rem', margin: '0.5rem 0' }}>
                                             <strong>Title:</strong> {resource.title}
