@@ -86,16 +86,13 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) 
             updatedPlan[week][dayIndex].resources.YouTube = [updatedPlan[week][dayIndex].resources.YouTube];
         }
 
-        updatedPlan[week][dayIndex].resources.YouTube = [
-            ...updatedPlan[week][dayIndex].resources.YouTube,
-            {
-                link: selectedVideo.url,
-                title: selectedVideo.title,
-                thumbnail: selectedVideo.thumbnail,
-                views: selectedVideo.views,
-                likes: selectedVideo.likes,
-            }
-        ];
+        updatedPlan[week][dayIndex].resources.YouTube.push({
+            link: selectedVideo.url,
+            title: selectedVideo.title,
+            thumbnail: selectedVideo.thumbnail,
+            views: selectedVideo.views,
+            likes: selectedVideo.likes,
+        });
 
         setStudyPlan(updatedPlan); 
 
