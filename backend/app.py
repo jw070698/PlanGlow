@@ -129,7 +129,7 @@ async def generate_search_response(request: SearchRequest):
     response_resources = get_search_response(search_message)
     return {"response": response_resources}
 
-@app.post('/get_thumbnail')
+@app.get('/get_thumbnail')
 async def get_thumbnail(request: YouTubeVideoID):
     video_id = request.video_id
     if not video_id:
@@ -143,7 +143,7 @@ async def get_thumbnail(request: YouTubeVideoID):
     else:
         raise HTTPException(status_code=404, detail="Thumbnail not found")
 
-@app.post("/video_stats")
+@app.get("/video_stats")
 async def get_video_statistics(request: YouTubeVideoID):
     try:
         video_id = request.video_id
