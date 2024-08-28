@@ -12,9 +12,9 @@ import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1350';
 
-
-const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
-    const [parsedJson, setParsedJson] =  useState(null);
+const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) => {
+    
+const [parsedJson, setParsedJson] =  useState(null);
     const [searchResults, setSearchResults] = useState([]);
     const [resourcesModalIsOpen, setResourcesModalIsOpen] = useState(false);
     const [completedItems, setCompletedItems] = useState({});
@@ -149,16 +149,22 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
     }, [parsedJson, setResponsePlan]);
 
     useEffect(() => {
+        console.log('sessionId in CustomMarkdown:', sessionId);
         if (parsedJson && parsedJson.studyPlan) {
             const updateButtonStyles = async () => {
-                const resources = Object.values(parsedJson.studyPlan).flatMap(item => 
-                    item.flatMap(day => 
-                        Object.values(day.resources || {})
+                const resources = Object.values(parsedJson.studyPlan).flatMap(week => 
+                    week.flatMap(day => 
+                        // If the resource is an array, flat map it
+                        // Else, just return the single resource
+                        Object.values(day.resources || {}).flatMap(resource =>
+                            Array.isArray(resource) ? resource : [resource]
+                        )
                     )
                 );
+    
 
                 const linkStatuses = await Promise.all(resources.map(async resource => {
-                    const result = await checkAvailability(resource.link);
+                    const result = await checkAvailability(resource.link, sessionId);
                     return {
                         link: resource.link,
                         backgroundColor: result.exists ? '#AFD0BF' : '#EB5353',
@@ -243,24 +249,32 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
 
     const fetchVideoStatus = async (videoIds) => {
         if (!videoIds) {
-            return { views: 'N/A', likes: 'N/A'};
+            return { views: 'N/A', likes: 'N/A' , chapters: []};
         }
         try {
             // Fetch video statistics
             const statsResponse = await axios.post(`${API_BASE_URL}/video_stats`, { video_id: videoIds });
             const statsData = statsResponse.data;
 
+            // Fetch video chapters
+            const chaptersData = [];
+
             return {
                 views: statsData.views,
                 likes: statsData.likes,
+                chapters: chaptersData
             };
         } catch (error) {
             console.error('Error fetching video status:', error); 
-            return { views: 'N/A', likes: 'N/A'};
+            return { views: 'N/A', likes: 'N/A', chapters: [] };
         }
     };
 
     const handleResourcesClick = async (topic, type, weekIndex, dayIndex) => {
+        if (!sessionId) {
+            console.error('sessionId is missing.');
+            return;
+        }
         if (type === 'YouTube') {
             if (!topic) {
                 alert('Please provide a topic');
@@ -271,7 +285,8 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
 
             try {
                 const search_message = `${topic} in ${formData?.topic || ''}`;
-                const response = await axios.post(`${API_BASE_URL}/search`, { search_message: search_message });
+                const response = await axios.post(`${API_BASE_URL}/search`, { 
+                    search_message: search_message});
                 const items = response.data.response.items || [];
                 const videoIds = items.map(item => item.id.videoId);
                 const statusPromises = videoIds.map(videoId => fetchVideoStatus(videoId));
@@ -309,8 +324,8 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
             }
     
             const [reasonResponse, objectivesResponse] = await Promise.all([
-                axios.post(`${API_BASE_URL}/topic-explanations`, { user_message: topic }),
-                axios.post(`${API_BASE_URL}/generate-objectives`, { user_message: topic })
+                axios.post(`${API_BASE_URL}/topic-explanations`, { user_message: topic, custom_id: sessionId }),
+                axios.post(`${API_BASE_URL}/generate-objectives`, { user_message: topic, custom_id: sessionId })
             ]);
     
             // Combine the content
@@ -365,40 +380,43 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
 
     const renderResources = (resources, topic, weekIndex, dayIndex) => {
         if (typeof resources === 'object' && resources !== null) {
-            return Object.keys(resources).map((type, index) => {
-                const resource = resources[type];
-                const resourceStatus = videoStatuses[resource.link] || { views: 'N/A', likes: 'N/A', thumbnail: 'https://via.placeholder.com/120' };
-                return (
-                    <div key={index} style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#F3F7F3', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
-                            <h4 style={{ fontSize: '1rem', margin: '0 0.5rem', color: '#333' }}>{type}</h4>
-                            <button 
-                                onClick={() => handleResourcesClick(topic, type, weekIndex, dayIndex)}
-                                style={{ 
-                                    fontSize: '1rem', 
-                                    marginLeft: '1rem',
-                                    padding: '0.5rem 1rem', 
-                                    backgroundColor: '#DAE7DA', 
-                                    color: '#4F5452', 
-                                    border: 'none', 
-                                    borderRadius: '4px', 
-                                    cursor: 'pointer',
-                                    alignItems: 'center',
-                                    lineHeight: '1',
-                                }}
-                            >
-                                🎦 Additional Resources
-                            </button>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', marginTop: '0.5rem' }}>
-                            {resourceStatus.thumbnail && (
-                                <img 
-                                    src={resourceStatus.thumbnail} 
-                                    alt={resource.title} 
-                                    style={{ width: '120px', height: 'auto', borderRadius: '4px', marginRight: '1rem' }} 
-                                />
-                            )}
-                            <p style={{ fontSize: '1rem', margin: '0.5rem 0', marginLeft: '1rem' }}>
+            return Object.keys(resources).map((type) => {
+                const resourceArray = resources[type];
+                const normalizedResourceArray = Array.isArray(resourceArray) ? resourceArray : [resourceArray];
+
+                return normalizedResourceArray.map((resource, index) => {
+                    const resourceStatus = videoStatuses[resource.link] || { views: 'N/A', likes: 'N/A', thumbnail: 'https://via.placeholder.com/120' };
+                    return (
+                        <div key={`${type}-${index}`} style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#F3F7F3', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                <h4 style={{ fontSize: '1rem', margin: '0 0.5rem', color: '#333' }}>{type}</h4>
+                                <button 
+                                    onClick={() => handleResourcesClick(topic, type, weekIndex, dayIndex)}
+                                    style={{ 
+                                        fontSize: '1rem', 
+                                        marginLeft: '1rem',
+                                        padding: '0.5rem 1rem', 
+                                        backgroundColor: '#DAE7DA', 
+                                        color: '#4F5452', 
+                                        border: 'none', 
+                                        borderRadius: '4px', 
+                                        cursor: 'pointer',
+                                        alignItems: 'center',
+                                        lineHeight: '1',
+                                    }}
+                                >
+                                    🎦 Additional Resources
+                                </button>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', marginTop: '0.5rem' }}>
+                                {resourceStatus.thumbnail && (
+                                    <img 
+                                        src={resourceStatus.thumbnail} 
+                                        alt={resource.title} 
+                                        style={{ width: '120px', height: 'auto', borderRadius: '4px', marginRight: '1rem' }} 
+                                    />
+                                )}
+                                <p style={{ fontSize: '1rem', margin: '0.5rem 0', marginLeft: '1rem' }}>
                                     <FontAwesomeIcon icon={faThumbsUp} style={{ marginRight: '0.5rem' }} />
                                     {formatNumber(resourceStatus.likes)}
                                     <span style={{ margin: '0 0.5rem' }}>|</span>
@@ -428,30 +446,32 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
                                             )}
                                         </button>
                                     </div>
-                                <br></br>
-                                <p style={{ fontSize: '1rem', margin: '0.5rem 0'}}>
-                                    <strong>Title:</strong> {resource.title}
+                                    <br />
+                                    <p style={{ fontSize: '1rem', margin: '0.5rem 0'}}>
+                                        <strong>Title:</strong> {resource.title}
+                                    </p>
+                                    <p style={{ fontSize: '1rem', margin: '0.5rem 0'}}>
+                                        <strong>Link: </strong> 
+                                        <a 
+                                            href={resource.link} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer" 
+                                            style={{ color: '#3855A7', textDecoration: 'none' }}
+                                        >
+                                            {resource.link}
+                                        </a>
+                                    </p>
                                 </p>
-                                <p style={{ fontSize: '1rem', margin: '0.5rem 0'}}>
-                                    <strong>Link: </strong> 
-                                    <a 
-                                        href={resource.link} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer" 
-                                        style={{ color: '#3855A7', textDecoration: 'none' }}
-                                    >
-                                        {resource.link}
-                                    </a>
-                                </p>
-                            </p>
+                            </div>
                         </div>
-                    </div>
-                );
+                    );
+                });
             });
         } else {
             return <p>No resources available</p>;
         }
     };
+    
 
     const renderStudyPlan = (plan) => {
         return Object.keys(plan).map((week, weekIndex) => (
@@ -542,7 +562,7 @@ const CustomMarkdown = ({ markdownText, formData, setResponsePlan }) => {
                 {weekVisibility[week] && (
                     <div style={{ marginLeft: '1.5rem', marginTop: '0.5rem' }}>
                         {/* Content to be toggled */}
-                        <FAQIconStudyPlan week={week}/>
+                        <FAQIconStudyPlan week={week} sessionId={sessionId}/>
                     </div>
                     )}
                 </div>
