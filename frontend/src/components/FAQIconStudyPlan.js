@@ -6,7 +6,7 @@ import remarkBreaks from 'remark-breaks';
 
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1350';
 
-const FAQIconStudyPlan = ({ week, sessionId }) => {
+const FAQIconStudyPlan = ({ week, custom_id }) => {
   const [explanationContent, setExplanationContent] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -32,7 +32,7 @@ const FAQIconStudyPlan = ({ week, sessionId }) => {
         const response = await axios.post(`${API_BASE_URL}/plan-reasoning`, {
           info_message: "You have suggested a study plan of a sequence of topics. Please give explanations of why you divided the topics this way. \
           Start directly with the explanation of each week, using bullet points.",
-          custom_id: sessionId
+          custom_id: custom_id
         });
 
         const data = response.data.response;

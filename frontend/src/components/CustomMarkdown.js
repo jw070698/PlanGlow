@@ -572,7 +572,7 @@ const [parsedJson, setParsedJson] =  useState(null);
                 {weekVisibility[week] && (
                     <div style={{ marginLeft: '1.5rem', marginTop: '0.5rem' }}>
                         {/* Content to be toggled */}
-                        <FAQIconStudyPlan week={week} sessionId={sessionId}/>
+                        <FAQIconStudyPlan week={week} custom_id={sessionId}/>
                     </div>
                     )}
                 </div>
