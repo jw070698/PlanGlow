@@ -521,7 +521,7 @@ const [parsedJson, setParsedJson] =  useState(null);
                                 fontSize: '1rem',  
                                 color: '#888'
                             }}>
-                                for {entry.Time}
+                                within {entry.Time}
                             </p>
                         </div>
                         {/* Place toggle message here */}
