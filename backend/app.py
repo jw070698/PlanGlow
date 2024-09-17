@@ -232,7 +232,7 @@ async def generate_learning_objectives(request: UserMessageRequest):
 
         # Generate the prompt for GPT-4o
         prompt = (
-            f"You are a helpful assistant. Below is a study plan. Please generate clear and concise learning objectives (at most 3). "
+            f"You are a helpful assistant. Below is a study plan. Please generate clear and concise learning objectives (at most 3) using Bloom's Taxonomy verbs. "
             f"Begin with the objectives immediately. Do not say 'Objectives for the topic 'xxx':' for the topic '{topic}' in the context of this study plan.\n\nStudy Plan: {recent_plan}"
         )
         response = chat_app.chat(prompt)
