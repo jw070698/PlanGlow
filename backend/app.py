@@ -120,7 +120,7 @@ async def generate_info_response(request: InfoRequest):
                     |                   | - Capable of complex data analysis, machine learning, and optimization.     |\
                     |-------------------|-----------------------------------------------------------------------------|"},
                 {"role": "user", "content": request.info_message}
-            ], temperature=0)
+            ], temperature=0.5, top_p=0.8, frequency_penalty=0.2, presence_penalty=0.1)
             response_received = response.choices[0].message.content
             return {"response": response_received}
     except Exception as e:
