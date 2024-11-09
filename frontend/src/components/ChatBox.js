@@ -13,6 +13,20 @@ import Spinner from './Spinner';
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1350';
 // API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1350';
 const ChatBox = () => {
+  useEffect(() => {
+    // Fetch data from the backend and log it to the console
+    fetch(`${process.env.REACT_APP_API_URL}/your-endpoint`) // replace 'your-endpoint' with your actual endpoint path
+      .then(response => response.json())
+      .then(data => {
+        console.log("Fetched data:", data); // Log the data to the console
+      })
+      .catch(error => console.error("Error fetching data:", error));
+  }, []);
+
+
+
+
+
   const [formData, setFormData] = useState({
     topic: '',
     background: 'absolute beginner',
