@@ -12,7 +12,7 @@ import Spinner from './Spinner';
 
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1350';
 // API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1350';
-
+const ChatBox = () => {
   const [formData, setFormData] = useState({
     topic: '',
     background: 'absolute beginner',
