@@ -1,2 +1,1 @@
-# AI-Curriculum
-AI-driven Curriculum 
+# PlanGlow
