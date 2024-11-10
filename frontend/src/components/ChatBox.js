@@ -66,7 +66,7 @@ const ChatBox = () => {
 
   // Submit participantId and hide input form
   const handleParticipantIdSubmit = (e) => {
-    e.preventDefault();
+    e.preventDefault(); // Prevents page reload on form submission
     if (participantsId.trim()) {
       setMessages((prevMessages) => [
         ...prevMessages,
@@ -76,7 +76,7 @@ const ChatBox = () => {
       alert("Please enter a Participant ID.");
     }
   };
-
+  
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (type === 'checkbox') {
@@ -221,7 +221,6 @@ const ChatBox = () => {
 
   return (
     <div style={styles.container}>
-      <div id="participantsID" style={styles.messages}>
         {/* Participant ID Form */}
         {!participantsId && (
           <form onSubmit={handleParticipantIdSubmit} style={styles.participantIdForm}>
@@ -235,7 +234,6 @@ const ChatBox = () => {
             <button type="submit">Submit</button>
           </form>
         )}
-      </div>
       <div id="messagesContainer" style={styles.messages}>
         {messages.map((message, index) => (
           <div key={index} style={message.type === 'user' ? styles.userMessage : styles.botMessage}>
