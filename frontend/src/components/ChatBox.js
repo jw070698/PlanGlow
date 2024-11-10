@@ -9,6 +9,26 @@ import './ChatBox.css';
 import InputForm from './InputForm';
 import CustomMarkdown from './CustomMarkdown';
 import Spinner from './Spinner';
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDEu_plavdpqEAY4DRU-x-EKWzhtFR8Q6o",
+  authDomain: "plan-glow.firebaseapp.com",
+  projectId: "plan-glow",
+  storageBucket: "plan-glow.firebasestorage.app",
+  messagingSenderId: "586642379491",
+  appId: "1:586642379491:web:ac5aeb242cdfac5f462bd6",
+  measurementId: "G-448RWVVP9Z"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
 
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1350';
 
@@ -219,6 +239,7 @@ const ChatBox = () => {
   const closeModal = () => setModalIsOpen(false);
   const closeResourcesModal = () => setResourcesModalIsOpen(false);
 
+  
   return (
     <div style={styles.container}>
       {!isIdSubmitted ? (
