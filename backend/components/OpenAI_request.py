@@ -73,8 +73,7 @@ class ChatApp:
                 temperature=0.5,
                 top_p=0.8,
                 frequency_penalty=0.2,
-                presence_penalty=0.1,
-                request_timeout=60 
+                presence_penalty=0.1
             ).choices[0].message.content
             print("OpenAI initial response:", initial_response)
 
@@ -83,8 +82,7 @@ class ChatApp:
             critique_response = self.client.chat.completions.create(
                 model="gpt-4o",
                 messages=[{"role": "system", "content": "You are an evaluator."}, {"role": "user", "content": critique_prompt}],
-                temperature=0.2,
-                request_timeout=60 
+                temperature=0.2
             ).choices[0].message.content
             print("OpenAI critique response:", critique_response)
 
@@ -96,8 +94,7 @@ class ChatApp:
                 temperature=0.5,
                 top_p=0.8,
                 frequency_penalty=0.2,
-                presence_penalty=0.1,
-                request_timeout=60 
+                presence_penalty=0.1
             ).choices[0].message.content
             print("OpenAI improved response:", improved_response)
 
