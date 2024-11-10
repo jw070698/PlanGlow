@@ -3,7 +3,7 @@ import sys
 import os
 import json
 from dotenv import load_dotenv
-import time
+
 load_dotenv()
 api_key = os.getenv("API_KEY1")
 client = OpenAI(api_key=api_key)
@@ -63,18 +63,17 @@ class ChatApp:
             }
         ]
 
-    
     def chat_with_retry(self, prompt, retries=3, delay=5, **kwargs):
         for attempt in range(retries):
             try:
-                response = openai.ChatCompletion.create(
-                    model="gpt-4",
+                response = self.client.chat.completions.create(
+                    model="gpt-4o",
                     messages=prompt,
                     **kwargs
                 )
-                return response.choices[0].message['content']
-            except openai.error.OpenAIError as oe:
-                print(f"OpenAI API error on attempt {attempt + 1}: {oe}")
+                return response.choices[0].message.content
+            except Exception as e:
+                print(f"OpenAI API error on attempt {attempt + 1}: {e}")
                 if attempt < retries - 1:
                     time.sleep(delay)  # Wait before retrying
                 else:
