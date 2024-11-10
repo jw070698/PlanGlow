@@ -88,6 +88,9 @@ async def generate_response(request: MessageRequest):
             store_messages(participantId, request.user_input, response_text) # Store user input & study plan
         else:
             response_text = 'No message'
+        if not response_text:
+            raise HTTPException(status_code=500, detail="No response received from OpenAI")
+
         return {"response": response_text}
     except HTTPException as http_err:
         print(f"HTTP error occurred: {http_err}")
