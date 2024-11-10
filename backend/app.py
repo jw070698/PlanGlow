@@ -76,8 +76,8 @@ def extract_topic(user_message):
 
 @app.post("/response")
 async def generate_response(request: MessageRequest):
-    if not request.participantId:
-        return {"error": "participantId is required"}, 422
+    if not request.user_message or not request.participantId:
+        return {"response": "user_message and participantId are required fields"}, 422
     if request.user_message:
         participantId = request.participantId
         response_text = chat_app.chat(request.user_message)

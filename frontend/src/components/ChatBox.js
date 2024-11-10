@@ -127,9 +127,12 @@ const ChatBox = () => {
     ]);
 
     try {
+      console.log(userMessage);
+      console.log(participantsId);
       const response = await axios.post(`${API_BASE_URL}/response`, { 
         user_message: userMessage,
         participantId: participantsId });
+      console.log('Response Data:', response.data);
       const newResponsePlan = response.data.response;
       console.log('API Response:', newResponsePlan);
       setResponsePlan(newResponsePlan);
