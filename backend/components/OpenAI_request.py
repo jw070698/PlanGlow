@@ -3,6 +3,7 @@ import sys
 import os
 import json
 from dotenv import load_dotenv
+import time
 load_dotenv()
 api_key = os.getenv("API_KEY1")
 client = OpenAI(api_key=api_key)
@@ -62,11 +63,12 @@ class ChatApp:
             }
         ]
 
+    
     def chat_with_retry(self, prompt, retries=3, delay=5, **kwargs):
         for attempt in range(retries):
             try:
                 response = openai.ChatCompletion.create(
-                    model="gpt-4o",
+                    model="gpt-4",
                     messages=prompt,
                     **kwargs
                 )
@@ -78,7 +80,6 @@ class ChatApp:
                 else:
                     raise
 
-    # Chain of Thought
     def chat(self, message):
         self.messages.append({"role": "user", "content": message})
         try:
