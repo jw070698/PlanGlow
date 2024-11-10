@@ -90,7 +90,6 @@ const ChatBox = () => {
     e.preventDefault(); // Prevents page reload on form submission
     
     if (participantsId) {
-      console.log("Participant ID accepted:", participantsId);
       setIsIdSubmitted(true);
     } else {
       alert("Please enter a valid Participant ID");
@@ -120,21 +119,18 @@ const ChatBox = () => {
     setLoading(true);
     const { topic, background, duration, availableTime } = formData;
     const userMessage = `Create a study plan for a ${background} student on ${topic} using YouTube over ${duration.months} months, ${duration.weeks} weeks, and ${duration.days} days with ${availableTime} hours available per day.`;
-    console.log(userMessage);
     setMessages((prevMessages) => [
       ...prevMessages,
       { type: 'user', text: userMessage }
     ]);
 
     try {
-      console.log(userMessage);
-      console.log(participantsId);
+      console.log('user message', userMessage);
+      console.log('participantId', participantsId);
       const response = await axios.post(`${API_BASE_URL}/response`, { 
         user_message: userMessage,
         participantId: participantsId });
-      console.log('Response Data:', response.data);
       const newResponsePlan = response.data.response;
-      console.log('API Response:', newResponsePlan);
       setResponsePlan(newResponsePlan);
       //add bot message
       setMessages((prevMessages) => [
