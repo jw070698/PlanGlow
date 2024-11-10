@@ -29,14 +29,11 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 
-
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1350';
 
 const ChatBox = () => {
-  // participants id
   const [participantsId, setParticipantsId] = useState('');
   const [isIdSubmitted, setIsIdSubmitted] = useState(false);
-  // input box
   const [formData, setFormData] = useState({
     topic: '',
     background: 'absolute beginner',
@@ -44,9 +41,7 @@ const ChatBox = () => {
     duration: { months: 0, weeks: 0, days: 0 },
     availableTime: 0,
   });
-  const [messages, setMessages] = useState([
-    { type: 'bot', text: 'Hello! Please provide the following details:', isForm: true }
-  ]);
+  const [messages, setMessages] = useState([{ type: 'bot', text: 'Hello! Please provide the following details:', isForm: true }]);
   const [userInput, setUserInput] = useState('');
   const [isFormVisible, setIsFormVisible] = useState(true);
   const [responsePlan, setResponsePlan] = useState('');
@@ -54,7 +49,7 @@ const ChatBox = () => {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [resourcesModalIsOpen, setResourcesModalIsOpen] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
-  const [loading, setLoading] = useState(false); 
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     animateScroll.scrollToBottom({
@@ -80,22 +75,19 @@ const ChatBox = () => {
     };
   }, [messages, formData, userInput, isFormVisible]);
 
-  // Handle changes for participantId input
   const handleParticipantIdChange = (e) => {
     setParticipantsId(e.target.value);
   };
 
-  // Submit participantId and hide input form
   const handleParticipantIdSubmit = (e) => {
-    e.preventDefault(); // Prevents page reload on form submission
-    
+    e.preventDefault();
     if (participantsId) {
       setIsIdSubmitted(true);
     } else {
       alert("Please enter a valid Participant ID");
     }
   };
-  
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (type === 'checkbox') {
@@ -119,34 +111,22 @@ const ChatBox = () => {
     setLoading(true);
     const { topic, background, duration, availableTime } = formData;
     const userMessage = `Create a study plan for a ${background} student on ${topic} using YouTube over ${duration.months} months, ${duration.weeks} weeks, and ${duration.days} days with ${availableTime} hours available per day.`;
-    setMessages((prevMessages) => [
-      ...prevMessages,
-      { type: 'user', text: userMessage }
-    ]);
+    setMessages((prevMessages) => [...prevMessages, { type: 'user', text: userMessage }]);
 
     try {
-      console.log('user message', userMessage);
-      console.log('participantId', participantsId);
       const response = await axios.post(`${API_BASE_URL}/response`, { 
         user_message: userMessage,
-        participantId: participantsId });
+        participantId: participantsId 
+      });
       const newResponsePlan = response.data.response;
       setResponsePlan(newResponsePlan);
-      //add bot message
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { type: 'bot', text: newResponsePlan, isForm: false }
-      ]);
-    
+      setMessages((prevMessages) => [...prevMessages, { type: 'bot', text: newResponsePlan, isForm: false }]);
       setIsFormVisible(false);
-      } catch (error) {
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          { type: 'bot', text: 'Error fetching response from OpenAI.', isForm: false }
-        ]);
-      } finally {
-        setLoading(false);
-      }
+    } catch (error) {
+      setMessages((prevMessages) => [...prevMessages, { type: 'bot', text: 'Error fetching response from OpenAI.', isForm: false }]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleUserInputChange = (e) => {
@@ -155,26 +135,18 @@ const ChatBox = () => {
 
   const handleUserInputSubmit = async () => {
     if (userInput.trim() === '') return;
-    setMessages((prevMessages) => [
-      ...prevMessages,
-      { type: 'user', text: userInput },
-    ]);
+    setMessages((prevMessages) => [...prevMessages, { type: 'user', text: userInput }]);
     setUserInput('');
     setLoading(true);
     try {
       const response = await axios.post(`${API_BASE_URL}/response`, { 
         user_message: userInput,
-        participantId: participantsId });
+        participantId: participantsId 
+      });
       setResponsePlan(response.data.response);
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { type: 'bot', text: response.data.response, isForm: false },
-      ]);
+      setMessages((prevMessages) => [...prevMessages, { type: 'bot', text: response.data.response, isForm: false }]);
     } catch (error) {
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { type: 'bot', text: 'Error fetching response from OpenAI.', isForm: false },
-      ]);
+      setMessages((prevMessages) => [...prevMessages, { type: 'bot', text: 'Error fetching response from OpenAI.', isForm: false }]);
     } finally {
       setLoading(false); 
     }
@@ -208,11 +180,9 @@ const ChatBox = () => {
     try {
       const response = await axios.post(`${API_BASE_URL}/search`, { 
         search_message: formData.topic, 
-        participantId: participantsId});
+        participantId: participantsId });
 
       const items = response.data.response.items || [];
-      console.log('Extracted Items Array:', items);
-
       const formattedResults = items.map(item => ({
         url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
         thumbnail: item.snippet.thumbnails.default.url,
@@ -220,18 +190,11 @@ const ChatBox = () => {
         description: item.snippet.description,
       }));
 
-      console.log('Formatted Results:', formattedResults);
-
-      if (formattedResults.length === 0) {
-        setSearchResults([{ title: 'No resources found', description: '', url: '', thumbnail: '' }]);
-      } else {
-        setSearchResults(formattedResults);
-      }
+      setSearchResults(formattedResults.length ? formattedResults : [{ title: 'No resources found', description: '', url: '', thumbnail: '' }]);
       setResourcesModalIsOpen(true);
     } catch (error) {
       alert('Error fetching additional resources');
-      console.error('API Error:', error);
-    }finally {
+    } finally {
       setLoading(false);
     }
   };
@@ -239,7 +202,6 @@ const ChatBox = () => {
   const closeModal = () => setModalIsOpen(false);
   const closeResourcesModal = () => setResourcesModalIsOpen(false);
 
-  
   return (
     <div style={styles.container}>
       {!isIdSubmitted ? (
@@ -251,11 +213,11 @@ const ChatBox = () => {
             onChange={handleParticipantIdChange} 
             required
           />
-        <button type="submit">Submit</button>
+          <button type="submit">Submit</button>
         </form>
       ) : (
         <div>Welcome, Participant {participantsId}</div>
-        )}
+      )}
 
       <div id="messagesContainer" style={styles.messages}>
         {messages.map((message, index) => (
@@ -275,6 +237,7 @@ const ChatBox = () => {
         ))}
         {loading && <Spinner />}
       </div>
+
       {!isFormVisible && (
         <div style={styles.userInputContainer}>
           <input
@@ -312,181 +275,13 @@ const ChatBox = () => {
 };
 
 const styles = {
-    container: {
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100%',
-      width: '100%',
-      border: '1px solid #ccc',
-      borderRadius: '5px',
-      padding: '10px',
-      boxSizing: 'border-box',
-    },
-    messages: {
-      flex: 1,
-      overflowY: 'auto',
-      marginBottom: '10px',
-    },
-    userMessage: {
-      padding: '10px',
-      margin: '10px 250px',
-      borderRadius: '15px',
-      backgroundColor: '#d1f5d3',
-      alignSelf: 'flex-end',
-      maxWidth: '80%',
-      wordWrap: 'break-word',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-      fontFamily: 'San Francisco, Arial, sans-serif',
-      //textAlign: 'left',
-      fontSize: '16px',
-      marginRight: '1px',
-      display: 'flex',
-      justifyContent: 'space-between',
-    },
-    botMessage: {
-      padding: '10px',
-      borderRadius: '15px',
-      backgroundColor: '#d0e7ff',
-      alignSelf: 'flex-start',
-      maxWidth: '80%',
-      wordWrap: 'break-word',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-      fontFamily: 'San Francisco, Arial, sans-serif',
-      fontSize: '16px',
-      marginRight: 'auto',
-      justifyContent: 'space-between',
-    },
-    label: {
-        display: 'block',
-        fontSize: '15px', 
-        fontWeight: 'bold',
-        marginBottom: '10px',
-      },
-    label1:{
-        display: 'block',
-        fontSize: '15px', 
-        fontWeight: 'bold',
-        color: '#333',
-        marginBottom: '10px',
-        textAlign: 'left',
-        fontFamily: 'Arial, sans-serif',
-        backgroundColor: '#f0f8ff',
-        padding: '8px 12px',
-        borderRadius: '8px',
-        boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-        whiteSpace: 'nowrap',
-      },
-    input: {
-      padding: '10px',
-      borderRadius: '5px',
-      border: '1px solid #ccc',
-      marginTop: '10px',
-    },
-    userInputContainer: {
-      display: 'flex',
-      alignItems: 'center',
-      borderTop: '1px solid #ccc',
-      padding: '10px 0',
-    },
-    userInput: {
-      display: 'right',
-      flex: 1,
-      padding: '10px',
-      borderRadius: '5px',
-      border: '1px solid #ccc',
-      fontFamily: 'San Francisco, Arial, sans-serif',
-      fontSize: '16px',
-    },
-    sendButton: {
-      padding: '10px 20px',
-      borderRadius: '5px',
-      border: 'none',
-      backgroundColor: '#007bff',
-      color: '#fff',
-      cursor: 'pointer',
-      marginLeft: '10px',
-      fontFamily: 'San Francisco, Arial, sans-serif',
-      fontSize: '16px',
-      alignItems: 'center',
-    },
-    botButton: {
-      padding: '5px 10px',
-      borderRadius: '5px',
-      border: 'none',
-      backgroundColor: '#007bff',
-      color: '#fff',
-      cursor: 'pointer',
-      fontFamily: 'San Francisco, Arial, sans-serif',
-      fontSize: '14px',
-      marginLeft: '10px',
-    },
-    inputWithButton: { 
-      display: 'flex', 
-      alignItems: 'center' 
-    },
-    button: {
-      padding: '5px 5px',
-      marginLeft: '10px',
-      borderRadius: '5px',
-      border: 'none',
-      backgroundColor: '#007bff',
-      color: '#fff',
-      cursor: 'pointer',
-      alignSelf: 'center',
-      marginTop: '5px',
-      fontFamily: 'San Francisco, Arial, sans-serif',
-      fontSize: '13px',
-    },
-    additionalResourcesButton: {
-      padding: '10px 20px',
-      borderRadius: '5px',
-      border: 'none',
-      backgroundColor: '#28a745',
-      color: '#fff',
-      cursor: 'pointer',
-      marginTop: '10px',
-      fontFamily: 'San Francisco, Arial, sans-serif',
-      fontSize: '14px',
-    },
-    modal: {
-      content: {
-        top: '50%',
-        left: '50%',
-        right: 'auto',
-        bottom: 'auto',
-        marginRight: '-50%',
-        transform: 'translate(-50%, -50%)',
-        maxWidth: '600px',
-        width: '90%',
-        borderRadius: '10px',
-        padding: '20px',
-      },
-    },
-    botMessageContent: {
-      display: 'flex',
-      flexDirection: 'column',
-    },
-    resultsContainer: {
-      display: 'flex',
-      flexDirection: 'column',
-    },
-    resultCard: {
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: '10px',
-      padding: '10px',
-      border: '1px solid #ccc',
-      borderRadius: '5px',
-    },
-    thumbnail: {
-      width: '50px',
-      height: '50px',
-      marginRight: '10px',
-    },
-    cardContent: {
-      display: 'flex',
-      flexDirection: 'column',
-    },
-  };
+  container: { display: 'flex', flexDirection: 'column', height: '100%', width: '100%', padding: '10px', boxSizing: 'border-box' },
+  messages: { flex: 1, overflowY: 'auto', marginBottom: '10px' },
+  userMessage: { padding: '10px', margin: '10px 250px', borderRadius: '15px', backgroundColor: '#d1f5d3', alignSelf: 'flex-end', maxWidth: '80%', wordWrap: 'break-word', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', fontSize: '16px', marginRight: '1px' },
+  botMessage: { padding: '10px', borderRadius: '15px', backgroundColor: '#d0e7ff', alignSelf: 'flex-start', maxWidth: '80%', wordWrap: 'break-word', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', fontSize: '16px', marginRight: 'auto' },
+  userInputContainer: { display: 'flex', alignItems: 'center', borderTop: '1px solid #ccc', padding: '10px 0' },
+  userInput: { flex: 1, padding: '10px', borderRadius: '5px', border: '1px solid #ccc', fontSize: '16px' },
+  sendButton: { padding: '10px 20px', borderRadius: '5px', backgroundColor: '#007bff', color: '#fff', cursor: 'pointer', marginLeft: '10px', fontSize: '16px' },
+};
+
 export default ChatBox;
