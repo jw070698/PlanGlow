@@ -74,12 +74,6 @@ def extract_topic(user_message):
         return match.group(1)
     return None
 
-@app.post("/start_session")
-async def start_session():
-    custom_id = generate_custom_id()
-    create_session(custom_id)
-    return {"custom_id": custom_id}
-
 @app.post("/response")
 async def generate_response(request: MessageRequest):
     if request.user_message:
@@ -100,29 +94,40 @@ async def generate_info_response(request: InfoRequest):
         if not request.info_message:
             raise HTTPException(status_code=400, detail="No info message provided")
         else:
-            response = client.chat.completions.create(model="gpt-4o", messages=[
-                {"role": "system", "content": "You are a helpful assistant. You will let user know about the difference of background knowledge level of 'absolute beginner, beginner, intermediate, advanced' of the topic as a table. \
-                    Please be concise, each description at most 2 bullet points. Please start directly with the Level and description using table format.\
-                    Please be pretty, simple, and easy to read. \
-                    For example, \
-                    | Level             | Description                                                                 |\
-                    |-------------------|-----------------------------------------------------------------------------|\
-                    | Absolute Beginner | - No prior programming experience.                                          |\
-                    |                   | - Unfamiliar with Python and data analysis concepts.                        |\
-                    |-------------------|-----------------------------------------------------------------------------|\
-                    | Beginner          | - Basic understanding of Python syntax and simple scripts.                  |\
-                    |                   | - Familiar with basic data structures (lists, dictionaries).                |\
-                    |-------------------|-----------------------------------------------------------------------------|\
-                    | Intermediate      | - Comfortable with Python libraries like Pandas and NumPy.                  |\
-                    |                   | - Can perform basic data manipulation and visualization.                    |\
-                    |-------------------|-----------------------------------------------------------------------------|\
-                    | Advanced          | - Proficient in using advanced libraries (e.g., SciPy, Scikit-learn).       |\
-                    |                   | - Capable of complex data analysis, machine learning, and optimization.     |\
-                    |-------------------|-----------------------------------------------------------------------------|"},
-                {"role": "user", "content": request.info_message}
-            ], temperature=0.5, top_p=0.8, frequency_penalty=0.2, presence_penalty=0.1)
-            response_received = response.choices[0].message.content
-            return {"response": response_received}
+            response = client.chat.completions.create(
+    model="gpt-4o",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "You are a helpful assistant. You will let the user know about the difference in background knowledge levels "
+                    "('absolute beginner', 'beginner', 'intermediate', 'advanced') for the topic as a table. "
+                    "Please be concise, with each description at most 2 bullet points. Start directly with the Level and description "
+                    "using table format. "
+                    "Please be pretty, simple, and easy to read."
+                    "\n\n"
+                    "For example:\n"
+                    "| Level             | Description                                                                 |\n"
+                    "|-------------------|-----------------------------------------------------------------------------|\n"
+                    "| Absolute Beginner | - No prior programming experience.                                          |\n"
+                    "|                   | - Unfamiliar with Python and data analysis concepts.                        |\n"
+                    "| Beginner          | - Basic understanding of Python syntax and simple scripts.                  |\n"
+                    "|                   | - Familiar with basic data structures (lists, dictionaries).                |\n"
+                    "| Intermediate      | - Comfortable with Python libraries like Pandas and NumPy.                  |\n"
+                    "|                   | - Can perform basic data manipulation and visualization.                    |\n"
+                    "| Advanced          | - Proficient in using advanced libraries (e.g., SciPy, Scikit-learn).       |\n"
+                    "|                   | - Capable of complex data analysis, machine learning, and optimization.     |\n"
+                )
+            },
+            {"role": "user", "content": request.info_message}
+        ],
+        temperature=0.2,
+        top_p=0.6,
+        frequency_penalty=0.2,
+        presence_penalty=0.1)
+
+        response_received = response.choices[0].message.content
+        return {"response": response_received}
     except Exception as e:
         print(f"Error: {str(e)}")
 
