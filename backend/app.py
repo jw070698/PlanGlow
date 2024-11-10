@@ -77,7 +77,7 @@ async def generate_response(request: MessageRequest):
     try:
         participantId = request.participantId
         create_session(participantId)
-        print(participantId)
+        print("session created to", participantId)
         if request.user_message:
             response_text = chat_app.chat(request.user_message)
             store_messages(participantId, request.user_message, response_text)  # Store user message & study plan

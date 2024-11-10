@@ -93,7 +93,7 @@ class ChatApp:
                 presence_penalty=0.1
             )
             print("OpenAI initial response:", initial_response)
-
+            '''
             # Step 2: critique of the initial response
             critique_prompt = [
                 {"role": "system", "content": "You are an evaluator."},
@@ -104,7 +104,7 @@ class ChatApp:
                 temperature=0.0
             )
             print("OpenAI critique response:", critique_response)
-            '''
+            
             # Step 3: improved response
             improvement_prompt = [
                 {"role": "system", "content": "You are an assistant aiming to improve based on feedback."},
