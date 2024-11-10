@@ -120,6 +120,7 @@ const ChatBox = () => {
     setLoading(true);
     const { topic, background, duration, availableTime } = formData;
     const userMessage = `Create a study plan for a ${background} student on ${topic} using YouTube over ${duration.months} months, ${duration.weeks} weeks, and ${duration.days} days with ${availableTime} hours available per day.`;
+    console.log(userMessage);
     setMessages((prevMessages) => [
       ...prevMessages,
       { type: 'user', text: userMessage }
