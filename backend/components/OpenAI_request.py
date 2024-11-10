@@ -1,4 +1,6 @@
 from openai import OpenAI
+from openai import OpenAIError
+
 import sys
 import os
 import json
@@ -6,7 +8,7 @@ from dotenv import load_dotenv
 import time
 load_dotenv()
 api_key = os.getenv("API_KEY1")
-client = OpenAI(api_key=api_key)
+client = OpenAI(api_key=api_key, timeout=90)
 
 class ChatApp:
     def __init__(self):
