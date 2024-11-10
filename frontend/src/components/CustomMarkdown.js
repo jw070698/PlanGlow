@@ -12,7 +12,7 @@ import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1350';
 
-const CustomMarkdown = ({ markdownText, formData, setResponsePlan, sessionId }) => {
+const CustomMarkdown = ({ markdownText, formData, setResponsePlan, participantsId }) => {
     
 const [parsedJson, setParsedJson] =  useState(null);
     const [searchResults, setSearchResults] = useState([]);
@@ -149,7 +149,7 @@ const [parsedJson, setParsedJson] =  useState(null);
     }, [parsedJson, setResponsePlan]);
 
     useEffect(() => {
-        console.log('sessionId in CustomMarkdown:', sessionId);
+        console.log('participantsId in CustomMarkdown:', participantsId);
         if (parsedJson && parsedJson.studyPlan) {
             const updateButtonStyles = async () => {
                 const resources = Object.values(parsedJson.studyPlan).flatMap(week => 
@@ -164,7 +164,7 @@ const [parsedJson, setParsedJson] =  useState(null);
     
 
                 const linkStatuses = await Promise.all(resources.map(async resource => {
-                    const result = await checkAvailability(resource.link, sessionId);
+                    const result = await checkAvailability(resource.link, participantsId);
                     return {
                         link: resource.link,
                         backgroundColor: result.exists ? '#AFD0BF' : '#EB5353',
@@ -281,8 +281,8 @@ const [parsedJson, setParsedJson] =  useState(null);
     };
 
     const handleResourcesClick = async (topic, type, weekIndex, dayIndex) => {
-        if (!sessionId) {
-            console.error('sessionId is missing.');
+        if (!participantsId) {
+            console.error('participantsId is missing.');
             return;
         }
         if (type === 'YouTube') {
@@ -334,8 +334,8 @@ const [parsedJson, setParsedJson] =  useState(null);
             }
     
             const [reasonResponse, objectivesResponse] = await Promise.all([
-                axios.post(`${API_BASE_URL}/topic-explanations`, { user_message: topic, custom_id: sessionId }),
-                axios.post(`${API_BASE_URL}/generate-objectives`, { user_message: topic, custom_id: sessionId })
+                axios.post(`${API_BASE_URL}/topic-explanations`, { user_message: topic, custom_id: participantsId }),
+                axios.post(`${API_BASE_URL}/generate-objectives`, { user_message: topic, custom_id: participantsId })
             ]);
     
             // Combine the content
@@ -550,7 +550,7 @@ const [parsedJson, setParsedJson] =  useState(null);
     return (
         <div>
             <h2>Study Plan Overview </h2>
-            <Editable formData={formData} setResponsePlan={setParsedJson}  setStudyPlan={handleUpdateStudyPlan} custom_id={sessionId}/>
+            <Editable formData={formData} setResponsePlan={setParsedJson}  setStudyPlan={handleUpdateStudyPlan} custom_id={participantsId}/>
             {parsedJson.studyPlan_Overview && Object.keys(parsedJson.studyPlan_Overview).map(week => (
                 <div key={week} style={{ marginBottom: '1rem' }}>
                 <div
@@ -572,7 +572,7 @@ const [parsedJson, setParsedJson] =  useState(null);
                 {weekVisibility[week] && (
                     <div style={{ marginLeft: '1.5rem', marginTop: '0.5rem' }}>
                         {/* Content to be toggled */}
-                        <FAQIconStudyPlan week={week} custom_id={sessionId}/>
+                        <FAQIconStudyPlan week={week} custom_id={participantsId}/>
                     </div>
                     )}
                 </div>
