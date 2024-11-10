@@ -73,7 +73,8 @@ class ChatApp:
                 temperature=0.5,
                 top_p=0.8,
                 frequency_penalty=0.2,
-                presence_penalty=0.1
+                presence_penalty=0.1,
+                request_timeout=60 
             ).choices[0].message.content
 
             # Step 2: critique of the initial response
@@ -81,7 +82,8 @@ class ChatApp:
             critique_response = self.client.chat.completions.create(
                 model="gpt-4o",
                 messages=[{"role": "system", "content": "You are an evaluator."}, {"role": "user", "content": critique_prompt}],
-                temperature=0.2
+                temperature=0.2,
+                request_timeout=60 
             ).choices[0].message.content
 
             # Step 3: improved response
@@ -92,7 +94,8 @@ class ChatApp:
                 temperature=0.5,
                 top_p=0.8,
                 frequency_penalty=0.2,
-                presence_penalty=0.1
+                presence_penalty=0.1,
+                request_timeout=60 
             ).choices[0].message.content
             
             self.messages.append({"role": "assistant", "content": initial_response})
