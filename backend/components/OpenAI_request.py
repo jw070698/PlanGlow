@@ -64,6 +64,7 @@ class ChatApp:
             }
         ]
     def chat_with_retry(self, prompt, retries=3, delay=5, **kwargs):
+        delay = initial_delay
         for attempt in range(retries):
             try:
                 response = self.client.with_options(timeout=120.0).chat.completions.create(
@@ -76,7 +77,8 @@ class ChatApp:
             except Exception as e:
                 print(f"OpenAI API error on attempt {attempt + 1}: {e}")
                 if attempt < retries - 1:
-                    time.sleep(delay)  # Wait before retrying
+                    time.sleep(delay)
+                    delay *= 2  # Exponential backoff
                 else:
                     raise
 
@@ -93,7 +95,7 @@ class ChatApp:
             )
             print("OpenAI initial response:", initial_response)
 
-            # Step 2: critique of the initial response
+            '''# Step 2: critique of the initial response
             critique_prompt = [
                 {"role": "system", "content": "You are an evaluator."},
                 {"role": "user", "content": f"Here's my answer: {initial_response}. Critique this response and suggest improvements."}
@@ -117,13 +119,13 @@ class ChatApp:
                 presence_penalty=0.1
             )
             print("OpenAI improved response:", improved_response)
-
-            # Update messages and return final response
+'''
+            '''# Update messages and return final response
             self.messages.append({"role": "assistant", "content": initial_response})
             self.messages.append({"role": "assistant", "content": critique_response})
             self.messages.append({"role": "assistant", "content": improved_response})
-
-            return improved_response
+'''
+            return initial_response
 
         except Exception as e:
             print(f"OpenAI API request error: {e}")
