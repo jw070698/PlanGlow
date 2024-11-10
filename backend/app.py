@@ -42,8 +42,7 @@ def hello_world():
 
 class MessageRequest(BaseModel):
     user_message: str = None
-    user_input: str = None
-    custom_id: str
+    participantId: str
 
 class InfoRequest(BaseModel):
     info_message: str
@@ -62,11 +61,11 @@ class CheckRequest(BaseModel):
 
 class PlanRequest(BaseModel):
     info_message: str
-    custom_id: str
+    participantId: str
 
 class UserMessageRequest(BaseModel):
     user_message: str
-    custom_id: str
+    participantId: str
 
 def extract_topic(user_message):
     match = re.search(r'Create a study plan for a .* student on (.+?) using', user_message)
