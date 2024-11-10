@@ -28,7 +28,7 @@ client = OpenAI(api_key=api_key)
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://plan-glow.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -76,17 +76,16 @@ def extract_topic(user_message):
 @app.post("/response")
 async def generate_response(request: MessageRequest):
     
-    #if request.user_message:
-    #    participantId = request.participantId
-    #    response_text = chat_app.chat(request.user_message)
-    #    store_messages(participantId, request.user_message, response_text)  # Store user message & study plan
-    #elif request.user_input:
-    #    participantId = request.participantId
-    #    response_text = chat_app.chat(request.user_input) 
-    #    store_messages(participantId, request.user_input, response_text) # Store user input & study plan
-    #else:
-    #    response_text = 'No message'
-    response_text = chat_app.chat(request.user_message)
+    if request.user_message:
+        participantId = request.participantId
+        response_text = chat_app.chat(request.user_message)
+        store_messages(participantId, request.user_message, response_text)  # Store user message & study plan
+    elif request.user_input:
+        participantId = request.participantId
+        response_text = chat_app.chat(request.user_input) 
+        store_messages(participantId, request.user_input, response_text) # Store user input & study plan
+    else:
+        response_text = 'No message'
     return {"response": response_text}
 
 @app.post("/info")
