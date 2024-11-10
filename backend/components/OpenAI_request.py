@@ -3,7 +3,7 @@ from openai import OpenAIError
 import sys
 import os
 import json
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 import time
 load_dotenv()
 api_key = os.getenv("API_KEY1")
