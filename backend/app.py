@@ -5,7 +5,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import re, os
 from openai import OpenAI
-
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
 
@@ -23,7 +22,7 @@ from components.GoogleSearch_request import google_search_availability
 #load_dotenv()
 api_key = os.getenv('API_KEY1')
 
-client = OpenAI(timeout=120.0, api_key=api_key)
+client = OpenAI(api_key=api_key)
 
 app = FastAPI()
 app.add_middleware(
