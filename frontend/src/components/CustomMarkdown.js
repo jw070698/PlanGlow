@@ -130,11 +130,20 @@ const [parsedJson, setParsedJson] =  useState(null);
             console.error("markdownText is undefined");
             return;
         }
-        const jsonMatch = markdownText.match(/```json([\s\S]*?)```/);
+        const jsonMatch = markdownText.match(/```json([\s\S]*?)```/) || markdownText.match(/{[\s\S]*}/);
         if (jsonMatch && jsonMatch[1]) {
             try {
                 // Trim any whitespace and parse JSON
                 const jsonData = JSON.parse(jsonMatch[1].trim());
+                setParsedJson(jsonData);
+                console.log("Parsed JSON:", jsonData);
+            } catch (error) {
+                console.error("JSON parsing error:", error);
+            }
+        } else if (jsonMatch && jsonMatch[0]) {
+            // Handle raw JSON without backticks, in case it matches only jsonMatch[0]
+            try {
+                const jsonData = JSON.parse(jsonMatch[0].trim());
                 setParsedJson(jsonData);
                 console.log("Parsed JSON:", jsonData);
             } catch (error) {
