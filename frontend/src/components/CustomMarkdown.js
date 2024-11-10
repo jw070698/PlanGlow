@@ -125,6 +125,7 @@ const [parsedJson, setParsedJson] =  useState(null);
     };
 
     useEffect(() => {
+        console.log(markdownText)
         if (!markdownText) {
             console.error("markdownText is undefined");
             return;
