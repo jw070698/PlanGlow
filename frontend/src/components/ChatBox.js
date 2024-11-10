@@ -36,10 +36,6 @@ const ChatBox = () => {
   const [loading, setLoading] = useState(false); 
 
   useEffect(() => {
-    startNewSession(); // id
-  }, []);
-
-  useEffect(() => {
     animateScroll.scrollToBottom({
       containerId: 'messagesContainer',
       duration: 300,
@@ -62,14 +58,6 @@ const ChatBox = () => {
       window.removeEventListener('keydown', handleKeyPress);
     };
   }, [messages, formData, userInput, isFormVisible]);
-
-  const startNewSession = async () => {
-    try {
-    const response = await axios.post(`${API_BASE_URL}/start_session`);
-    } catch (error) {
-      console.error('Error starting a new session:', error);
-    }
-  };
 
   // Handle changes for participantId input
   const handleParticipantIdChange = (e) => {
@@ -233,19 +221,21 @@ const ChatBox = () => {
 
   return (
     <div style={styles.container}>
-      {/* Participant ID Form */}
-      {!participantsId && (
-        <form onSubmit={handleParticipantIdSubmit} style={styles.participantIdForm}>
-          <input 
-            type="text" 
-            placeholder="Enter Participant ID" 
-            value={participantsId} 
-            onChange={handleParticipantIdChange} 
-            required
-          />
-          <button type="submit">Submit</button>
-        </form>
-      )}
+      <div id="participantsID" style={styles.messages}>
+        {/* Participant ID Form */}
+        {!participantsId && (
+          <form onSubmit={handleParticipantIdSubmit} style={styles.participantIdForm}>
+            <input 
+              type="text" 
+              placeholder="Enter Participant ID" 
+              value={participantsId} 
+              onChange={handleParticipantIdChange} 
+              required
+            />
+            <button type="submit">Submit</button>
+          </form>
+        )}
+      </div>
       <div id="messagesContainer" style={styles.messages}>
         {messages.map((message, index) => (
           <div key={index} style={message.type === 'user' ? styles.userMessage : styles.botMessage}>

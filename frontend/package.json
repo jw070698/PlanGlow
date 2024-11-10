@@ -11,6 +11,7 @@
         "@mui/material": "^5.16.4",
         "axios": "^1.7.2",
         "dotenv": "^16.4.5",
+        "firebase": "^11.0.1",
         "googleapi": "^1.0.2",
         "json": "^11.0.0",
         "npm": "^10.8.2",
