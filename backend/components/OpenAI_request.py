@@ -62,12 +62,28 @@ class ChatApp:
             }
         ]
 
+    def chat_with_retry(self, prompt, retries=3, delay=5, **kwargs):
+        for attempt in range(retries):
+            try:
+                response = openai.ChatCompletion.create(
+                    model="gpt-4o",
+                    messages=prompt,
+                    **kwargs
+                )
+                return response.choices[0].message['content']
+            except openai.error.OpenAIError as oe:
+                print(f"OpenAI API error on attempt {attempt + 1}: {oe}")
+                if attempt < retries - 1:
+                    time.sleep(delay)  # Wait before retrying
+                else:
+                    raise
+
     # Chain of Thought
     def chat(self, message):
         self.messages.append({"role": "user", "content": message})
         try:
             # Step 1: initial response
-            initial_response = self.client.chat.completions.create(
+            initial_response = self.chat_with_retry(
                 model="gpt-4o",
                 messages=self.messages,
                 temperature=0.5,
@@ -79,7 +95,7 @@ class ChatApp:
 
             # Step 2: critique of the initial response
             critique_prompt = f"Here's my answer: {initial_response}. Critique this response and suggest improvements."
-            critique_response = self.client.chat.completions.create(
+            critique_response = self.chat_with_retry(
                 model="gpt-4o",
                 messages=[{"role": "system", "content": "You are an evaluator."}, {"role": "user", "content": critique_prompt}],
                 temperature=0.2
@@ -88,7 +104,7 @@ class ChatApp:
 
             # Step 3: improved response
             improvement_prompt = f"Here's the initial answer: {initial_response}. Here's the critique: {critique_response}. Now, generate an improved response based on the critique."
-            improved_response = self.client.chat.completions.create(
+            improved_response = self.chat_with_retry(
                 model="gpt-4o",
                 messages=[{"role": "system", "content": "You are an assistant aiming to improve based on feedback."}, {"role": "user", "content": improvement_prompt}],
                 temperature=0.5,
