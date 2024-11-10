@@ -76,6 +76,7 @@ class ChatApp:
                 presence_penalty=0.1,
                 request_timeout=60 
             ).choices[0].message.content
+            print("OpenAI initial response:", initial_response)
 
             # Step 2: critique of the initial response
             critique_prompt = f"Here's my answer: {initial_response}. Critique this response and suggest improvements."
@@ -85,6 +86,7 @@ class ChatApp:
                 temperature=0.2,
                 request_timeout=60 
             ).choices[0].message.content
+            print("OpenAI critique response:", critique_response)
 
             # Step 3: improved response
             improvement_prompt = f"Here's the initial answer: {initial_response}. Here's the critique: {critique_response}. Now, generate an improved response based on the critique."
@@ -97,6 +99,8 @@ class ChatApp:
                 presence_penalty=0.1,
                 request_timeout=60 
             ).choices[0].message.content
+            print("OpenAI improved response:", improved_response)
+
             
             self.messages.append({"role": "assistant", "content": initial_response})
             self.messages.append({"role": "assistant", "content": critique_response})
