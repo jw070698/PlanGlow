@@ -77,10 +77,6 @@ def extract_topic(user_message):
 async def generate_response(request: MessageRequest):
     try:
         participantId = request.participantId
-        if not request.user_message:
-                raise HTTPException(status_code=400, detail="No user message provided")
-        
-        response_text = chat_app.chat(request.user_message)
         if request.user_message:
             response_text = chat_app.chat(request.user_message)
             store_messages(participantId, request.user_message, response_text)  # Store user message & study plan
