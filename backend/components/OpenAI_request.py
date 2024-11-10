@@ -85,7 +85,7 @@ class ChatApp:
             # Step 1: initial response
             initial_response = self.chat_with_retry(
                 prompt=self.messages,
-                temperature=0.5,
+                temperature=0.0,
                 top_p=0.8,
                 frequency_penalty=0.2,
                 presence_penalty=0.1
@@ -99,7 +99,7 @@ class ChatApp:
             ]
             critique_response = self.chat_with_retry(
                 prompt=critique_prompt,
-                temperature=0.2
+                temperature=0.0
             )
             print("OpenAI critique response:", critique_response)
 
@@ -110,7 +110,7 @@ class ChatApp:
             ]
             improved_response = self.chat_with_retry(
                 prompt=improvement_prompt,
-                temperature=0.5,
+                temperature=0.0,
                 top_p=0.8,
                 frequency_penalty=0.2,
                 presence_penalty=0.1
