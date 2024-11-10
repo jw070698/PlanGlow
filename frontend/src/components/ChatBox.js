@@ -15,6 +15,7 @@ const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1350
 const ChatBox = () => {
   // participants id
   const [participantsId, setParticipantsId] = useState('');
+  const [isIdSubmitted, setIsIdSubmitted] = useState(false);
   // input box
   const [formData, setFormData] = useState({
     topic: '',
@@ -67,13 +68,12 @@ const ChatBox = () => {
   // Submit participantId and hide input form
   const handleParticipantIdSubmit = (e) => {
     e.preventDefault(); // Prevents page reload on form submission
-    if (participantsId.trim()) {
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { type: 'bot', text: `Welcome, Participant ID: ${participantsId}` }
-      ]);
+    
+    if (participantsId) {
+      console.log("Participant ID accepted:", participantsId);
+      setIsIdSubmitted(true);
     } else {
-      alert("Please enter a Participant ID.");
+      alert("Please enter a valid Participant ID");
     }
   };
   
@@ -221,7 +221,7 @@ const ChatBox = () => {
 
   return (
     <div style={styles.container}>
-      {!participantsId && (
+      {!isIdSubmitted ? (
         <form onSubmit={handleParticipantIdSubmit} style={styles.participantIdForm}>
           <input 
             type="text" 
@@ -230,9 +230,12 @@ const ChatBox = () => {
             onChange={handleParticipantIdChange} 
             required
           />
-          <button type="submit" onClick={() => console.log('Button clicked')}> Submit </button>
+        <button type="submit">Submit</button>
         </form>
-       )}
+      ) : (
+        <div>Welcome, Participant {participantsId}</div>
+        )}
+
       <div id="messagesContainer" style={styles.messages}>
         {messages.map((message, index) => (
           <div key={index} style={message.type === 'user' ? styles.userMessage : styles.botMessage}>
