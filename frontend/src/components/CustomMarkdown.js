@@ -131,12 +131,17 @@ const [parsedJson, setParsedJson] =  useState(null);
             return;
         }
         const jsonMatch = markdownText.match(/```json([\s\S]*?)```/);
-        try {
-            const jsonData = JSON.parse(jsonMatch[1].trim());
-            setParsedJson(jsonData);
-            console.log(jsonData);
-        } catch (error) {
-            console.error("JSON parsing error:", error);
+        if (jsonMatch && jsonMatch[1]) {
+            try {
+                // Trim any whitespace and parse JSON
+                const jsonData = JSON.parse(jsonMatch[1].trim());
+                setParsedJson(jsonData);
+                console.log("Parsed JSON:", jsonData);
+            } catch (error) {
+                console.error("JSON parsing error:", error);
+            }
+        } else {
+            console.error("No JSON code block or raw JSON found in markdownText.");
         }
     }, [markdownText]);
 
