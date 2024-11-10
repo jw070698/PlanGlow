@@ -87,8 +87,8 @@ async def generate_response(request: MessageRequest):
     #    store_messages(participantId, request.user_input, response_text) # Store user input & study plan
     #else:
     #    response_text = 'No message'
-    
-    return {"response": chat_app.chat(request.user_message)}
+    response_text = chat_app.chat(request.user_message)
+    return {"response": response_text}
 
 @app.post("/info")
 async def generate_info_response(request: InfoRequest):
