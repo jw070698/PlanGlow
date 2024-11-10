@@ -14,7 +14,7 @@ cred = credentials.Certificate("serviceAccountKey.json")
 firebase_admin.initialize_app(cred)
 
 from components.OpenAI_request import ChatApp
-from components.Database import generate_custom_id, create_session, store_messages, get_recent_messages
+from components.Database import create_session, store_messages, get_recent_messages
 from components.YouTube_request import get_search_response, get_video_info, info_to_dict, extract_video_id, get_video_thumbnail, check_resource_availability, get_video_stats
 from components.GoogleSearch_request import google_search_availability
 
