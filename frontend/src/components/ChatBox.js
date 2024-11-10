@@ -221,7 +221,6 @@ const ChatBox = () => {
 
   return (
     <div style={styles.container}>
-      {/* Participant ID Form */}
       {!participantsId && (
         <form onSubmit={handleParticipantIdSubmit} style={styles.participantIdForm}>
           <input 
@@ -231,7 +230,7 @@ const ChatBox = () => {
             onChange={handleParticipantIdChange} 
             required
           />
-          <button type="submit">Submit</button>
+          <button type="submit" onClick={() => console.log('Button clicked')}> Submit </button>
         </form>
        )}
       <div id="messagesContainer" style={styles.messages}>
