@@ -1,10 +1,8 @@
 import json
 import uuid
-from firebase_admin import firestore
+from firebase_admin import credentials, firestore
 db = firestore.client()
-# TODO: Define the session
-# update_time, session_ref = db.collection("messages").add({"history": []})
-
+print(db)
 def create_session(participant_id):
     session_ref = db.collection("messages").document(participant_id)
     session_ref.set({"history": []})
