@@ -5,7 +5,7 @@ import os
 import json
 #from dotenv import load_dotenv
 import time
-load_dotenv()
+#load_dotenv()
 api_key = os.getenv("API_KEY1")
 client = OpenAI(timeout=120.0, api_key=api_key)
 
