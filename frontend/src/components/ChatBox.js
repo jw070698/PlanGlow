@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
 import { animateScroll } from "react-scroll";
@@ -11,8 +11,11 @@ import CustomMarkdown from './CustomMarkdown';
 import Spinner from './Spinner';
 
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1350';
-// API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1350';
+
 const ChatBox = () => {
+  // participants id
+  const [participantsId, setParticipantsId] = useState('');
+  // input box
   const [formData, setFormData] = useState({
     topic: '',
     background: 'absolute beginner',
@@ -20,7 +23,6 @@ const ChatBox = () => {
     duration: { months: 0, weeks: 0, days: 0 },
     availableTime: 0,
   });
-
   const [messages, setMessages] = useState([
     { type: 'bot', text: 'Hello! Please provide the following details:', isForm: true }
   ]);
@@ -32,12 +34,10 @@ const ChatBox = () => {
   const [resourcesModalIsOpen, setResourcesModalIsOpen] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false); 
-  const [sessionId, setSessionId] = useState('');
 
   useEffect(() => {
     startNewSession(); // id
   }, []);
-
 
   useEffect(() => {
     animateScroll.scrollToBottom({
@@ -65,11 +65,27 @@ const ChatBox = () => {
 
   const startNewSession = async () => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/start_session`);
-      const newSessionId = response.data.custom_id;
-      setSessionId(newSessionId);
+    const response = await axios.post(`${API_BASE_URL}/start_session`);
     } catch (error) {
       console.error('Error starting a new session:', error);
+    }
+  };
+
+  // Handle changes for participantId input
+  const handleParticipantIdChange = (e) => {
+    setParticipantsId(e.target.value);
+  };
+
+  // Submit participantId and hide input form
+  const handleParticipantIdSubmit = (e) => {
+    e.preventDefault();
+    if (participantsId.trim()) {
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { type: 'bot', text: `Welcome, Participant ID: ${participantsId}` }
+      ]);
+    } else {
+      alert("Please enter a Participant ID.");
     }
   };
 
@@ -102,10 +118,9 @@ const ChatBox = () => {
     ]);
 
     try {
-      console.log(sessionId);
       const response = await axios.post(`${API_BASE_URL}/response`, { 
         user_message: userMessage,
-        custom_id: sessionId });
+        participantId: participantsId });
       const newResponsePlan = response.data.response;
       console.log('API Response:', newResponsePlan);
       setResponsePlan(newResponsePlan);
@@ -124,29 +139,6 @@ const ChatBox = () => {
       } finally {
         setLoading(false);
       }
-      // Replace the last bot message with the new response plan
-      /*setMessages((prevMessages) => {
-        const lastMessageIndex = prevMessages.length - 1;
-        if (prevMessages[lastMessageIndex]?.type === 'bot') {
-          return [
-            ...prevMessages.slice(0, lastMessageIndex),
-            { type: 'bot', text: newResponsePlan, isForm: false }
-          ];
-        }
-        return [
-          ...prevMessages,
-          { type: 'bot', text: newResponsePlan, isForm: false }
-        ];
-      });
-      setIsFormVisible(false);
-    } catch (error) {
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { type: 'bot', text: 'Error fetching response from OpenAI.', isForm: false }
-      ]);
-    } finally {
-      setLoading(false); // complete
-    }*/
   };
 
   const handleUserInputChange = (e) => {
@@ -164,7 +156,7 @@ const ChatBox = () => {
     try {
       const response = await axios.post(`${API_BASE_URL}/response`, { 
         user_message: userInput,
-        custom_id: sessionId });
+        participantId: participantsId });
       setResponsePlan(response.data.response);
       setMessages((prevMessages) => [
         ...prevMessages,
@@ -208,7 +200,7 @@ const ChatBox = () => {
     try {
       const response = await axios.post(`${API_BASE_URL}/search`, { 
         search_message: formData.topic, 
-        custom_id: sessionId});
+        participantId: participantsId});
 
       const items = response.data.response.items || [];
       console.log('Extracted Items Array:', items);
@@ -241,6 +233,19 @@ const ChatBox = () => {
 
   return (
     <div style={styles.container}>
+      {/* Participant ID Form */}
+      {!participantsId && (
+        <form onSubmit={handleParticipantIdSubmit} style={styles.participantIdForm}>
+          <input 
+            type="text" 
+            placeholder="Enter Participant ID" 
+            value={participantsId} 
+            onChange={handleParticipantIdChange} 
+            required
+          />
+          <button type="submit">Submit</button>
+        </form>
+      )}
       <div id="messagesContainer" style={styles.messages}>
         {messages.map((message, index) => (
           <div key={index} style={message.type === 'user' ? styles.userMessage : styles.botMessage}>
@@ -253,7 +258,7 @@ const ChatBox = () => {
                 handleResourcesClick={handleResourcesClick}
               />
             ) : (
-              <CustomMarkdown markdownText={message.text} formData={formData} setResponsePlan={setResponsePlan} sessionId={sessionId}/>
+              <CustomMarkdown markdownText={message.text} formData={formData} setResponsePlan={setResponsePlan} participantsId={participantsId}/>
             )}
           </div>
         ))}
