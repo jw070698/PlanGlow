@@ -3,8 +3,6 @@ import sys
 import os
 import json
 from dotenv import load_dotenv
-import time
-
 load_dotenv()
 api_key = os.getenv("API_KEY1")
 client = OpenAI(api_key=api_key)
@@ -63,68 +61,50 @@ class ChatApp:
                 )
             }
         ]
-
-    def chat_with_retry(self, prompt, retries=3, delay=5, **kwargs):
-        for attempt in range(retries):
-            try:
-                response = self.client.chat.completions.create(
-                    model="gpt-4o",
-                    messages=prompt,
-                    **kwargs
-                )
-                return response.choices[0].message.content
-            except Exception as e:
-                print(f"OpenAI API error on attempt {attempt + 1}: {e}")
-                if attempt < retries - 1:
-                    time.sleep(delay)  # Wait before retrying
-                else:
-                    raise
-
+    
+    # Chain of Thought
     def chat(self, message):
         self.messages.append({"role": "user", "content": message})
         try:
             # Step 1: initial response
-            initial_response = self.chat_with_retry(
-                prompt=self.messages,
+            initial_response = self.client.chat.completions.create(
+                model="gpt-4o",
+                messages=self.messages,
                 temperature=0.5,
                 top_p=0.8,
                 frequency_penalty=0.2,
                 presence_penalty=0.1
-            )
+            ).choices[0].message.content
             print("OpenAI initial response:", initial_response)
 
             # Step 2: critique of the initial response
-            critique_prompt = [
-                {"role": "system", "content": "You are an evaluator."},
-                {"role": "user", "content": f"Here's my answer: {initial_response}. Critique this response and suggest improvements."}
-            ]
-            critique_response = self.chat_with_retry(
-                prompt=critique_prompt,
+            critique_prompt = f"Here's my answer: {initial_response}. Critique this response and suggest improvements."
+            critique_response = self.client.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "system", "content": "You are an evaluator."}, {"role": "user", "content": critique_prompt}],
                 temperature=0.2
-            )
+            ).choices[0].message.content
             print("OpenAI critique response:", critique_response)
 
             # Step 3: improved response
-            improvement_prompt = [
-                {"role": "system", "content": "You are an assistant aiming to improve based on feedback."},
-                {"role": "user", "content": f"Here's the initial answer: {initial_response}. Here's the critique: {critique_response}. Now, generate an improved response based on the critique."}
-            ]
-            improved_response = self.chat_with_retry(
-                prompt=improvement_prompt,
+            improvement_prompt = f"Here's the initial answer: {initial_response}. Here's the critique: {critique_response}. Now, generate an improved response based on the critique."
+            improved_response = self.client.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "system", "content": "You are an assistant aiming to improve based on feedback."}, {"role": "user", "content": improvement_prompt}],
                 temperature=0.5,
                 top_p=0.8,
                 frequency_penalty=0.2,
                 presence_penalty=0.1
-            )
+            ).choices[0].message.content
             print("OpenAI improved response:", improved_response)
 
-            # Update messages and return final response
+            
             self.messages.append({"role": "assistant", "content": initial_response})
             self.messages.append({"role": "assistant", "content": critique_response})
             self.messages.append({"role": "assistant", "content": improved_response})
 
             return improved_response
-
+            
         except Exception as e:
             print(f"OpenAI API request error: {e}")
             return {"error": "Error occurred while communicating with the AI."}
