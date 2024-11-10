@@ -221,19 +221,19 @@ const ChatBox = () => {
 
   return (
     <div style={styles.container}>
-        {/* Participant ID Form */}
-        {!participantsId && (
-          <form onSubmit={handleParticipantIdSubmit} style={styles.participantIdForm}>
-            <input 
-              type="text" 
-              placeholder="Enter Participant ID" 
-              value={participantsId} 
-              onChange={handleParticipantIdChange} 
-              required
-            />
-            <button type="submit">Submit</button>
-          </form>
-        )}
+      {/* Participant ID Form */}
+      {!participantsId && (
+        <form onSubmit={handleParticipantIdSubmit} style={styles.participantIdForm}>
+          <input 
+            type="text" 
+            placeholder="Enter Participant ID" 
+            value={participantsId} 
+            onChange={handleParticipantIdChange} 
+            required
+          />
+          <button type="submit">Submit</button>
+        </form>
+       )}
       <div id="messagesContainer" style={styles.messages}>
         {messages.map((message, index) => (
           <div key={index} style={message.type === 'user' ? styles.userMessage : styles.botMessage}>
