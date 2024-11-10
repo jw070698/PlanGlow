@@ -120,10 +120,13 @@ async def generate_info_response(request: InfoRequest):
                         "|-------------------|-----------------------------------------------------------------------------|\n"
                         "| Absolute Beginner | - No prior programming experience.                                          |\n"
                         "|                   | - Unfamiliar with Python and data analysis concepts.                        |\n"
+                        "|-------------------|-----------------------------------------------------------------------------|\n"
                         "| Beginner          | - Basic understanding of Python syntax and simple scripts.                  |\n"
                         "|                   | - Familiar with basic data structures (lists, dictionaries).                |\n"
+                        "|-------------------|-----------------------------------------------------------------------------|\n"
                         "| Intermediate      | - Comfortable with Python libraries like Pandas and NumPy.                  |\n"
                         "|                   | - Can perform basic data manipulation and visualization.                    |\n"
+                        "|-------------------|-----------------------------------------------------------------------------|\n"
                         "| Advanced          | - Proficient in using advanced libraries (e.g., SciPy, Scikit-learn).       |\n"
                         "|                   | - Capable of complex data analysis, machine learning, and optimization.     |\n"
                     )

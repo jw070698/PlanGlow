@@ -257,8 +257,9 @@ const ChatBox = () => {
         contentLabel="Markdown Info"
         style={styles.modal}
       >
-        <button onClick={closeModal} style={styles.closeButton}>Close</button>
+        
         <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>{infoInput}</ReactMarkdown>
+        <button onClick={closeModal} style={styles.closeButton}>Close</button>
       </Modal>
 
       <Modal
