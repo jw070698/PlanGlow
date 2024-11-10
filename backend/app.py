@@ -76,15 +76,16 @@ def extract_topic(user_message):
 
 @app.post("/response")
 async def generate_response(request: MessageRequest):
+    if not request.participantId:
+        return {"error": "participantId is required"}, 422
     if request.user_message:
         participantId = request.participantId
-        print(participantId)
         response_text = chat_app.chat(request.user_message)
         store_messages(participantId, request.user_message, response_text)  # Store user message & study plan
     elif request.user_input:
         participantId = request.participantId
         response_text = chat_app.chat(request.user_input) 
-        store_messages(participantId, request.input, response_text) # Store user input & study plan
+        store_messages(participantId, request.user_input, response_text) # Store user input & study plan
     else:
         response_text = 'No message'
     return {"response": response_text}
