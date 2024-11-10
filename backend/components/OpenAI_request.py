@@ -7,7 +7,7 @@ import json
 import time
 #load_dotenv()
 api_key = os.getenv("API_KEY1")
-client = OpenAI(timeout=120.0, api_key=api_key)
+client = OpenAI(api_key=api_key)
 
 class ChatApp:
     def __init__(self):
@@ -71,6 +71,7 @@ class ChatApp:
                     messages=prompt,
                     **kwargs
                 )
+                print("chat with retry")
                 return response.choices[0].message.content
             except Exception as e:
                 print(f"OpenAI API error on attempt {attempt + 1}: {e}")
