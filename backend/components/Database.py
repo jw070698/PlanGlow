@@ -1,12 +1,18 @@
 import json
 import uuid
+import firebase_admin
 from firebase_admin import credentials, firestore
+
 db = firestore.client()
-print(db)
+
 def create_session(participant_id):
-    session_ref = db.collection("messages").document(participant_id)
-    session_ref.set({"history": []})
-    return session_ref
+    try:
+        session_ref = db.collection("messages").document(participant_id)
+        session_ref.set({"history": []})
+        print(f"Session created for participant {participant_id}.")
+        return session_ref
+    except Exception as e:
+        print(f"Error creating session for participant {participant_id}: {e}")
 
 # Get recent messages 
 '''def get_recent_messages():
@@ -37,23 +43,22 @@ def create_session(participant_id):
 
 # Store Messages 
 def store_messages(participant_id, request_message, response_message):
-    # Get session reference
     session_ref = db.collection("messages").document(participant_id)
 
-    # Add messages to session
+    # Prepare messages
     user_message = {"role": "user", "content": request_message}
     assistant_message = {"role": "assistant", "content": response_message}
+
     try:
-        # Check if the document exists
+        # Check if document exists
         if not session_ref.get().exists:
-            # If document does not exist, create it with initial history
+            # Create the document if it doesn't exist
             session_ref.set({"history": [user_message, assistant_message]})
+            print(f"New document created for participant {participant_id}.")
         else:
-            # If document exists, append to the existing history
+            # Update existing document
             session_ref.update({"history": firestore.ArrayUnion([user_message, assistant_message])})
-        
-        print("Messages stored successfully.")
-    
+            print(f"Messages appended for participant {participant_id}.")
     except Exception as e:
         print(f"Error storing messages for participant {participant_id}: {e}")
 
