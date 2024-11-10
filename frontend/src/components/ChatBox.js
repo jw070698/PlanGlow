@@ -149,6 +149,10 @@ const ChatBox = () => {
       }
   };
 
+  const handleUserInputChange = (e) => {
+    setUserInput(e.target.value);
+  };
+
   const handleUserInputSubmit = async () => {
     if (userInput.trim() === '') return;
     setMessages((prevMessages) => [
