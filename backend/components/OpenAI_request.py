@@ -1,6 +1,5 @@
 from openai import OpenAI
 from openai import OpenAIError
-
 import sys
 import os
 import json
@@ -8,7 +7,7 @@ from dotenv import load_dotenv
 import time
 load_dotenv()
 api_key = os.getenv("API_KEY1")
-client = OpenAI(api_key=api_key, timeout=90)
+client = OpenAI(timeout=120.0, api_key=api_key)
 
 class ChatApp:
     def __init__(self):
@@ -67,7 +66,7 @@ class ChatApp:
     def chat_with_retry(self, prompt, retries=3, delay=5, **kwargs):
         for attempt in range(retries):
             try:
-                response = self.client.chat.completions.create(
+                response = self.client.with_options(timeout=120.0).chat.completions.create(
                     model="gpt-4o",
                     messages=prompt,
                     **kwargs

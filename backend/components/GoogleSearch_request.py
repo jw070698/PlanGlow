@@ -4,9 +4,9 @@ from googleapiclient.discovery import build
 # pylint: disable=maybe-no-member
 import json
 import os
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 import random
-load_dotenv()
+#load_dotenv()
 cse_id = os.getenv('CSE_ID1')
 
 # Get all environment variables
