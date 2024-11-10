@@ -77,11 +77,11 @@ def extract_topic(user_message):
 @app.post("/response")
 async def generate_response(request: MessageRequest):
     if request.user_message:
-        custom_id = request.custom_id
+        custom_id = request.participantId
         response_text = chat_app.chat(request.user_message)
         store_messages(custom_id, request.user_message, response_text)  # Store user message & study plan
     elif request.user_input:
-        custom_id = request.custom_id
+        custom_id = request.participantId
         response_text = chat_app.chat(request.user_input) 
         store_messages(custom_id, request.input, response_text) # Store user input & study plan
     else:
