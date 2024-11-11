@@ -236,56 +236,6 @@ const getImprovedResponse = async () => {
     }
   };*/
 
-  const getInitialResponse = async (userMessage) => {
-    try {
-        const response = await axios.post(`${API_BASE_URL}/response`, {
-            user_message: userMessage,
-            participantId: participantsId
-        });
-        const newResponsePlan = response.data.response;
-        setMessages((prevMessages) => [
-            ...prevMessages,
-            { type: 'bot', text: newResponsePlan, isForm: false }
-        ]);
-        return newResponsePlan;
-    } catch (error) {
-        console.error('Error getting initial response:', error);
-        return null;
-    }
-};
-
-  // step 2
-  const getCritiqueResponse = async () => {
-    try {
-        const response = await axios.post(`${API_BASE_URL}/response/critique`, {
-            participantId: participantsId
-        });
-        const critiquePlan = response.data.response;
-        setMessages((prevMessages) => [
-            ...prevMessages,
-            { type: 'bot', text: "Critique generated. Refining response...", isForm: false }
-        ]);
-        return critiquePlan;
-    } catch (error) {
-        console.error('Error getting critique response:', error);
-        return null;
-    }
-};
-
-  // step 3
-  const getImprovedResponse = async () => {
-    try {
-        const response = await axios.post(`${API_BASE_URL}/response/improved`, {
-            participantId: participantsId
-        });
-        const improvedPlan = response.data.response;
-        return improvedPlan;
-    } catch (error) {
-        console.error('Error getting improved response:', error);
-        return null;
-    }
-};
-
   const handleUserInputChange = (e) => {
     setUserInput(e.target.value);
   };
