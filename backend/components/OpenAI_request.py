@@ -104,7 +104,40 @@ class ChatApp:
     def get_improved_response(self, initial_response, critique_response):
         improvement_prompt = [
             {"role": "system", "content": "You are an assistant aiming to improve based on feedback."},
-            {"role": "user", "content": f"Here's the initial answer: {initial_response}. Here's the critique: {critique_response}. Now, generate an improved response based on the critique. Return study plan in json type."}
+            {"role": "user", "content": 
+            f"Here's the initial answer: {initial_response}. Here's the critique: {critique_response}. \n"
+            "Now, generate an improved response based on the critique. Return study plan in json type. \n"
+            "Use the following structure for your JSON output:\n"
+                    "{\n"
+                    "  'studyPlan_Overview': {\n"
+                    "    'Week1': 'Overview of topics for week 1',\n"
+                    "    ...\n"
+                    "  },\n"
+                    "  'studyPlan': {\n"
+                    "    'Week 1: Introduction to Python': [\n"
+                    "      {\n"
+                    "        'day': 'Day 1',\n"
+                    "        'topic': 'specific topic',\n"
+                    "        'Time': 'x hours',\n"
+                    "        'resources': {\n"
+                    "          'YouTube': [\n"
+                    "            {\n"
+                    "              'title': 'Advanced OOP Concepts in Python',\n"
+                    "              'link': 'https://youtu.be/BJ-VvGyQxho'\n"
+                    "            },\n"
+                    "            { ... }\n"
+                    "          ],\n"
+                    "          'Articles': [\n"
+                    "            { 'title': 'Introduction to Python', 'link': '...' }\n"
+                    "          ]\n"
+                    "        }\n"
+                    "      },\n"
+                    "      ...\n"
+                    "    ]\n"
+                    "  }\n"
+                    "}\n"
+                    "\n\n"
+                    "Once you complete your reasoning, output only the JSON format without any extra comments or formatting."}
         ]
         return self.chat_with_retry(improvement_prompt, temperature=0.0, top_p=0.8, frequency_penalty=0.2, presence_penalty=0.1)
 
