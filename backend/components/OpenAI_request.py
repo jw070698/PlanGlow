@@ -83,50 +83,29 @@ class ChatApp:
 
     def chat(self, message):
         self.messages.append({"role": "user", "content": message})
-        try:
-            # Step 1: initial response
-            initial_response = self.chat_with_retry(
-                prompt=self.messages,
-                temperature=0.0,
-                top_p=0.8,
-                frequency_penalty=0.2,
-                presence_penalty=0.1
-            )
-            print("OpenAI initial response:", initial_response)
-            
-            # Step 2: critique of the initial response
-            critique_prompt = [
-                {"role": "system", "content": "You are an evaluator."},
-                {"role": "user", "content": f"Here's my answer: {initial_response}. Critique this response and suggest improvements."}
-            ]
-            critique_response = self.chat_with_retry(
-                prompt=critique_prompt,
-                temperature=0.0
-            )
-            print("OpenAI critique response:", critique_response)
-            
-            # Step 3: improved response
-            improvement_prompt = [
-                {"role": "system", "content": "You are an assistant aiming to improve based on feedback."},
-                {"role": "user", "content": f"Here's the initial answer: {initial_response}. Here's the critique: {critique_response}. Now, generate an improved response based on the critique."}
-            ]
-            improved_response = self.chat_with_retry(
-                prompt=improvement_prompt,
-                temperature=0.0,
-                top_p=0.8,
-                frequency_penalty=0.2,
-                presence_penalty=0.1
-            )
-            print("OpenAI improved response:", improved_response)
-            
-            # Update messages and return final response
-            #self.messages.append({"role": "assistant", "content": initial_response})
-            
-            #self.messages.append({"role": "assistant", "content": critique_response})
-            #self.messages.append({"role": "assistant", "content": improved_response})
-            
-            return initial_response, critique_response, improved_response
+        # Step 1: initial response
+        initial_response = self.chat_with_retry(
+            prompt=self.messages,
+            temperature=0.0,
+            top_p=0.8,
+            frequency_penalty=0.2,
+            presence_penalty=0.1
+        )
+        print("OpenAI initial response:", initial_response)
+        return initial_response
 
-        except Exception as e:
-            print(f"OpenAI API request error: {e}")
-            return {"error": "Error occurred while communicating with the AI."}
+    def get_critique_response(self, initial_response):
+        critique_prompt = [
+            {"role": "system", "content": "You are an evaluator."},
+            {"role": "user", "content": f"Here's my answer: {initial_response}. Critique this response and suggest improvements."}
+        ]
+        return self.chat_with_retry(critique_prompt, temperature=0.0)
+
+    def get_improved_response(self, initial_response, critique_response):
+        improvement_prompt = [
+            {"role": "system", "content": "You are an assistant aiming to improve based on feedback."},
+            {"role": "user", "content": f"Here's the initial answer: {initial_response}. Here's the critique: {critique_response}. Now, generate an improved response based on the critique."}
+        ]
+        return self.chat_with_retry(improvement_prompt, temperature=0.0, top_p=0.8, frequency_penalty=0.2, presence_penalty=0.1)
+
+        

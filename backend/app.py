@@ -13,7 +13,7 @@ cred = credentials.Certificate("serviceAccountKey.json")
 
 firebase_admin.initialize_app(cred)
 
-from components.OpenAI_request import ChatApp
+from components.OpenAI_request import ChatApp, get_critique_response, get_improved_response
 from components.Database import db, create_session, store_messages, get_recent_messages
 from components.YouTube_request import get_search_response, get_video_info, info_to_dict, extract_video_id, get_video_thumbnail, check_resource_availability, get_video_stats
 from components.GoogleSearch_request import google_search_availability
@@ -89,25 +89,32 @@ async def generate_response(request: MessageRequest):
         user_message = request.user_message or request.user_input
         if not user_message:
             raise HTTPException(status_code=400, detail="No message provided")
-
+        
+        # Step 1
         # Generate response and store it
-        response_text = chat_app.chat(user_message)
-        if not response_text:
+        initial_response = chat_app.chat(user_message)
+        if not initial_response:
             raise HTTPException(status_code=500, detail="No response received from OpenAI")
 
         # Store the message and response in Firestore (append to history)
-        #store_messages(participantId, user_message, response_text)
-        # Generate responses from each step
-        initial_response, critique_response, improved_response = chat_app.chat(user_message)
-        if not improved_response:
-            raise HTTPException(status_code=500, detail="No response received from OpenAI")
-
-        # Store each step in Firestore under participantId
         store_messages(participantId, user_message, initial_response)
-        store_messages(participantId, "Critique", critique_response)
-        store_messages(participantId, "Improved Response", improved_response)
+        print("Stored initial response:", initial_response)
+
+        # Step 2
+        critique_response = chat_app.get_critique_response(initial_response)
+        if critique_response:
+            store_messages(participantId, "Critique of Initial Response", critique_response)
+            print("Stored critique response:", critique_response)
         
-        return {"response": improved_response}
+        # Step 3
+        improved_response = chat_app.get_improved_response(initial_response, critique_response)
+        if improved_response:
+            store_messages(participantId, "Improved Response", improved_response)
+            print("Stored improved response:", improved_response)
+        
+        response_text = improved_response
+        return {"response": response_text}
+
     except HTTPException as http_err:
         print(f"HTTP error occurred: {http_err}")
         raise
