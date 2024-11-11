@@ -67,7 +67,7 @@ class ChatApp:
 
     def generate_response(self, prompt, **kwargs):
         try:
-            response = self.client.with_options(timeout=240.0).chat.completions.create(
+            response = self.client.with_options(timeout=300.0).chat.completions.create(
                 model="gpt-4o",
                 messages=prompt,
                 **kwargs
@@ -116,7 +116,13 @@ class ChatApp:
             f"Here's my answer: {initial_response}. \n"
             "Critique this response and suggest improvements focusing on disciplinary core ideas, crosscutting concepts and scientific practices examining phenomena."}
         ]
-        return self.generate_response(critique_prompt, temperature=0.0)
+        try:
+            critique_text = self.generate_response(critique_prompt, temperature=0.0)
+            print("Critique response:", critique_text)
+            return critique_text
+        except Exception as e:
+            print(f"Error during critique generation: {e}")
+            return "An error occurred while generating the critique."
 
     # step 3 improved response
     def get_improved_response(self, initial_response, critique_response):
