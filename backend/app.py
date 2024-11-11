@@ -78,6 +78,7 @@ async def generate_response(request: MessageRequest):
         participantId = request.participantId
         # Check if session exists; if not, create a new session
         session_ref = db.collection("messages").document(participantId)
+        print("session_ref",session_ref)
         if not session_ref.get().exists:
             create_session(participantId)
             print("Session created for", participantId)
