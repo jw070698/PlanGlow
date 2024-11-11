@@ -66,7 +66,7 @@ class ChatApp:
     def chat_with_retry(self, prompt, retries=3, delay=5, **kwargs):
         for attempt in range(retries):
             try:
-                response = self.client.with_options(timeout=120.0).chat.completions.create(
+                response = self.client.with_options(timeout=240.0).chat.completions.create(
                     model="gpt-4o",
                     messages=prompt,
                     **kwargs
@@ -97,7 +97,9 @@ class ChatApp:
     def get_critique_response(self, initial_response):
         critique_prompt = [
             {"role": "system", "content": "You are an evaluator."},
-            {"role": "user", "content": f"Here's my answer: {initial_response}. Critique this response and suggest improvements."}
+            {"role": "user", "content": 
+            f"Here's my answer: {initial_response}. \n"
+            "Critique this response and suggest improvements based on Garrison's Model of Self-Directed Learning."}
         ]
         return self.chat_with_retry(critique_prompt, temperature=0.0)
 
