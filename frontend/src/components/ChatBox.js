@@ -114,6 +114,47 @@ const ChatBox = () => {
     setMessages((prevMessages) => [...prevMessages, { type: 'user', text: userMessage }]);
 
     try {
+        const combinedResponse = await getCombinedResponse(userMessage);
+        if (!combinedResponse) throw new Error('Failed to get combined response');
+
+        setResponsePlan(combinedResponse);
+        setMessages((prevMessages) => [
+            ...prevMessages,
+            { type: 'bot', text: combinedResponse, isForm: false }
+        ]);
+
+        setIsFormVisible(false);
+    } catch (error) {
+        setMessages((prevMessages) => [
+            ...prevMessages,
+            { type: 'bot', text: 'Error fetching response.', isForm: false }
+        ]);
+    } finally {
+        setLoading(false);
+    }
+};
+
+const getCombinedResponse = async (userMessage) => {
+    try {
+        const response = await axios.post(`${API_BASE_URL}/response/combined`, {
+            user_message: userMessage,
+            participantId: participantsId
+        });
+        return response.data.response;
+    } catch (error) {
+        console.error('Error getting combined response:', error);
+        return null;
+    }
+};
+
+/*
+  const handleFormSubmit = async () => {
+    setLoading(true);
+    const { topic, background, duration, availableTime } = formData;
+    const userMessage = `Create a study plan for a ${background} student on ${topic} using YouTube over ${duration.months} months, ${duration.weeks} weeks, and ${duration.days} days with ${availableTime} hours available per day.`;
+    setMessages((prevMessages) => [...prevMessages, { type: 'user', text: userMessage }]);
+
+    try {
         // Step 1: Initial response
         const initialResponse = await getInitialResponse(userMessage);
         if (!initialResponse) throw new Error('Failed to get initial response');
@@ -150,29 +191,21 @@ const getInitialResponse = async (userMessage) => {
             participantId: participantsId
         });
         const newResponsePlan = response.data.response;
-        /*
-        setMessages((prevMessages) => [
-            ...prevMessages,
-            { type: 'bot', text: newResponsePlan, isForm: false }
-        ]);*/
         return newResponsePlan;
     } catch (error) {
         console.error('Error getting initial response:', error);
         return null;
     }
 };
+*/
 
+/*
 const getCritiqueResponse = async () => {
     try {
         const response = await axios.post(`${API_BASE_URL}/response/critique`, {
             participantId: participantsId
         });
         const critiquePlan = response.data.response;
-        /*
-        setMessages((prevMessages) => [
-            ...prevMessages,
-            { type: 'bot', text: "Critique generated. Refining response...", isForm: false }
-        ]);*/
         return critiquePlan;
     } catch (error) {
         console.error('Error getting critique response:', error);
@@ -192,7 +225,7 @@ const getImprovedResponse = async () => {
         return null;
     }
 };
-
+*/
 /*
   const handleFormSubmit = async () => {
     setLoading(true);
