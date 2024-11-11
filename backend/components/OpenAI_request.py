@@ -111,8 +111,7 @@ class ChatApp:
     # step 2 critique
     def get_critique_response(self, parsed_json):
         critique_prompt = [
-            {"role": "system", "content": "You are an evaluator."},
-            {"role": "user", "content": 
+            {"role": "system", "content": "You are an evaluator.\n"
             f"Here's my initial study plan response: {parsed_json}. \n"
             "Critique this response and suggest improvements focusing on disciplinary core ideas, crosscutting concepts and scientific practices examining phenomena. \n"
             "Please provide a short improvements of this response. Focus only on the main areas for improvement in 2-3 sentences. \n"
@@ -130,8 +129,7 @@ class ChatApp:
     # step 3 improved response
     def get_improved_response(self, parsed_json, critique_response):
         improvement_prompt = [
-            {"role": "system", "content": "You are an assistant aiming to improve based on feedback."},
-            {"role": "user", "content": 
+            {"role": "system", "content": "You are an assistant aiming to improve based on feedback. \n"
             f"Here's the initial answer: {parsed_json}. Here's the critique: {critique_response}. \n"
             "Now, generate an improved response based on the critique. Return study plan in json type. \n"
             "Make sure the following criteria are met:\n"
