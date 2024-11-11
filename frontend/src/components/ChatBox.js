@@ -114,6 +114,91 @@ const ChatBox = () => {
     setMessages((prevMessages) => [...prevMessages, { type: 'user', text: userMessage }]);
 
     try {
+        // Step 1: Initial response
+        const initialResponse = await getInitialResponse(userMessage);
+        if (!initialResponse) throw new Error('Failed to get initial response');
+
+        // Step 2: Critique response
+        const critiqueResponse = await getCritiqueResponse();
+        if (!critiqueResponse) throw new Error('Failed to get critique response');
+
+        // Step 3: Improved response
+        const improvedResponse = await getImprovedResponse();
+        if (!improvedResponse) throw new Error('Failed to get improved response');
+
+        setResponsePlan(improvedResponse);
+        setMessages((prevMessages) => [
+            ...prevMessages,
+            { type: 'bot', text: improvedResponse, isForm: false }
+        ]);
+
+        setIsFormVisible(false);
+    } catch (error) {
+        setMessages((prevMessages) => [
+            ...prevMessages,
+            { type: 'bot', text: 'Error fetching response from OpenAI.', isForm: false }
+        ]);
+    } finally {
+        setLoading(false);
+    }
+};
+
+const getInitialResponse = async (userMessage) => {
+    try {
+        const response = await axios.post(`${API_BASE_URL}/response`, {
+            user_message: userMessage,
+            participantId: participantsId
+        });
+        const newResponsePlan = response.data.response;
+        setMessages((prevMessages) => [
+            ...prevMessages,
+            { type: 'bot', text: newResponsePlan, isForm: false }
+        ]);
+        return newResponsePlan;
+    } catch (error) {
+        console.error('Error getting initial response:', error);
+        return null;
+    }
+};
+
+const getCritiqueResponse = async () => {
+    try {
+        const response = await axios.post(`${API_BASE_URL}/response/critique`, {
+            participantId: participantsId
+        });
+        const critiquePlan = response.data.response;
+        setMessages((prevMessages) => [
+            ...prevMessages,
+            { type: 'bot', text: "Critique generated. Refining response...", isForm: false }
+        ]);
+        return critiquePlan;
+    } catch (error) {
+        console.error('Error getting critique response:', error);
+        return null;
+    }
+};
+
+const getImprovedResponse = async () => {
+    try {
+        const response = await axios.post(`${API_BASE_URL}/response/improved`, {
+            participantId: participantsId
+        });
+        const improvedPlan = response.data.response;
+        return improvedPlan;
+    } catch (error) {
+        console.error('Error getting improved response:', error);
+        return null;
+    }
+};
+
+/*
+  const handleFormSubmit = async () => {
+    setLoading(true);
+    const { topic, background, duration, availableTime } = formData;
+    const userMessage = `Create a study plan for a ${background} student on ${topic} using YouTube over ${duration.months} months, ${duration.weeks} weeks, and ${duration.days} days with ${availableTime} hours available per day.`;
+    setMessages((prevMessages) => [...prevMessages, { type: 'user', text: userMessage }]);
+
+    try {
       const response = await axios.post(`${API_BASE_URL}/response`, { 
         user_message: userMessage,
         participantId: participantsId 
@@ -142,14 +227,64 @@ const ChatBox = () => {
         ...prevMessages,
         { type: 'bot', text: improvedPlan, isForm: false }
       ]);
-      
+
       setIsFormVisible(false);
     } catch (error) {
       setMessages((prevMessages) => [...prevMessages, { type: 'bot', text: 'Error fetching response from OpenAI.', isForm: false }]);
     } finally {
       setLoading(false);
     }
-  };
+  };*/
+
+  const getInitialResponse = async (userMessage) => {
+    try {
+        const response = await axios.post(`${API_BASE_URL}/response`, {
+            user_message: userMessage,
+            participantId: participantsId
+        });
+        const newResponsePlan = response.data.response;
+        setMessages((prevMessages) => [
+            ...prevMessages,
+            { type: 'bot', text: newResponsePlan, isForm: false }
+        ]);
+        return newResponsePlan;
+    } catch (error) {
+        console.error('Error getting initial response:', error);
+        return null;
+    }
+};
+
+  // step 2
+  const getCritiqueResponse = async () => {
+    try {
+        const response = await axios.post(`${API_BASE_URL}/response/critique`, {
+            participantId: participantsId
+        });
+        const critiquePlan = response.data.response;
+        setMessages((prevMessages) => [
+            ...prevMessages,
+            { type: 'bot', text: "Critique generated. Refining response...", isForm: false }
+        ]);
+        return critiquePlan;
+    } catch (error) {
+        console.error('Error getting critique response:', error);
+        return null;
+    }
+};
+
+  // step 3
+  const getImprovedResponse = async () => {
+    try {
+        const response = await axios.post(`${API_BASE_URL}/response/improved`, {
+            participantId: participantsId
+        });
+        const improvedPlan = response.data.response;
+        return improvedPlan;
+    } catch (error) {
+        console.error('Error getting improved response:', error);
+        return null;
+    }
+};
 
   const handleUserInputChange = (e) => {
     setUserInput(e.target.value);
