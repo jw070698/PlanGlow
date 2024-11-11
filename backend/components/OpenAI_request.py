@@ -109,14 +109,14 @@ class ChatApp:
             return {"error": "An error occurred while generating the response."} 
 
     # step 2 critique
-    def get_critique_response(self, initial_response):
+    def get_critique_response(self, parsed_json):
         critique_prompt = [
             {"role": "system", "content": "You are an evaluator."},
             {"role": "user", "content": 
-            f"Here's my initial study plan response: {initial_response}. \n"
+            f"Here's my initial study plan response: {parsed_json}. \n"
             "Critique this response and suggest improvements focusing on disciplinary core ideas, crosscutting concepts and scientific practices examining phenomena. \n"
-            "Please provide a short critique of this response. Focus only on the main areas for improvement in 2-3 sentences. \n"
-            "Make sure the critique is concise, constructive, and avoids unnecessary detail. \n"
+            "Please provide a short improvements of this response. Focus only on the main areas for improvement in 2-3 sentences. \n"
+            "Make sure the suggestion is concise, constructive, and avoids unnecessary detail. \n"
             "Study materials only accepted YouTube resources."}
         ]
         try:
