@@ -121,6 +121,28 @@ const ChatBox = () => {
       const newResponsePlan = response.data.response;
       setResponsePlan(newResponsePlan);
       setMessages((prevMessages) => [...prevMessages, { type: 'bot', text: newResponsePlan, isForm: false }]);
+      
+      // step 2
+      const critiqueResponse = await axios.post(`${API_BASE_URL}/response/critique`, {
+        participantId: participantsId
+      });
+      const critiquePlan = critiqueResponse.data.response;
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { type: 'bot', text: "Critique generated. Refining response...", isForm: false }
+      ]);
+
+      // step 3
+      const improvedResponse = await axios.post(`${API_BASE_URL}/response/improved`, {
+        participantId: participantsId
+      });
+      const improvedPlan = improvedResponse.data.response;
+      setResponsePlan(improvedPlan);
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { type: 'bot', text: improvedPlan, isForm: false }
+      ]);
+      
       setIsFormVisible(false);
     } catch (error) {
       setMessages((prevMessages) => [...prevMessages, { type: 'bot', text: 'Error fetching response from OpenAI.', isForm: false }]);

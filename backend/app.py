@@ -78,7 +78,7 @@ async def generate_response(request: MessageRequest):
         participantId = request.participantId
         # Check if session exists; if not, create a new session
         session_ref = db.collection("messages").document(participantId)
-        print("session_ref",session_ref)
+
         if not session_ref.get().exists:
             create_session(participantId)
             print("Session created for", participantId)
@@ -92,36 +92,57 @@ async def generate_response(request: MessageRequest):
         
         # Step 1
         # Generate response and store it
-        initial_response = chat_app.chat(user_message)
-        if not initial_response:
+        response_text = chat_app.chat(user_message)
+        if not response_text:
             raise HTTPException(status_code=500, detail="No response received from OpenAI")
         
         # Store the message and response in Firestore (append to history)
-        store_messages(participantId, user_message, initial_response)
-        print("Stored initial response:", initial_response)
+        store_messages(participantId, user_message, response_text)
+        print("Stored initial response:", response_text)
 
-        # Step 2
-        critique_response = chat_app.get_critique_response(initial_response)
-        if critique_response:
-            store_messages(participantId, "Critique of Initial Response", critique_response)
-            print("Stored critique response:", critique_response)
-        
-        # Step 3
-        improved_response = chat_app.get_improved_response(initial_response, critique_response)
-        if improved_response:
-            store_messages(participantId, "Improved Response", improved_response)
-            print("Stored improved response:", improved_response)
-        
-        response_text = improved_response
         return {"response": response_text}
 
-    except HTTPException as http_err:
-        print(f"HTTP error occurred: {http_err}")
-        raise
     except Exception as e:
         # General error logging
         print(f"Unexpected error occurred in /response endpoint: {e}")
         raise HTTPException(status_code=500, detail="Failed to generate response")
+
+@app.post("/response/critique")
+async def generate_critique_response(request: MessageRequest):
+    try:
+        participantId = request.participantId
+        initial_response = get_recent_messages(participantId)[-1]['content']  # Get the last message if stored
+
+        critique_response = chat_app.get_critique_response(initial_response)
+        if critique_response:
+            store_messages(participantId, "Critique of Initial Response", critique_response)
+            print("Stored critique response:", critique_response)
+
+        return {"response": critique_response}
+
+    except Exception as e:
+        print(f"Error in critique response: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate critique response")
+
+@app.post("/response/improved")
+async def generate_improved_response(request: MessageRequest):
+    try:
+        participantId = request.participantId
+        messages = get_recent_messages(participantId)
+        initial_response = messages[-2]['content']  # Assuming the last two entries are initial and critique
+        critique_response = messages[-1]['content']
+
+        improved_response = chat_app.get_improved_response(initial_response, critique_response)
+        if improved_response:
+            store_messages(participantId, "Improved Response", improved_response)
+            print("Stored improved response:", improved_response)
+
+        return {"response": improved_response}
+
+    except Exception as e:
+        print(f"Error in improved response: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate improved response")
+
 
 @app.post("/info")
 async def generate_info_response(request: InfoRequest):
