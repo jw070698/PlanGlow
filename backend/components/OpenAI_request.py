@@ -129,14 +129,27 @@ class ChatApp:
 
     # step 3 improved response
     def get_improved_response(self, parsed_json, critique_response):
+        parsed_json_str = json.dumps(parsed_json)
+        critique_str = critique_response.strip()
         improvement_prompt = [
-            {"role": "system", "content": "You are an assistant aiming to improve based on feedback. \n"
-            f"Here's the initial answer: {parsed_json}. Here's the critique: {critique_response}. \n"
-            "Based on the critique, make the necessary improvements to the study plan. "
-            "Keep the original structure, but modify or enhance only the areas mentioned in the critique. "
-            "Output the improved study plan in JSON format with 'studyPlan_Overview' and 'studyPlan' sections. "
-            "Please avoid any additional comments, explanations, or formatting beyond the JSON structure."}
-        ]
+        {
+            "role": "system",
+            "content": (
+                "You are an assistant improving a study plan based on the following critique. "
+                "Please use the existing structure in 'studyPlan_Overview' and 'studyPlan' sections, "
+                "and avoid additional comments or explanations."
+            )
+        },
+        {
+            "role": "user",
+            "content": (
+                f"Initial Study Plan (keep structure):\n{parsed_json_str}\n\n"
+                f"Critique Summary:\n{critique_str}\n\n"
+                "Make necessary improvements according to the critique. "
+                "Output the improved study plan in valid JSON format, using only 'studyPlan_Overview' and 'studyPlan'."
+            )
+        }
+    ]
         return self.generate_response(improvement_prompt, temperature=0.0, top_p=0.8, frequency_penalty=0.2, presence_penalty=0.1)
 
         
