@@ -72,7 +72,16 @@ class ChatApp:
                     **kwargs
                 )
                 print("chat with retry")
-                return response.choices[0].message.content
+                response_text = response.choices[0].message.content
+
+                # Try to load the response as JSON
+                try:
+                    json_response = json.loads(response_text)
+                    print("Valid JSON response:", json_response)
+                    return json_response  # Return parsed JSON
+                except json.JSONDecodeError:
+                    print("Response is not valid JSON, retrying...")
+
             except Exception as e:
                 print(f"OpenAI API error on attempt {attempt + 1}: {e}")
                 if attempt < retries - 1:
