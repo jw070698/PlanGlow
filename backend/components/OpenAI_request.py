@@ -87,21 +87,25 @@ class ChatApp:
     def chat(self, message):
         self.messages.append({"role": "user", "content": message})
         # Step 1: initial response
-        initial_response = self.chat_with_retry(
-            prompt=self.messages,
-            temperature=0.0,
-            top_p=0.8,
-            frequency_penalty=0.2,
-            presence_penalty=0.1
-        )
-        print("OpenAI initial response:", initial_response)
         try:
-            json_response = json.loads(initial_response)
-            print("Parsed JSON response:", json_response)
-            return json_response
-        except json.JSONDecodeError:
-            print("Response is not valid JSON, returning raw response.")
-            return initial_response
+            initial_response = self.chat_with_retry(
+                prompt=self.messages,
+                temperature=0.0,
+                top_p=0.8,
+                frequency_penalty=0.2,
+                presence_penalty=0.1
+            )
+            print("OpenAI initial response:", initial_response)
+            try:
+                json_response = json.loads(initial_response)
+                print("Parsed JSON response:", json_response)
+                return json_response
+            except json.JSONDecodeError:
+                print("Response is not valid JSON, returning raw response.")
+                return initial_response
+        except Exception as e:
+            print(f"Unexpected error in chat method: {e}")
+            return "An error occurred while generating the response."
 
     # step 2 critique
     def get_critique_response(self, initial_response):
