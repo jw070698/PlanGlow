@@ -96,9 +96,18 @@ async def generate_response(request: MessageRequest):
             raise HTTPException(status_code=500, detail="No response received from OpenAI")
 
         # Store the message and response in Firestore (append to history)
-        store_messages(participantId, user_message, response_text)
+        #store_messages(participantId, user_message, response_text)
+        # Generate responses from each step
+        initial_response, critique_response, improved_response = chat_app.chat(user_message)
+        if not improved_response:
+            raise HTTPException(status_code=500, detail="No response received from OpenAI")
+
+        # Store each step in Firestore under participantId
+        store_messages(participantId, user_message, initial_response)
+        store_messages(participantId, "Critique", critique_response)
+        store_messages(participantId, "Improved Response", improved_response)
         
-        return {"response": response_text}
+        return {"response": improved_response}
     except HTTPException as http_err:
         print(f"HTTP error occurred: {http_err}")
         raise

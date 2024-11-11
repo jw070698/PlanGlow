@@ -104,7 +104,7 @@ class ChatApp:
                 temperature=0.0
             )
             print("OpenAI critique response:", critique_response)
-            '''
+            
             # Step 3: improved response
             improvement_prompt = [
                 {"role": "system", "content": "You are an assistant aiming to improve based on feedback."},
@@ -118,14 +118,14 @@ class ChatApp:
                 presence_penalty=0.1
             )
             print("OpenAI improved response:", improved_response)
-            '''
-            # Update messages and return final response
-            self.messages.append({"role": "assistant", "content": initial_response})
             
-            self.messages.append({"role": "assistant", "content": critique_response})
+            # Update messages and return final response
+            #self.messages.append({"role": "assistant", "content": initial_response})
+            
+            #self.messages.append({"role": "assistant", "content": critique_response})
             #self.messages.append({"role": "assistant", "content": improved_response})
             
-            return initial_response
+            return initial_response, critique_response, improved_response
 
         except Exception as e:
             print(f"OpenAI API request error: {e}")
