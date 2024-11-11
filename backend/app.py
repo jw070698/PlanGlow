@@ -85,17 +85,19 @@ async def generate_response(request: MessageRequest):
         else:
             print("Session already exists for", participantId)
         
-        if request.user_message:
-            response_text = chat_app.chat(request.user_message)
-            store_messages(participantId, request.user_message, response_text)  # Store user message & study plan
-        elif request.user_input:
-            response_text = chat_app.chat(request.user_input) 
-            store_messages(participantId, request.user_input, response_text) # Store user input & study plan
-        else:
-            response_text = 'No message'
+        # Handle user message input
+        user_message = request.user_message or request.user_input
+        if not user_message:
+            raise HTTPException(status_code=400, detail="No message provided")
+
+        # Generate response and store it
+        response_text = chat_app.chat(user_message)
         if not response_text:
             raise HTTPException(status_code=500, detail="No response received from OpenAI")
 
+        # Store the message and response in Firestore (append to history)
+        store_messages(participantId, user_message, response_text)
+        
         return {"response": response_text}
     except HTTPException as http_err:
         print(f"HTTP error occurred: {http_err}")
