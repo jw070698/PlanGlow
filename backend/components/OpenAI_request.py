@@ -66,9 +66,9 @@ class ChatApp:
             }
         ]
 
-    async def generate_response(self, prompt, **kwargs):
+    def generate_response(self, prompt, **kwargs):
         try:
-            response = await self.client.with_options(timeout=300.0).chat.completions.create(
+            response = self.client.with_options(timeout=300.0).chat.completions.create(
                 model="gpt-4o",
                 messages=prompt,
                 **kwargs
@@ -81,10 +81,10 @@ class ChatApp:
             return None
 
 
-    async def chat(self, message):
+    def chat(self, message):
         self.messages.append({"role": "user", "content": message})
         # Step 1: initial response
-        initial_response = await self.generate_response(
+        initial_response = self.generate_response(
             prompt=self.messages,
             temperature=0.0,
             top_p=0.8,
@@ -111,7 +111,7 @@ class ChatApp:
 
 
     # step 2 critique
-    async def get_critique_response(self, parsed_json):
+    def get_critique_response(self, parsed_json):
         critique_prompt = [
             {"role": "system", "content": "You are an evaluator.\n"
             f"Here's my initial study plan response: {parsed_json}. \n"
@@ -121,7 +121,7 @@ class ChatApp:
             "Study materials only accepted YouTube resources."}
         ]
         try:
-            critique_text = await self.generate_response(critique_prompt, temperature=0.0)
+            critique_text = self.generate_response(critique_prompt, temperature=0.0)
             print("Critique response:", critique_text)
             return critique_text
         except Exception as e:
@@ -129,7 +129,7 @@ class ChatApp:
             return "An error occurred while generating the critique."
 
     # step 3 improved response
-    async def get_improved_response(self, parsed_json, critique_response):
+    def get_improved_response(self, parsed_json, critique_response):
         parsed_json_str = json.dumps(parsed_json)
         critique_str = critique_response.strip()
         improvement_prompt = [
@@ -151,6 +151,6 @@ class ChatApp:
             )
         }
     ]
-        return await self.generate_response(improvement_prompt, temperature=0.0, top_p=0.8, frequency_penalty=0.2, presence_penalty=0.1)
+        return self.generate_response(improvement_prompt, temperature=0.0, top_p=0.8, frequency_penalty=0.2, presence_penalty=0.1)
 
         

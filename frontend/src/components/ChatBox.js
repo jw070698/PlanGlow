@@ -158,8 +158,6 @@ const getInitialResponse = async (userMessage) => {
     }
 };
 
-
-
 const getCritiqueResponse = async () => {
     try {
         const response = await axios.post(`${API_BASE_URL}/response/critique`, {
