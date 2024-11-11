@@ -94,21 +94,27 @@ class ChatApp:
         print("OpenAI initial response:", initial_response)
         return initial_response
 
+    # step 2 critique
     def get_critique_response(self, initial_response):
         critique_prompt = [
             {"role": "system", "content": "You are an evaluator."},
             {"role": "user", "content": 
             f"Here's my answer: {initial_response}. \n"
-            "Critique this response and suggest improvements based on Garrison's Model of Self-Directed Learning."}
+            "Critique this response and suggest improvements focusing on disciplinary core ideas, crosscutting concepts and scientific practices examining phenomena."}
         ]
         return self.chat_with_retry(critique_prompt, temperature=0.0)
 
+    # step 3 improved response
     def get_improved_response(self, initial_response, critique_response):
         improvement_prompt = [
             {"role": "system", "content": "You are an assistant aiming to improve based on feedback."},
             {"role": "user", "content": 
             f"Here's the initial answer: {initial_response}. Here's the critique: {critique_response}. \n"
             "Now, generate an improved response based on the critique. Return study plan in json type. \n"
+            "Make sure the following criteria are met:\n"
+                    "1. Each week should contain 5 study days, and each month should have 4 weeks.\n"
+                    "2. Use a consistent JSON format, separating 'studyPlan_Overview' and 'studyPlan' for easier parsing later. "
+                    "Show only valid JSON results without additional explanations or formatting.\n"
             "Use the following structure for your JSON output:\n"
                     "{\n"
                     "  'studyPlan_Overview': {\n"
