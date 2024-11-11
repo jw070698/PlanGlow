@@ -113,8 +113,7 @@ class ChatApp:
         {"role": "system", "content": "You are an evaluator and assistant with expertise in creating study plans."},
         {"role": "user", "content": (
             f"Here's the initial study plan response: {parsed_json}. \n"
-            "First, critique this response and suggest concise improvements in 2-3 sentences, focusing on the main areas where it can be improved. "
-            "After the critique, make the necessary improvements to the study plan. "
+            "First, critique this plan and update it based on suggestion which has concise improvements in 2-3 sentences, focusing on the main areas where it can be improved. "
             "Ensure the following criteria are met:\n"
             "1. Each week contains 5 study days, and each month has 4 weeks.\n"
             "2. Use only YouTube resources.\n"
