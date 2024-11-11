@@ -14,7 +14,7 @@ cred = credentials.Certificate("serviceAccountKey.json")
 firebase_admin.initialize_app(cred)
 
 from components.OpenAI_request import ChatApp
-from components.Database import create_session, store_messages, get_recent_messages
+from components.Database import db, create_session, store_messages, get_recent_messages
 from components.YouTube_request import get_search_response, get_video_info, info_to_dict, extract_video_id, get_video_thumbnail, check_resource_availability, get_video_stats
 from components.GoogleSearch_request import google_search_availability
 
@@ -76,8 +76,14 @@ def extract_topic(user_message):
 async def generate_response(request: MessageRequest):
     try:
         participantId = request.participantId
-        create_session(participantId)
-        print("session created to", participantId)
+        # Check if session exists; if not, create a new session
+        session_ref = db.collection("messages").document(participantId)
+        if not session_ref.get().exists:
+            create_session(participantId)
+            print("Session created for", participantId)
+        else:
+            print("Session already exists for", participantId)
+        
         if request.user_message:
             response_text = chat_app.chat(request.user_message)
             store_messages(participantId, request.user_message, response_text)  # Store user message & study plan
