@@ -127,7 +127,7 @@ const ChatBox = () => {
         // Step 2: Get the combined response (critique and improved based on initial response)
         const combinedResponse = await getCombinedResponse(userMessage);
         if (!combinedResponse) throw new Error('Failed to get combined response');
-
+        
         // Display combined response (improved)
         setResponsePlan(combinedResponse);
         setMessages((prevMessages) => [
