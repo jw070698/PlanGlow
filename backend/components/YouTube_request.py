@@ -3,23 +3,32 @@
 # Output: videoId, title, description, thumbnails, channelTitle, publishtime
 import json
 from googleapiclient.discovery import build
-from dotenv import load_dotenv
 import os
 import re
 import random
-load_dotenv()
 # Get all environment variables
-env_vars = os.environ
-env_vars_dict = dict(env_vars)
+#env_vars = os.environ
+#env_vars_dict = dict(env_vars)
 
 # Filter keys that start with 'YOUTUBE_API_KEY'
-youtube_api_keys = [k for k in env_vars_dict if k.startswith("YOUTUBE_API_KEY")]
+#youtube_api_keys = [k for k in env_vars_dict if k.startswith("YOUTUBE_API_KEY")]
 
-# Sort keys by the numerical suffix
+from dotenv import load_dotenv
+load_dotenv()
+youtube_api_keys = [k for k in os.environ if k.startswith("YOUTUBE_API_KEY")]
+
+#
+
 sorted_keys = sorted(youtube_api_keys)
-
 selected_key = random.choice(sorted_keys)
 YOUTUBE_API_KEY = os.environ[selected_key]
+
+if youtube_api_keys:
+    sorted_keys = sorted(youtube_api_keys)
+    selected_key = random.choice(sorted_keys)
+    YOUTUBE_API_KEY = os.getenv(selected_key)
+else:
+    raise ValueError("No YOUTUBE_API_KEY found in environment variables")
 
 youtube = build('youtube', 'v3', developerKey = YOUTUBE_API_KEY)
 # youtube = None

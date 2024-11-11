@@ -1,19 +1,13 @@
 from openai import OpenAI
-from openai import OpenAIError
 import sys
 import os
 import json
-#from dotenv import load_dotenv
 import time
 import re
 
-#load_dotenv()
-api_key = os.getenv("API_KEY1")
-client = OpenAI(api_key=api_key)
-
 class ChatApp:
-    def __init__(self):
-        self.client = client
+    def __init__(self, api_key):
+        self.client = OpenAI(api_key=api_key)
         self.messages = [
             {"role": "system", 
             "content": (
@@ -30,7 +24,7 @@ class ChatApp:
                     "2. Use a consistent JSON format, separating 'studyPlan_Overview' and 'studyPlan' for easier parsing later. "
                     "Show only valid JSON results without additional explanations or formatting.\n"
                     "\n\n"
-                    "Use the following structure for your JSON output:\n"
+                    "Use the following structure for your JSON output to have all duration of study plan:\n"
                     "{\n"
                     "  'studyPlan_Overview': {\n"
                     "    'Week1': 'Overview of topics for week 1',\n"
@@ -49,10 +43,6 @@ class ChatApp:
                     "              'link': 'https://youtu.be/BJ-VvGyQxho'\n"
                     "            },\n"
                     "            { ... }\n"
-                    "          ],\n"
-                    "          'Articles': [\n"
-                    "            { 'title': 'Introduction to Python', 'link': '...' }\n"
-                    "          ]\n"
                     "        }\n"
                     "      },\n"
                     "      ...\n"
@@ -138,19 +128,64 @@ class ChatApp:
             "content": (
                 "You are an assistant improving a study plan based on the following critique. "
                 "Please use the existing structure in 'studyPlan_Overview' and 'studyPlan' sections, "
-                "and avoid additional comments or explanations."
-            )
-        },
-        {
-            "role": "user",
-            "content": (
+                f"Initial user request\n"
                 f"Initial Study Plan (keep structure):\n{parsed_json_str}\n\n"
                 f"Critique Summary:\n{critique_str}\n\n"
+                "Each week should contain 5 study days, and each month should have 4 weeks.\n"
+                "Show only valid JSON results without additional explanations or formatting.\n"
                 "Make necessary improvements according to the critique. "
-                "Output the improved study plan in valid JSON format, using only 'studyPlan_Overview' and 'studyPlan'."
+                "Use the following structure for your JSON output to have all duration of study plan. do not adjust study duration\n"
+                    "{\n"
+                    "  'studyPlan_Overview': {\n"
+                    "    'Week1': '',\n"
+                    "    ...\n"
+                    "  },\n"
+                    "  'studyPlan': {\n"
+                    "    'Week 1: ': [\n"
+                    "      {\n"
+                    "        'day': 'Day 1',\n"
+                    "        'topic': 'specific topic',\n"
+                    "        'Time': 'x hours',\n"
+                    "        'resources': {\n"
+                    "          'YouTube': [\n"
+                    "            {\n"
+                    "              'title': 'title of videos',\n"
+                    "              'link': 'link of videos'\n"
+                    "            },\n"
+                    "            { ... }\n"
+                    "          ],\n"
+                    "        }\n"
+                    "      },\n"
+                    "      ...\n"
+                    "    ]\n"
+                    "  }\n"
+                    "}\n"
+                    "\n\n"
             )
         }
     ]
-        return self.generate_response(improvement_prompt, temperature=0.0, top_p=0.8, frequency_penalty=0.2, presence_penalty=0.1)
+        try:
+            response = self.generate_response(improvement_prompt, temperature=0.0)
 
-        
+            print("API improved response:", response)
+
+            # Search for JSON in the response (in case it's wrapped in code blocks)
+            json_match = re.search(r'```json([\s\S]*?)```', response)
+            if json_match:
+                json_text = json_match.group(1).strip()
+            else:
+                # If no code block is found, assume the entire response is the JSON text
+                json_text = response.strip()
+
+            # Parse the JSON response
+            try:
+                improved_json = json.loads(json_text)
+                print("Parsed JSON improved response:", improved_json)
+                return improved_json
+            except json.JSONDecodeError:
+                print("JSON parsing error. Returning raw response.")
+                return response
+
+        except Exception as e:
+            print(f"Error during improved response generation: {e}")
+            return "An error occurred while generating the improved response."

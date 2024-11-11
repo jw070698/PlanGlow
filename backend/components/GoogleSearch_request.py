@@ -1,12 +1,9 @@
 # Google Custom Search API
 # input: subject with method (e.g., python with blogs)
 from googleapiclient.discovery import build
-# pylint: disable=maybe-no-member
 import json
 import os
-#from dotenv import load_dotenv
 import random
-#load_dotenv()
 cse_id = os.getenv('CSE_ID1')
 
 # Get all environment variables

@@ -19,7 +19,7 @@ const InputForm = ({ formData, handleInputChange, handleFormSubmit, handleInfoCl
       value={formData.background} 
       onChange={handleInputChange} 
       type="select" 
-      options={["Absolute beginner", "Beginner", "Intermediate", "Advanced"]} 
+      options={["Absolute Beginner", "Beginner", "Intermediate", "Advanced"]} 
       button=
       {<button style={{ background: 'none', border: 'none', cursor: 'pointer' }} onClick={handleInfoClick}>
         <FontAwesomeIcon icon={faLightbulb} style={{ marginLeft: '0.5rem', marginTop: '0.5rem' }} />
@@ -65,7 +65,7 @@ const InputGroup = ({ label, name, value, onChange, type = "text", options = [],
               value={option}
               checked={selectedOptions.includes(option)}
               onChange={onChange}
-              style={styles.checkbox} // Ensure this style exists if needed
+              style={styles.checkbox}
             /> {option}
           </label>
         ))}

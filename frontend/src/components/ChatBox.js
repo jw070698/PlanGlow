@@ -41,7 +41,7 @@ const ChatBox = () => {
     duration: { months: 0, weeks: 0, days: 0 },
     availableTime: 0,
   });
-  const [messages, setMessages] = useState([{ type: 'bot', text: 'Hello! Please provide the following details:', isForm: true }]);
+  const [messages, setMessages] = useState([{ type: 'bot', text: 'Hello!', isForm: true }]);
   const [userInput, setUserInput] = useState('');
   const [isFormVisible, setIsFormVisible] = useState(true);
   const [responsePlan, setResponsePlan] = useState('');
@@ -51,6 +51,7 @@ const ChatBox = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // Scroll to bottom
   useEffect(() => {
     animateScroll.scrollToBottom({
       containerId: 'messagesContainer',
@@ -59,6 +60,7 @@ const ChatBox = () => {
     });
   }, [messages]);
 
+  // Enter
   useEffect(() => {
     const handleKeyPress = (event) => {
       if (event.key === 'Enter') {
@@ -75,10 +77,12 @@ const ChatBox = () => {
     };
   }, [messages, formData, userInput, isFormVisible]);
 
+  // Participant ID - Change
   const handleParticipantIdChange = (e) => {
     setParticipantsId(e.target.value);
   };
 
+  // Participant ID - Submit
   const handleParticipantIdSubmit = (e) => {
     e.preventDefault();
     if (participantsId) {
@@ -88,6 +92,7 @@ const ChatBox = () => {
     }
   };
 
+  //
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (type === 'checkbox') {
@@ -107,7 +112,7 @@ const ChatBox = () => {
     }
   };
 
-
+  // Input form - Submit
   const handleFormSubmit = async () => {
     setLoading(true);
     const { topic, background, duration, availableTime } = formData;
@@ -130,8 +135,8 @@ const ChatBox = () => {
         setResponsePlan(improvedResponse);
         setMessages((prevMessages) => [
             ...prevMessages,
-            { type: 'bot', text: improvedResponse, isForm: false }
-        ]);
+            { type: 'bot', text: typeof improvedResponse === 'object' ? JSON.stringify(improvedResponse, null, 2) : improvedResponse, isForm: false }
+          ]);
 
         setIsFormVisible(false);
     } catch (error) {
@@ -144,6 +149,7 @@ const ChatBox = () => {
     }
 };
 
+// Step 1: Initial response
 const getInitialResponse = async (userMessage) => {
     try {
         const response = await axios.post(`${API_BASE_URL}/response`, {
@@ -158,6 +164,7 @@ const getInitialResponse = async (userMessage) => {
     }
 };
 
+// Step 2: Critique response
 const getCritiqueResponse = async () => {
     try {
         const response = await axios.post(`${API_BASE_URL}/response/critique`, {
@@ -171,6 +178,7 @@ const getCritiqueResponse = async () => {
     }
 };
 
+// Step 3: Improved response
 const getImprovedResponse = async () => {
     try {
         const response = await axios.post(`${API_BASE_URL}/response/improved`, {
@@ -184,125 +192,88 @@ const getImprovedResponse = async () => {
     }
 };
 
-/*
-  const handleFormSubmit = async () => {
-    setLoading(true);
-    const { topic, background, duration, availableTime } = formData;
-    const userMessage = `Create a study plan for a ${background} student on ${topic} using YouTube over ${duration.months} months, ${duration.weeks} weeks, and ${duration.days} days with ${availableTime} hours available per day.`;
-    setMessages((prevMessages) => [...prevMessages, { type: 'user', text: userMessage }]);
+// 
+const handleUserInputChange = (e) => {
+  setUserInput(e.target.value);
+};
 
-    try {
-      const response = await axios.post(`${API_BASE_URL}/response`, { 
-        user_message: userMessage,
-        participantId: participantsId 
-      });
-      const newResponsePlan = response.data.response;
-      setResponsePlan(newResponsePlan);
-      setMessages((prevMessages) => [...prevMessages, { type: 'bot', text: newResponsePlan, isForm: false }]);
-      
-      // step 2
-      const critiqueResponse = await axios.post(`${API_BASE_URL}/response/critique`, {
-        participantId: participantsId
-      });
-      const critiquePlan = critiqueResponse.data.response;
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { type: 'bot', text: "Critique generated. Refining response...", isForm: false }
-      ]);
-
-      // step 3
-      const improvedResponse = await axios.post(`${API_BASE_URL}/response/improved`, {
-        participantId: participantsId
-      });
-      const improvedPlan = improvedResponse.data.response;
-      setResponsePlan(improvedPlan);
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { type: 'bot', text: improvedPlan, isForm: false }
-      ]);
-
-      setIsFormVisible(false);
-    } catch (error) {
-      setMessages((prevMessages) => [...prevMessages, { type: 'bot', text: 'Error fetching response from OpenAI.', isForm: false }]);
-    } finally {
-      setLoading(false);
-    }
-  };*/
-
-  const handleUserInputChange = (e) => {
-    setUserInput(e.target.value);
-  };
-
-  const handleUserInputSubmit = async () => {
-    if (userInput.trim() === '') return;
+// 
+const handleUserInputSubmit = async () => {
+  if (userInput.trim() === '') return;
     setMessages((prevMessages) => [...prevMessages, { type: 'user', text: userInput }]);
     setUserInput('');
     setLoading(true);
-    try {
-      const response = await axios.post(`${API_BASE_URL}/response`, { 
-        user_message: userInput,
-        participantId: participantsId 
-      });
-      setResponsePlan(response.data.response);
-      setMessages((prevMessages) => [...prevMessages, { type: 'bot', text: response.data.response, isForm: false }]);
-    } catch (error) {
-      setMessages((prevMessages) => [...prevMessages, { type: 'bot', text: 'Error fetching response from OpenAI.', isForm: false }]);
-    } finally {
-      setLoading(false); 
-    }
-  };
+  try {
+    const response = await axios.post(`${API_BASE_URL}/response`, { 
+      user_message: userInput,
+      participantId: participantsId 
+    });
 
-  const handleInfoClick = async () => {
-    setLoading(true);
-    const infoMessage = `Can you explain more about the background knowledge levels for the topic: ${formData.topic}?`;
-    try {
-      if (formData.topic) {
-        const response = await axios.post(`${API_BASE_URL}/info`, { 
-          info_message: infoMessage});
+    let responseText = response.data.response;
+
+    if (typeof responseText === 'object') {
+      responseText = JSON.stringify(responseText, null, 2); 
+    }
+    setResponsePlan(responseText);
+    setMessages((prevMessages) => [...prevMessages, { type: 'bot', text: responseText, isForm: false }]);
+  } catch (error) {
+      setMessages((prevMessages) => [...prevMessages, { type: 'bot', text: 'Error fetching response.', isForm: false }]);
+  } finally {
+      setLoading(false); 
+  }
+};
+
+const handleInfoClick = async () => {
+  setLoading(true);
+  const infoMessage = `Can you explain more about the background knowledge levels for the topic: ${formData.topic}?`;
+  try {
+    if (formData.topic) {
+      const response = await axios.post(`${API_BASE_URL}/info`, { 
+        info_message: infoMessage});
         setInfoInput(response.data.response);
         setModalIsOpen(true);
       } else {
         alert('Please input topic first');
       }
-    } catch (error) {
+  } catch (error) {
       alert('Error fetching response from OpenAI');
-    } finally {
+  } finally {
       setLoading(false); 
     }
   };
 
-  const handleResourcesClick = async () => {
-    if (!formData.topic) {
-      alert('Please input a topic first');
-      return;
-    }
-    setLoading(true);
-    try {
-      const response = await axios.post(`${API_BASE_URL}/search`, { 
-        search_message: formData.topic, 
-        participantId: participantsId });
+const handleResourcesClick = async () => {
+  if (!formData.topic) {
+    alert('Please input a topic first');
+    return;
+  }
+  setLoading(true);
+  try {
+    const response = await axios.post(`${API_BASE_URL}/search`, { 
+      search_message: formData.topic, 
+      participantId: participantsId });
 
-      const items = response.data.response.items || [];
-      const formattedResults = items.map(item => ({
-        url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
-        thumbnail: item.snippet.thumbnails.default.url,
-        title: item.snippet.title,
-        description: item.snippet.description,
-      }));
+    const items = response.data.response.items || [];
+    const formattedResults = items.map(item => ({
+      url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
+      thumbnail: item.snippet.thumbnails.default.url,
+      title: item.snippet.title,
+      description: item.snippet.description,
+    }));
 
-      setSearchResults(formattedResults.length ? formattedResults : [{ title: 'No resources found', description: '', url: '', thumbnail: '' }]);
-      setResourcesModalIsOpen(true);
-    } catch (error) {
+    setSearchResults(formattedResults.length ? formattedResults : [{ title: 'No resources found', description: '', url: '', thumbnail: '' }]);
+    setResourcesModalIsOpen(true);
+  } catch (error) {
       alert('Error fetching additional resources');
-    } finally {
+  } finally {
       setLoading(false);
-    }
-  };
+  }
+};
 
-  const closeModal = () => setModalIsOpen(false);
-  const closeResourcesModal = () => setResourcesModalIsOpen(false);
+const closeModal = () => setModalIsOpen(false);
+const closeResourcesModal = () => setResourcesModalIsOpen(false);
 
-  return (
+return (
     <div style={styles.container}>
       {!isIdSubmitted ? (
         <form onSubmit={handleParticipantIdSubmit} style={styles.participantIdForm}>
@@ -313,10 +284,10 @@ const getImprovedResponse = async () => {
             onChange={handleParticipantIdChange} 
             required
           />
-          <button type="submit">Submit</button>
+          <button type="submit" style={styles.sendidButton} >Submit</button>
         </form>
       ) : (
-        <div>Welcome, Participant {participantsId}</div>
+        <div style={styles.welcomemsg}>Welcome, Participant {participantsId}</div>
       )}
 
       <div id="messagesContainer" style={styles.messages}>
@@ -378,7 +349,10 @@ const getImprovedResponse = async () => {
 const styles = {
   container: { display: 'flex', flexDirection: 'column', height: '100%', width: '100%', padding: '10px', boxSizing: 'border-box' },
   messages: { flex: 1, overflowY: 'auto', marginBottom: '10px' },
-  userMessage: { padding: '10px', margin: '10px 250px', borderRadius: '15px', backgroundColor: '#d1f5d3', alignSelf: 'flex-end', maxWidth: '80%', wordWrap: 'break-word', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', fontSize: '16px', marginRight: '1px' },
+  participantIdForm: {margin: '5px 5px'},
+  sendidButton: {borderRadius: '5px', border: 'none', backgroundColor: 'White', color: 'Black', cursor: 'pointer', marginLeft: '5px' },
+  welcomemsg: {marginBottom: '5px'},
+  userMessage: { padding: '10px', border: 'none', margin: '10px 250px', borderRadius: '15px', backgroundColor: '#d1f5d3', alignSelf: 'flex-end', maxWidth: '80%', wordWrap: 'break-word', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', fontSize: '16px', marginRight: '1px' },
   botMessage: { padding: '10px', borderRadius: '15px', backgroundColor: '#d0e7ff', alignSelf: 'flex-start', maxWidth: '80%', wordWrap: 'break-word', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', fontSize: '16px', marginRight: 'auto' },
   userInputContainer: { display: 'flex', alignItems: 'center', borderTop: '1px solid #ccc', padding: '10px 0' },
   userInput: { flex: 1, padding: '10px', borderRadius: '5px', border: '1px solid #ccc', fontSize: '16px' },

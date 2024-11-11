@@ -18,10 +18,7 @@ from components.Database import db, create_session, store_messages, get_recent_m
 from components.YouTube_request import get_search_response, get_video_info, info_to_dict, extract_video_id, get_video_thumbnail, check_resource_availability, get_video_stats
 from components.GoogleSearch_request import google_search_availability
 
-#from dotenv import load_dotenv
-#load_dotenv()
 api_key = os.getenv('API_KEY1')
-
 client = OpenAI(api_key=api_key)
 
 app = FastAPI()
@@ -33,7 +30,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-chat_app = ChatApp()
+chat_app = ChatApp(api_key=api_key)
 
 @app.get('/')
 def hello_world():

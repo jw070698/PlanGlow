@@ -139,6 +139,7 @@ const [parsedJson, setParsedJson] =  useState(null);
                 console.log("Parsed JSON:", jsonData);
             } catch (error) {
                 console.error("JSON parsing error:", error);
+                setParsedJson(null);
             }
         } else if (jsonMatch && jsonMatch[0]) {
             // Handle raw JSON without backticks, in case it matches only jsonMatch[0]
@@ -148,11 +149,15 @@ const [parsedJson, setParsedJson] =  useState(null);
                 console.log("Parsed JSON:", jsonData);
             } catch (error) {
                 console.error("JSON parsing error:", error);
+                // If parsing fails, set the raw markdown text to display as a fallback
+                setParsedJson(null);
             }
         } else {
             console.error("No JSON code block or raw JSON found in markdownText.");
+            setParsedJson(null); // No valid JSON found, set to null to fallback to markdown
         }
     }, [markdownText]);
+    
 
     useEffect(() => {
         if (parsedJson) {
@@ -164,7 +169,6 @@ const [parsedJson, setParsedJson] =  useState(null);
     }, [parsedJson, setResponsePlan]);
 
     useEffect(() => {
-        console.log('participantsId in CustomMarkdown:', participantsId);
         if (parsedJson && parsedJson.studyPlan) {
             const updateButtonStyles = async () => {
                 const resources = Object.values(parsedJson.studyPlan).flatMap(week => 
@@ -559,7 +563,11 @@ const [parsedJson, setParsedJson] =  useState(null);
     };
 
     if (parsedJson === null) {
-        return <ReactMarkdown>{markdownText}</ReactMarkdown>;
+        return (
+            <div style={{ padding: '1rem', backgroundColor: '#f9f9f9', borderRadius: '8px' }}>
+                <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>{markdownText}</ReactMarkdown>
+            </div>
+        );
     }
 
     return (
