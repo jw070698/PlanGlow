@@ -119,8 +119,9 @@ class ChatApp:
             )
             print("OpenAI improved response:", improved_response)
             '''
-            '''# Update messages and return final response
+            # Update messages and return final response
             self.messages.append({"role": "assistant", "content": initial_response})
+            '''
             self.messages.append({"role": "assistant", "content": critique_response})
             self.messages.append({"role": "assistant", "content": improved_response})
             '''
