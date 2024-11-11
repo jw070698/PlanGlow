@@ -5,6 +5,7 @@ import os
 import json
 #from dotenv import load_dotenv
 import time
+import re
 #load_dotenv()
 api_key = os.getenv("API_KEY1")
 client = OpenAI(api_key=api_key)
@@ -96,16 +97,20 @@ class ChatApp:
                 presence_penalty=0.1
             )
             print("OpenAI initial response:", initial_response)
-            try:
-                json_response = json.loads(initial_response)
-                print("Parsed JSON response:", json_response)
-                return json_response
-            except json.JSONDecodeError:
-                print("Response is not valid JSON, returning raw response.")
-                return initial_response
-        except Exception as e:
-            print(f"Unexpected error in chat method: {e}")
-            return "An error occurred while generating the response."
+            json_match = re.search(r'```json([\s\S]*?)```', initial_response)
+            if json_match:
+                json_text = json_match.group(1).strip()  # Get the JSON part and strip any extra whitespace
+                try:
+                    parsed_json = json.loads(json_text)
+                    print("Parsed JSON response:", parsed_json)
+                    return parsed_json
+                except json.JSONDecodeError as json_err:
+                    print("JSON parsing error:", json_err)
+                    print("Returning raw response due to parsing error.")
+                    return initial_response  # Return raw response if JSON parsing fails
+            else:
+                print("No JSON block found, returning raw response.")
+                return initial_response  
 
     # step 2 critique
     def get_critique_response(self, initial_response):
