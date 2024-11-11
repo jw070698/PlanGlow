@@ -92,11 +92,13 @@ async def generate_response(request: MessageRequest):
         
         # Step 1
         # Generate response and store it
+        print("generaing response")
         response_text = chat_app.chat(user_message)
         if not response_text:
             raise HTTPException(status_code=500, detail="No response received from OpenAI")
         
         # Store the message and response in Firestore (append to history)
+        print("storing message")
         store_messages(participantId, user_message, response_text)
         print("Stored initial response:", response_text)
 
