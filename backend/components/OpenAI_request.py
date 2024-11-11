@@ -6,6 +6,8 @@ import json
 #from dotenv import load_dotenv
 import time
 import re
+import httpx
+
 #load_dotenv()
 api_key = os.getenv("API_KEY1")
 client = OpenAI(api_key=api_key)
@@ -65,7 +67,31 @@ class ChatApp:
             }
         ]
 
-    def generate_response(self, prompt, **kwargs):
+    async def generate_response(self, prompt, **kwargs):
+        try:
+            async with httpx.AsyncClient(timeout=300.0) as client:
+                response = await client.post(
+                    "https://api.openai.com/v1/chat/completions",
+                    headers={"Authorization": f"Bearer {self.api_key}"},
+                    json={
+                        "model": "gpt-4",
+                        "messages": prompt,
+                        **kwargs
+                    }
+                )
+                response.raise_for_status()  # Raises error if the request failed
+                response_text = response.json()["choices"][0]["message"]["content"]
+                print("API response:", response_text)
+                return response_text
+        except httpx.HTTPStatusError as e:
+            print(f"HTTP error occurred: {e}")
+            return None
+        except Exception as e:
+            print(f"Unexpected error occurred: {e}")
+            return None
+
+
+    '''def generate_response(self, prompt, **kwargs):
         try:
             response = self.client.with_options(timeout=300.0).chat.completions.create(
                 model="gpt-4o",
@@ -77,7 +103,7 @@ class ChatApp:
             return response_text
         except Exception as e:
             print(f"OpenAI API error: {e}")
-            return None
+            return None'''
 
 
     def chat(self, message):
