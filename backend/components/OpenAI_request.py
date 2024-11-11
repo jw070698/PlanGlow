@@ -128,11 +128,11 @@ class ChatApp:
             return "An error occurred while generating the critique."
 
     # step 3 improved response
-    def get_improved_response(self, initial_response, critique_response):
+    def get_improved_response(self, parsed_json, critique_response):
         improvement_prompt = [
             {"role": "system", "content": "You are an assistant aiming to improve based on feedback."},
             {"role": "user", "content": 
-            f"Here's the initial answer: {initial_response}. Here's the critique: {critique_response}. \n"
+            f"Here's the initial answer: {parsed_json}. Here's the critique: {critique_response}. \n"
             "Now, generate an improved response based on the critique. Return study plan in json type. \n"
             "Make sure the following criteria are met:\n"
                     "1. Each week should contain 5 study days, and each month should have 4 weeks.\n"
