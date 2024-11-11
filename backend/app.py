@@ -94,6 +94,7 @@ async def generate_response(request: MessageRequest):
         # Generate response and store it
         print("generaing response")
         response_text = chat_app.chat(user_message)
+        print("received response", response_text)
         if not response_text:
             raise HTTPException(status_code=500, detail="No response received from OpenAI")
         
