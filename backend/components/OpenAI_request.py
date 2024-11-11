@@ -108,7 +108,56 @@ class ChatApp:
         else:
             return {"error": "An error occurred while generating the response."} 
 
-    # step 2 critique
+    def get_combined_improved_response(self, parsed_json):
+        combined_prompt = [
+        {"role": "system", "content": "You are an evaluator and assistant with expertise in creating study plans."},
+        {"role": "user", "content": (
+            f"Here's the initial study plan response: {parsed_json}. \n"
+            "First, critique this response and suggest concise improvements in 2-3 sentences, focusing on the main areas where it can be improved. "
+            "After the critique, make the necessary improvements to the study plan. "
+            "Ensure the following criteria are met:\n"
+            "1. Each week contains 5 study days, and each month has 4 weeks.\n"
+            "2. Use only YouTube resources.\n"
+            "3. Output the study plan in a JSON format, with 'studyPlan_Overview' and 'studyPlan' sections, as shown in this structure:\n"
+            "{\n"
+            "  'studyPlan_Overview': {\n"
+            "    'Week1': 'Overview of topics for week 1',\n"
+            "    ...\n"
+            "  },\n"
+            "  'studyPlan': {\n"
+            "    'Week 1: Introduction to Python': [\n"
+            "      {\n"
+            "        'day': 'Day 1',\n"
+            "        'topic': 'specific topic',\n"
+            "        'Time': 'x hours',\n"
+            "        'resources': {\n"
+            "          'YouTube': [\n"
+            "            {\n"
+            "              'title': 'Advanced OOP Concepts in Python',\n"
+            "              'link': 'https://youtu.be/BJ-VvGyQxho'\n"
+            "            },\n"
+            "            { ... }\n"
+            "          ]\n"
+            "        }\n"
+            "      },\n"
+            "      ...\n"
+            "    ]\n"
+            "  }\n"
+            "}\n"
+            "Please output only the final improved study plan in JSON format without any additional commentary."
+        )}
+    ]
+    
+        try:
+            improved_response = self.generate_response(combined_prompt, temperature=0.0, top_p=0.8, frequency_penalty=0.2, presence_penalty=0.1)
+            print("Combined critique and improvement response:", improved_response)
+            return improved_response
+        except Exception as e:
+            print(f"Error generating combined critique and improvement response: {e}")
+            return "An error occurred while generating the improved response."
+
+
+'''    # step 2 critique
     def get_critique_response(self, parsed_json):
         critique_prompt = [
             {"role": "system", "content": "You are an evaluator.\n"
@@ -169,5 +218,5 @@ class ChatApp:
                     "Once you complete your reasoning, output only the JSON format without any extra comments or formatting."}
         ]
         return self.generate_response(improvement_prompt, temperature=0.0, top_p=0.8, frequency_penalty=0.2, presence_penalty=0.1)
-
+'''
         
