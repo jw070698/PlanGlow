@@ -64,53 +64,49 @@ class ChatApp:
                 )
             }
         ]
-    def chat_with_retry(self, prompt, retries=3, delay=5, **kwargs):
-        for attempt in range(retries):
-            try:
-                response = self.client.with_options(timeout=240.0).chat.completions.create(
-                    model="gpt-4o",
-                    messages=prompt,
-                    **kwargs
-                )
-                print("chat with retry")
-                response_text = response.choices[0].message.content
-                print("chat_with_retry response:", response_text)
-                return response_text
 
-            except Exception as e:
-                print(f"OpenAI API error on attempt {attempt + 1}: {e}")
-                if attempt < retries - 1:
-                    time.sleep(delay)
-                    delay *= 2  # Exponential backoff
-                else:
-                    raise
+    def generate_response(self, prompt, **kwargs):
+        try:
+            response = self.client.with_options(timeout=240.0).chat.completions.create(
+                model="gpt-4o",
+                messages=prompt,
+                **kwargs
+            )
+            response_text = response.choices[0].message.content
+            print("API response:", response_text)
+            return response_text
+        except Exception as e:
+            print(f"OpenAI API error: {e}")
+            return None
+
 
     def chat(self, message):
         self.messages.append({"role": "user", "content": message})
         # Step 1: initial response
-        try:
-            initial_response = self.chat_with_retry(
-                prompt=self.messages,
-                temperature=0.0,
-                top_p=0.8,
-                frequency_penalty=0.2,
-                presence_penalty=0.1
-            )
-            print("OpenAI initial response:", initial_response)
+        initial_response = self.generate_response(
+            prompt=self.messages,
+            temperature=0.0,
+            top_p=0.8,
+            frequency_penalty=0.2,
+            presence_penalty=0.1
+        )
+        print("OpenAI initial response:", initial_response)
+        if initial_response:
             json_match = re.search(r'```json([\s\S]*?)```', initial_response)
             if json_match:
-                json_text = json_match.group(1).strip()  # Get the JSON part and strip any extra whitespace
+                json_text = json_match.group(1).strip()
                 try:
                     parsed_json = json.loads(json_text)
                     print("Parsed JSON response:", parsed_json)
                     return parsed_json
-                except json.JSONDecodeError as json_err:
-                    print("JSON parsing error:", json_err)
-                    print("Returning raw response due to parsing error.")
-                    return initial_response  # Return raw response if JSON parsing fails
+                except json.JSONDecodeError:
+                    print("JSON parsing error. Returning raw response.")
+                    return initial_response
             else:
                 print("No JSON block found, returning raw response.")
                 return initial_response  
+        else:
+            return {"error": "An error occurred while generating the response."} 
 
     # step 2 critique
     def get_critique_response(self, initial_response):
@@ -120,7 +116,7 @@ class ChatApp:
             f"Here's my answer: {initial_response}. \n"
             "Critique this response and suggest improvements focusing on disciplinary core ideas, crosscutting concepts and scientific practices examining phenomena."}
         ]
-        return self.chat_with_retry(critique_prompt, temperature=0.0)
+        return self.generate_response(critique_prompt, temperature=0.0)
 
     # step 3 improved response
     def get_improved_response(self, initial_response, critique_response):
@@ -165,6 +161,6 @@ class ChatApp:
                     "\n\n"
                     "Once you complete your reasoning, output only the JSON format without any extra comments or formatting."}
         ]
-        return self.chat_with_retry(improvement_prompt, temperature=0.0, top_p=0.8, frequency_penalty=0.2, presence_penalty=0.1)
+        return self.generate_response(improvement_prompt, temperature=0.0, top_p=0.8, frequency_penalty=0.2, presence_penalty=0.1)
 
         
