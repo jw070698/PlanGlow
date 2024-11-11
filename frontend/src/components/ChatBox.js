@@ -136,7 +136,7 @@ const ChatBox = () => {
     } catch (error) {
         setMessages((prevMessages) => [
             ...prevMessages,
-            { type: 'bot', text: 'Error fetching response from OpenAI.', isForm: false }
+            { type: 'bot', text: 'Error', isForm: false }
         ]);
     } finally {
         setLoading(false);

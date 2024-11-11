@@ -73,6 +73,8 @@ class ChatApp:
                 )
                 print("chat with retry")
                 response_text = response.choices[0].message.content
+                print("chat_with_retry response:", response_text)
+                return response_text
 
             except Exception as e:
                 print(f"OpenAI API error on attempt {attempt + 1}: {e}")
@@ -93,7 +95,13 @@ class ChatApp:
             presence_penalty=0.1
         )
         print("OpenAI initial response:", initial_response)
-        return initial_response
+        try:
+            json_response = json.loads(initial_response)
+            print("Parsed JSON response:", json_response)
+            return json_response
+        except json.JSONDecodeError:
+            print("Response is not valid JSON, returning raw response.")
+            return initial_response
 
     # step 2 critique
     def get_critique_response(self, initial_response):
