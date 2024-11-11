@@ -135,7 +135,7 @@ class ChatApp:
             "Based on the critique, make the necessary improvements to the study plan. "
             "Keep the original structure, but modify or enhance only the areas mentioned in the critique. "
             "Output the improved study plan in JSON format with 'studyPlan_Overview' and 'studyPlan' sections. "
-            "Please avoid any additional comments, explanations, or formatting beyond the JSON structure."
+            "Please avoid any additional comments, explanations, or formatting beyond the JSON structure."}
         ]
         return self.generate_response(improvement_prompt, temperature=0.0, top_p=0.8, frequency_penalty=0.2, presence_penalty=0.1)
 
