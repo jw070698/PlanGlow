@@ -66,7 +66,7 @@ class ChatApp:
     def chat_with_retry(self, prompt, retries=3, delay=5, **kwargs):
         for attempt in range(retries):
             try:
-                response = self.client.with_options(timeout=120.0).chat.completions.create(
+                response = self.client.with_options(timeout=300.0).chat.completions.create(
                     model="gpt-4o",
                     messages=prompt,
                     **kwargs
