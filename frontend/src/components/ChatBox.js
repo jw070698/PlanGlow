@@ -30,6 +30,8 @@ const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1350';
+console.log('Backend URL:', process.env.REACT_APP_BACKEND_URL);
+
 
 const ChatBox = () => {
   const [participantsId, setParticipantsId] = useState('');
