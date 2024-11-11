@@ -104,7 +104,7 @@ class ChatApp:
     def get_improved_response(self, initial_response, critique_response):
         improvement_prompt = [
             {"role": "system", "content": "You are an assistant aiming to improve based on feedback."},
-            {"role": "user", "content": f"Here's the initial answer: {initial_response}. Here's the critique: {critique_response}. Now, generate an improved response based on the critique."}
+            {"role": "user", "content": f"Here's the initial answer: {initial_response}. Here's the critique: {critique_response}. Now, generate an improved response based on the critique. Return study plan in json type."}
         ]
         return self.chat_with_retry(improvement_prompt, temperature=0.0, top_p=0.8, frequency_penalty=0.2, presence_penalty=0.1)
 

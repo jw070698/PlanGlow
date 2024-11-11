@@ -138,7 +138,8 @@ async def generate_improved_response(request: MessageRequest):
         if improved_response:
             store_messages(participantId, "Improved Response", improved_response)
             print("Stored improved response:", improved_response)
-
+        else:
+            print("No improved response.")
         return {"response": improved_response}
 
     except Exception as e:

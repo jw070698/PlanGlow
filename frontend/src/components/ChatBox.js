@@ -150,10 +150,11 @@ const getInitialResponse = async (userMessage) => {
             participantId: participantsId
         });
         const newResponsePlan = response.data.response;
+        /*
         setMessages((prevMessages) => [
             ...prevMessages,
             { type: 'bot', text: newResponsePlan, isForm: false }
-        ]);
+        ]);*/
         return newResponsePlan;
     } catch (error) {
         console.error('Error getting initial response:', error);
@@ -167,10 +168,11 @@ const getCritiqueResponse = async () => {
             participantId: participantsId
         });
         const critiquePlan = response.data.response;
+        /*
         setMessages((prevMessages) => [
             ...prevMessages,
             { type: 'bot', text: "Critique generated. Refining response...", isForm: false }
-        ]);
+        ]);*/
         return critiquePlan;
     } catch (error) {
         console.error('Error getting critique response:', error);
