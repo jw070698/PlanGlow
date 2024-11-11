@@ -110,32 +110,8 @@ async def generate_response(request: MessageRequest):
         print(f"Unexpected error occurred in /response endpoint: {e}")
         raise HTTPException(status_code=500, detail="Failed to generate response")
 
-@app.post("/response/combined")
-async def generate_combined_response(request: MessageRequest):
-    try:
-        participantId = request.participantId
 
-        # Retrieve the latest initial response
-        initial_response = get_recent_messages(participantId)[-1]['content']  # Assuming the latest message is the initial response
-        
-        # Call the combined critique and improvement function
-        combined_response = chat_app.get_combined_improved_response(initial_response)
-        
-        # Store the final combined response
-        if combined_response:
-            store_messages(participantId, "Combined Critique and Improved Response", combined_response)
-            print("Stored combined response:", combined_response)
-        else:
-            print("No combined response generated.")
-        
-        return {"response": combined_response}
-
-    except Exception as e:
-        print(f"Error generating combined response: {e}")
-        raise HTTPException(status_code=500, detail="Failed to generate combined response")
-
-
-'''@app.post("/response/critique")
+@app.post("/response/critique")
 async def generate_critique_response(request: MessageRequest):
     try:
         participantId = request.participantId
@@ -170,7 +146,7 @@ async def generate_improved_response(request: MessageRequest):
 
     except Exception as e:
         print(f"Error in improved response: {e}")
-        raise HTTPException(status_code=500, detail="Failed to generate improved response")'''
+        raise HTTPException(status_code=500, detail="Failed to generate improved response")
 
 
 @app.post("/info")
