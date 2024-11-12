@@ -304,8 +304,10 @@ return (
                 handleResourcesClick={handleResourcesClick}
               />
             ) : (
-              <CustomMarkdown markdownText={message.text} formData={formData} setResponsePlan={setResponsePlan} participantsId={participantsId}/>
-            )}
+              typeof message.text === 'string' && message.text.trim().startsWith('{') && message.text.trim().endsWith('}')
+                ? <CustomMarkdown markdownText={message.text} formData={formData} setResponsePlan={setResponsePlan} participantsId={participantsId}/>
+                : <div>{message.text}</div>            
+              )}
           </div>
         ))}
         {loading && <Spinner />}
