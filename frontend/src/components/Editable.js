@@ -1,12 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Spinner from './Spinner';
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from "firebase/firestore";
+const firebaseConfig = {
+    apiKey: "AIzaSyDEu_plavdpqEAY4DRU-x-EKWzhtFR8Q6o",
+    authDomain: "plan-glow.firebaseapp.com",
+    projectId: "plan-glow",
+    storageBucket: "plan-glow.firebasestorage.app",
+    messagingSenderId: "586642379491",
+    appId: "1:586642379491:web:ac5aeb242cdfac5f462bd6",
+    measurementId: "G-448RWVVP9Z"
+  };
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const db = getFirestore(app);
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1350';
 
-const Editable = ({ formData, setResponsePlan , setStudyPlan, custom_id}) => {
+const Editable = ({ formData, setResponsePlan , setStudyPlan, participantsId}) => {
 
     const [originalPlan, setOriginalPlan] = useState(null);
     const [updatedPlan, setUpdatedPlan] = useState(null);
+    const [inlineCount, setInlineCount] = useState(0);
+    const fetchParticipantData = async () => {
+        try {
+            const participantRef = doc(db, "messages", participantsId);
+            const participantDoc = await getDoc(participantRef);
+    
+            if (participantDoc.exists()) {
+                const data = participantDoc.data();
+                setInlineCount(data.inline_count || 0); // Initialize inline count from Firestore
+            } else {
+                console.log("No data found for this participantsId:", participantsId);
+            }
+        } catch (error) {
+            console.error("Error fetching participant data:", error);
+        }
+    };
+    
+    // Call fetchParticipantData when the component mounts
+    useEffect(() => {
+        fetchParticipantData();
+    }, []);
+    
     const initialEditableData = {
         background: formData.background,
         topic: formData.topic,
@@ -38,7 +75,7 @@ const Editable = ({ formData, setResponsePlan , setStudyPlan, custom_id}) => {
             console.log(updated_userMessage);
             const response = await axios.post(`${API_BASE_URL}/response`, {
                 user_message: updated_userMessage,
-                custom_id: custom_id
+                participantId: participantsId
             });
             
             if (response.data?.response) {
@@ -75,7 +112,7 @@ const Editable = ({ formData, setResponsePlan , setStudyPlan, custom_id}) => {
         }
     };    
 
-    const handleEdit = (key, subkey = null) => {
+    const handleEdit = async (key, subkey = null) => {
         if (key === 'background') {
             setDropdownVisible(prev => ({ ...prev, background: !prev.background, studyMaterials: false }));
         } else if (key === 'studyMaterials') {
@@ -99,6 +136,16 @@ const Editable = ({ formData, setResponsePlan , setStudyPlan, custom_id}) => {
 
                 setEditableData(updatedData);
                 updateAPI(updatedData);
+
+                try {
+                    const participantRef = doc(db, "messages", participantsId);
+                    await updateDoc(participantRef, {
+                        inline_count: increment(1)
+                    });
+                    setInlineCount((prevCount) => prevCount + 1); // Update local count
+                } catch (error) {
+                    console.error("Error updating inline count:", error);
+                }
             }
         }
     };

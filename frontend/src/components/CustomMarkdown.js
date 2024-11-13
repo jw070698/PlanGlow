@@ -10,6 +10,24 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faThumbsUp, faEye, faCircleCheck, faCaretDown, faCaretRight } from '@fortawesome/free-solid-svg-icons';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from "firebase/firestore";
+const firebaseConfig = {
+    apiKey: "AIzaSyDEu_plavdpqEAY4DRU-x-EKWzhtFR8Q6o",
+    authDomain: "plan-glow.firebaseapp.com",
+    projectId: "plan-glow",
+    storageBucket: "plan-glow.firebasestorage.app",
+    messagingSenderId: "586642379491",
+    appId: "1:586642379491:web:ac5aeb242cdfac5f462bd6",
+    measurementId: "G-448RWVVP9Z"
+  };
+  
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const db = getFirestore(app);
+
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1350';
 
 const CustomMarkdown = ({ markdownText, formData, setResponsePlan, participantsId }) => {
@@ -27,6 +45,26 @@ const [parsedJson, setParsedJson] =  useState(null);
     const [explanationContent, setExplanationContent] = useState({}); 
     const [weekVisibility, setWeekVisibility] = useState({});  
     const [dayVisibility, setDayVisibility] = useState({});   
+    const [additionalResourcesCount, setAdditionalResourcesCount] = useState(0);
+    const [selectCount, setSelectCount] = useState(0);
+
+    const fetchParticipantData = async () => {
+        try {
+          const participantRef = doc(db, "messages", participantsId);
+          const participantDoc = await getDoc(participantRef);
+    
+          if (participantDoc.exists()) {
+            const data = participantDoc.data();
+            setAdditionalResourcesCount(data.additional_resources_count || 0);
+            setSelectCount(data.select_button_count || 0);
+          } else {
+            console.log("No data found for this participantId:", participantsId);
+          }
+        } catch (error) {
+          console.error("Error fetching participant data:", error);
+        }
+      };
+
 
     const handleToggleWeek = (week) => {
         setWeekVisibility(prevState => ({
@@ -65,29 +103,29 @@ const [parsedJson, setParsedJson] =  useState(null);
         }));
     };
 
-    const handleSelectVideo = (weekIndex, dayIndex, selectedVideo) => {
+    const handleSelectVideo = async (weekIndex, dayIndex, selectedVideo) => {
         const weeks = Object.keys(studyPlan); // Get all week keys
         const week = weeks[weekIndex];
-        
+    
         console.log('Selected week:', week, 'Selected day index:', dayIndex); 
-
+    
         if (!week || !studyPlan[week]) {
             console.error('Week is not defined in studyPlan:', week);
             return;
         }
-
+    
         if (dayIndex < 0 || dayIndex >= studyPlan[week].length) {
             console.error('Day index is out of bounds:', dayIndex);
             return;
         }
-
+    
         // Clone the existing study plan to avoid mutating the original one directly
         const updatedPlan = { ...studyPlan };
-
+    
         if (!updatedPlan[week][dayIndex].resources) {
             updatedPlan[week][dayIndex].resources = {};
         }
-
+    
         // Replace the YouTube resource with the selected video details
         updatedPlan[week][dayIndex].resources.YouTube = {
             link: selectedVideo.url,
@@ -96,13 +134,13 @@ const [parsedJson, setParsedJson] =  useState(null);
             views: selectedVideo.views,
             likes: selectedVideo.likes,
         };
-
+    
         setStudyPlan(updatedPlan); 
-
+    
         setParsedJson((prevState) => {
             const newStudyPlan = { ...prevState.studyPlan };
             newStudyPlan[week] = [...prevState.studyPlan[week]]; 
-
+    
             newStudyPlan[week][dayIndex].resources.YouTube = {
                 link: selectedVideo.url,
                 title: selectedVideo.title,
@@ -110,12 +148,24 @@ const [parsedJson, setParsedJson] =  useState(null);
                 views: selectedVideo.views,
                 likes: selectedVideo.likes,
             };
-
+    
             return { ...prevState, studyPlan: newStudyPlan };
         });
-
-        setResourcesModalIsOpen(false); 
+    
+        setResourcesModalIsOpen(false);
+    
+        // Increment select_count in Firestore
+        try {
+            const participantRef = doc(db, "messages", participantsId);
+            await updateDoc(participantRef, {
+                select_count: increment(1)
+            });
+            setSelectCount(prevCount => prevCount + 1);  // Update local state
+        } catch (error) {
+            console.error("Error updating select count:", error);
+        }
     };
+    
 
     const handleMouseOut = (link) => {
         setTooltipVisible((prevState) => ({
@@ -336,6 +386,11 @@ const [parsedJson, setParsedJson] =  useState(null);
                 setSearchResults(formattedResults.length > 0 ? formattedResults : [{ title: 'No resources found', description: '', url: '', thumbnail: '', views: 'N/A', likes: 'N/A'}]);
                 setResourcesModalIsOpen(true);
 
+                const participantRef = doc(db, "messages", participantsId);
+                await updateDoc(participantRef, {
+                    additional_resources_count: increment(1)
+                });
+
             } catch (error) {
                 alert('Error fetching additional resources');
             }
@@ -353,8 +408,8 @@ const [parsedJson, setParsedJson] =  useState(null);
             }
     
             const [reasonResponse, objectivesResponse] = await Promise.all([
-                axios.post(`${API_BASE_URL}/topic-explanations`, { user_message: topic, custom_id: participantsId }),
-                axios.post(`${API_BASE_URL}/generate-objectives`, { user_message: topic, custom_id: participantsId })
+                axios.post(`${API_BASE_URL}/topic-explanations`, { user_message: topic, participantId: participantsId }),
+                axios.post(`${API_BASE_URL}/generate-objectives`, { user_message: topic, participantId: participantsId })
             ]);
     
             // Combine the content
@@ -573,7 +628,7 @@ const [parsedJson, setParsedJson] =  useState(null);
     return (
         <div>
             <h2>Study Plan Overview </h2>
-            <Editable formData={formData} setResponsePlan={setParsedJson}  setStudyPlan={handleUpdateStudyPlan} custom_id={participantsId}/>
+            <Editable formData={formData} setResponsePlan={setParsedJson}  setStudyPlan={handleUpdateStudyPlan} participantsId={participantsId}/>
             {parsedJson.studyPlan_Overview && Object.keys(parsedJson.studyPlan_Overview).map(week => (
                 <div key={week} style={{ marginBottom: '1rem' }}>
                 <div
@@ -595,7 +650,7 @@ const [parsedJson, setParsedJson] =  useState(null);
                 {weekVisibility[week] && (
                     <div style={{ marginLeft: '1.5rem', marginTop: '0.5rem' }}>
                         {/* Content to be toggled */}
-                        <FAQIconStudyPlan week={week} custom_id={participantsId}/>
+                        <FAQIconStudyPlan week={week} participantsId={participantsId}/>
                     </div>
                     )}
                 </div>

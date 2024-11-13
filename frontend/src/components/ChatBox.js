@@ -11,6 +11,7 @@ import CustomMarkdown from './CustomMarkdown';
 import Spinner from './Spinner';
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
+import { getFirestore, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 
 
 // Your web app's Firebase configuration
@@ -28,6 +29,7 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
+const db = getFirestore(app);
 
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1350';
 console.log('Backend URL:', process.env.REACT_APP_BACKEND_URL);
@@ -52,6 +54,26 @@ const ChatBox = () => {
   const [resourcesModalIsOpen, setResourcesModalIsOpen] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  // Data - How many time click submit/Send button
+  const [submitCount, setSubmitCount] = useState(0);
+  const [sendCount, setSendCount] = useState(0);
+
+  const fetchParticipantData = async () => {
+    try {
+      const participantRef = doc(db, "messages", participantsId);
+      const participantDoc = await getDoc(participantRef);
+
+      if (participantDoc.exists()) {
+        const data = participantDoc.data();
+        setSubmitCount(data.submit_count || 0);
+        setSendCount(data.send_count || 0);
+      } else {
+        console.log("No data found for this participantId:", participantsId);
+      }
+    } catch (error) {
+      console.error("Error fetching participant data:", error);
+    }
+  };
 
   // Scroll to bottom
   useEffect(() => {
@@ -85,10 +107,11 @@ const ChatBox = () => {
   };
 
   // Participant ID - Submit
-  const handleParticipantIdSubmit = (e) => {
+  const handleParticipantIdSubmit = async (e) => {
     e.preventDefault();
     if (participantsId) {
       setIsIdSubmitted(true);
+      await fetchParticipantData();
     } else {
       alert("Please enter a valid Participant ID");
     }
@@ -133,6 +156,15 @@ const ChatBox = () => {
         // Step 3: Improved response
         const improvedResponse = await getImprovedResponse();
         if (!improvedResponse) throw new Error('Failed to get improved response');
+
+        const participantRef = doc(db, "messages", participantsId);
+
+        // Increment submit_count in Firestore
+        await updateDoc(participantRef, {
+          submit_count: submitCount + 1,
+        });
+  
+        setSubmitCount((prevCount) => prevCount + 1); 
 
         setResponsePlan(improvedResponse);
         setMessages((prevMessages) => [
@@ -218,6 +250,14 @@ const handleUserInputSubmit = async () => {
     }
     setResponsePlan(responseText);
     setMessages((prevMessages) => [...prevMessages, { type: 'bot', text: responseText, isForm: false }]);
+
+    // Data - counting the clicking of send button
+    const participantRef = doc(db, "messages", participantsId);
+    await updateDoc(participantRef, {
+      send_count: (sendCount || 0) + 1, // increment by 1
+    });
+    setSendCount((prevCount) => prevCount + 1);
+
   } catch (error) {
       setMessages((prevMessages) => [...prevMessages, { type: 'bot', text: 'Error fetching response.', isForm: false }]);
   } finally {
@@ -274,6 +314,7 @@ const handleResourcesClick = async () => {
 
 const closeModal = () => setModalIsOpen(false);
 const closeResourcesModal = () => setResourcesModalIsOpen(false);
+
 
 return (
     <div style={styles.container}>

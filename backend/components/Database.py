@@ -8,7 +8,13 @@ db = firestore.client()
 def create_session(participant_id):
     try:
         session_ref = db.collection("messages").document(participant_id)
-        session_ref.set({"history": []})
+        session_ref.set({
+            "history": [],
+            "submit_count": 0,
+            "send_count": 0,
+            "additional_resources_count": 0,
+            "inline_count": 0
+        })
         print(f"Session created for participant {participant_id}.")
         return session_ref
     except Exception as e:
@@ -34,22 +40,6 @@ def store_messages(participant_id, request_message, response_message):
             print(f"Messages appended for participant {participant_id}.")
     except Exception as e:
         print(f"Error storing messages for participant {participant_id}: {e}")
-
-#   # Define the file name
-#   file_name = "stored_data.json"
-
-#   # Get recent messages
-#   messages = get_recent_messages()[1:]
-
-#   # Add messages to data
-#   user_message = {"role": "user", "content": request_message}
-#   assistant_message = {"role": "assistant", "content": response_message}
-#   messages.append(user_message)
-#   messages.append(assistant_message)
-
-#   # Save the updated file
-#   with open(file_name, "w") as f:
-#     json.dump(messages, f)
 
 # Get recent messages
 def get_recent_messages(participant_id):

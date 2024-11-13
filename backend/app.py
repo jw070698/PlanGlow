@@ -3,7 +3,7 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import re, os
+import re, os, json
 from openai import OpenAI
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
@@ -63,12 +63,6 @@ class UserMessageRequest(BaseModel):
     user_message: str
     participantId: str
 
-def extract_topic(user_message):
-    match = re.search(r'Create a study plan for a .* student on (.+?) using', user_message)
-    if match:
-        return match.group(1)
-    return None
-
 @app.post("/response")
 async def generate_response(request: MessageRequest):
     try:
@@ -89,16 +83,13 @@ async def generate_response(request: MessageRequest):
         
         # Step 1
         # Generate response and store it
-        print("generaing response")
         response_text = chat_app.chat(user_message)
-        print("received response", response_text)
         if not response_text:
             raise HTTPException(status_code=500, detail="No response received from OpenAI")
         
         # Store the message and response in Firestore (append to history)
-        print("storing message")
         store_messages(participantId, user_message, response_text)
-        print("Stored initial response:", response_text)
+        print("Stored initial response")
 
         return {"response": response_text}
 
@@ -117,7 +108,7 @@ async def generate_critique_response(request: MessageRequest):
         critique_response = chat_app.get_critique_response(initial_response)
         if critique_response:
             store_messages(participantId, "Critique of Initial Response", critique_response)
-            print("Stored critique response:", critique_response)
+            print("Stored critique response")
 
         return {"response": critique_response}
 
@@ -136,7 +127,7 @@ async def generate_improved_response(request: MessageRequest):
         improved_response = chat_app.get_improved_response(initial_response, critique_response)
         if improved_response:
             store_messages(participantId, "Improved Response", improved_response)
-            print("Stored improved response:", improved_response)
+            print("Stored improved response")
         else:
             print("No improved response.")
         return {"response": improved_response}
@@ -207,7 +198,6 @@ async def get_thumbnail(request: YouTubeVideoID):
     # Assuming get_video_thumbnail is your function to retrieve the thumbnail
     thumbnail_url = get_video_thumbnail(video_id)
     if thumbnail_url:
-        print(thumbnail_url)
         return {"thumbnail": thumbnail_url}
     else:
         raise HTTPException(status_code=404, detail="Thumbnail not found")
@@ -237,21 +227,56 @@ async def generate_check_response(request: CheckRequest):
 async def generate_plan_reasoning(request: PlanRequest):
     try:
         # Retrieve the most recent study plan from storage
-        recent_messages = get_recent_messages(request.custom_id)
-        if not recent_messages:
-            raise HTTPException(status_code=404, detail="No recent messages found")
+        recent_messages = get_recent_messages(request.participantId)
+        improved_response_message = None
+        study_plan_response = None
 
-        recent_plan = recent_messages[-1]['content']
+        for i, msg in enumerate(recent_messages):
+            if msg.get('content') == 'Improved Response' and msg.get('role') == 'user':
+                improved_response_message = msg['content']
+                if i + 1 < len(recent_messages) and recent_messages[i + 1].get('role') == 'assistant':
+                    study_plan_response = recent_messages[i + 1]['content']
+                break
 
-        prompt = (
-            f"You are a helpful assistant. Please review the study plan provided and explain how you selected the content for each week. "
-            f"Do not show me the study plan in your answer. Just explain how you select and mention the connections between the content for each week."
-            f"\n\nStudy Plan: {recent_plan}"
+        if not improved_response_message or not study_plan_response:
+            raise HTTPException(status_code=404, detail="No 'Improved Response' message found")
+
+        study_plan_overview = study_plan_response.get('studyPlan_Overview', {})
+        study_plan_overview_str = json.dumps(study_plan_overview)
+        print(study_plan_overview_str)
+        response = client.with_options(timeout=120.0).chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a helpful assistant. Please review the study plan provided and explain how you selected the content for each week. "
+                        "Do not show me the study plan in your answer. Just explain how you select and mention the connections between the content for each week."
+                        "Each explanation should clarify the purpose of that week's content and how it builds on prior learning."
+                        "Should use Bloom's Taxonomy verbs for Learning objectives"
+                        "Provide concise explanations in complete sentences. "
+                        "Separate your reason by each week json type: "
+                        "{\n"
+                        "    \"Week1\": \"- Learning objective...\n - Content selection...\n - Connection...\n\",\n"
+                        "    \"Week2\": \"- Learning objective...\n - Content selection...\n - Connection...\n\",\n"
+                        "    \"Week3\": \"- Learning objective...\n - Content selection...\n - Connection...\n\",\n"
+                        "    \"Week4\": \"- Learning objective...\n - Content selection...\n - Connection...\n\"\n"
+                        "}\n\n"
+
+                    )
+                },
+                {"role": "user", "content": study_plan_overview_str}
+            ],
+            temperature=0.0,
+            top_p=0.6,
+            frequency_penalty=0.2,
+            presence_penalty=0.1
         )
-        # Call the GPT-4 API with the prompt
-        response = chat_app.chat(prompt)  
-        # Return the GPT-4 response
-        return {"response": response}
+        response_received = response.choices[0].message.content
+        print(response_received)
+
+        return {"response": response_received}
+
     except Exception as e:
         print(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
@@ -259,25 +284,38 @@ async def generate_plan_reasoning(request: PlanRequest):
 @app.post("/topic-explanations")
 async def generate_topic_explanation(request: UserMessageRequest):
     try:
-        # Retrieve the most recent study plan
-        recent_messages = get_recent_messages(request.custom_id)
-        if not recent_messages:
-            raise HTTPException(status_code=404, detail="No study plan found")
-
-        recent_plan = recent_messages[-1]['content']
-
-        # Extract the topic from the request
+        recent_messages = get_recent_messages(request.participantId)
+        # Data - recent improved study plan
+        improved_study_plan = None
+        for message in reversed(recent_messages):
+            # Check if this is the improved response containing 'studyPlan'
+            if message.get("role") == "assistant" and isinstance(message.get("content"), dict):
+                content = message["content"]
+                if "studyPlan" in content:
+                    improved_study_plan = content["studyPlan"]
+                    break
+        recent_plan = json.dumps(improved_study_plan) if improved_study_plan else "No study plan available."
         topic = request.user_message
-        if not topic:
-            raise HTTPException(status_code=400, detail="No topic provided in the request")
-
-        # Generate the prompt for GPT-4o
-        prompt = (
-            f"You are a helpful assistant. Below is a study plan. Please explain why the topic '{topic}' is important. Please give concise answers using 3 bullet points."
-            f"in the context of this study plan.\n\nStudy Plan: {recent_plan}. Just give the explanation. Do not give the study plan"
+        response = client.with_options(timeout=120.0).chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        f"You are a helpful assistant. Below is a study plan. Please explain why the topic '{topic}' is important. "
+                        f"Please give concise answers using 3 bullet points in the context of this study plan '{recent_plan}'. "
+                        "Just give the explanation. Do not give the study plan."                    )
+                    },
+                    {"role": "user", "content": recent_plan}
+            ],
+            temperature=0.0,
+            top_p=0.6,
+            frequency_penalty=0.2,
+            presence_penalty=0.1
         )
-        response = chat_app.chat(prompt)
-        return {"explanation": response}
+        response_received = response.choices[0].message.content
+        return {"explanation": response_received}        
+        
     except Exception as e:
         print(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -285,24 +323,43 @@ async def generate_topic_explanation(request: UserMessageRequest):
 @app.post("/generate-objectives")
 async def generate_learning_objectives(request: UserMessageRequest):
     try:
-        recent_messages = get_recent_messages(request.custom_id)
+        recent_messages = get_recent_messages(request.participantId)
         if not recent_messages:
             raise HTTPException(status_code=404, detail="No study plan found")
 
-        recent_plan = recent_messages[-1]['content']
-
-        # Extract the topic from the request
+        # Data - recent improved study plan
+        improved_study_plan = None
+        for message in reversed(recent_messages):
+            # Check if this is the improved response containing 'studyPlan'
+            if message.get("role") == "assistant" and isinstance(message.get("content"), dict):
+                content = message["content"]
+                if "studyPlan" in content:
+                    improved_study_plan = content["studyPlan"]
+                    break
+        recent_plan = json.dumps(improved_study_plan) if improved_study_plan else "No study plan available."
         topic = request.user_message
-        if not topic:
-            raise HTTPException(status_code=400, detail="No topic provided in the request")
 
         # Generate the prompt for GPT-4o
-        prompt = (
-            f"You are a helpful assistant. Below is a study plan. Please generate clear and concise learning objectives (at most 3) using Bloom's Taxonomy verbs. "
-            f"Begin with the objectives immediately. Do not say 'Objectives for the topic 'xxx':' for the topic '{topic}' in the context of this study plan.\n\nStudy Plan: {recent_plan}"
+        response = client.with_options(timeout=120.0).chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        f"You are a helpful assistant. Below is a study plan '{recent_plan}'. Please generate clear and concise learning objectives "
+                        f"(at most 3) using Bloom's Taxonomy verbs for the topic '{topic}'. "
+                        "Begin with the objectives immediately. Do not say 'Objectives for the topic' in the context of this study plan."
+                    )
+                },
+                {"role": "user", "content": recent_plan}
+            ],
+            temperature=0.0,
+            top_p=0.6,
+            frequency_penalty=0.2,
+            presence_penalty=0.1
         )
-        response = chat_app.chat(prompt)
-        return {"objectives": response}
+        response_received = response.choices[0].message.content
+        return {"objectives": response_received}
     except Exception as e:
         print(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
