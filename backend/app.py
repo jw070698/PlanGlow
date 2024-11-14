@@ -15,7 +15,7 @@ firebase_admin.initialize_app(cred)
 
 from components.OpenAI_request import ChatApp
 from components.Database import db, create_session, store_messages, get_recent_messages
-from components.YouTube_request import get_search_response, get_video_info, info_to_dict, extract_video_id, get_video_thumbnail, check_resource_availability, get_video_stats
+from components.YouTube_request import get_search_response, search_similar_videos, get_video_info, info_to_dict, extract_video_id, get_video_thumbnail, check_resource_availability, get_video_stats
 from components.GoogleSearch_request import google_search_availability
 
 api_key = os.getenv('API_KEY1')
@@ -54,6 +54,8 @@ class YouTubeLink(BaseModel):
 
 class CheckRequest(BaseModel):
     check_message: str
+    participantsId: str
+    research_query: str
 
 class PlanRequest(BaseModel):
     info_message: str
@@ -207,17 +209,58 @@ async def get_video_statistics(request: YouTubeVideoID):
     try:
         video_id = request.video_id
         stats = get_video_stats(video_id)
-        return {"views": stats['views'], "likes": stats['likes']}
+        if not stats:  # If stats are unavailable, fall back to similar videos
+            similar_video = search_similar_videos(video_id)
+            return {
+                "views": similar_video.get("views", "N/A"),
+                "likes": similar_video.get("likes", "N/A"),
+                "thumbnail": similar_video.get("thumbnail", "https://via.placeholder.com/120"),
+                "fallback": True
+            }
+        return {"views": stats['views'], "likes": stats['likes'], "fallback": False}
     except Exception as e:
         print(f"Error occurred while fetching video stats: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch video statistics")
 
+@app.post("/search_similar_videos")
+async def find_similar_videos(request: SearchRequest):
+    search_message = request.search_message
+    print("Finding similar videos for:", search_message)
+
+    try:
+        # Call the search_similar_videos function from your YouTube_request module
+        similar_video_response = search_similar_videos(search_message)
+
+        # Check if a similar video was found
+        if not similar_video_response.get("exists", False):
+            return {
+                "exists": False,
+                "message": "No similar videos found."
+            }
+
+        # Return details of the similar video found
+        return {
+            "exists": True,
+            "videoId": similar_video_response.get("videoId", "No Video ID"),
+            "title": similar_video_response.get("title", "No Title"),
+            "description": similar_video_response.get("description", "No Description"),
+            "thumbnail": similar_video_response.get("thumbnail", "https://via.placeholder.com/120"),
+            "channelTitle": similar_video_response.get("channelTitle", "Unknown Channel"),
+            "publishTime": similar_video_response.get("publishTime", "Unknown Publish Time")
+        }
+
+    except Exception as e:
+        print(f"Error finding similar videos: {e}")
+        raise HTTPException(status_code=500, detail="Failed to find similar videos")
+
+
 @app.post("/checkResource")
 async def generate_check_response(request: CheckRequest):
     check_message = request.check_message
-    print("Received request for /checkResource")
+    research_query = request.research_query
+    participantId = request.participantsId
     try:
-        response_check = check_resource_availability(check_message)
+        response_check = check_resource_availability(check_message, research_query)
         return {"response": response_check}
     except Exception as e:
         print(f"Error: {str(e)}")
@@ -243,7 +286,6 @@ async def generate_plan_reasoning(request: PlanRequest):
 
         study_plan_overview = study_plan_response.get('studyPlan_Overview', {})
         study_plan_overview_str = json.dumps(study_plan_overview)
-        print(study_plan_overview_str)
         response = client.with_options(timeout=120.0).chat.completions.create(
             model="gpt-4o",
             messages=[
@@ -273,7 +315,6 @@ async def generate_plan_reasoning(request: PlanRequest):
             presence_penalty=0.1
         )
         response_received = response.choices[0].message.content
-        print(response_received)
 
         return {"response": response_received}
 

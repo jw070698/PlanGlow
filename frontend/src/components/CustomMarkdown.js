@@ -106,9 +106,7 @@ const [parsedJson, setParsedJson] =  useState(null);
     const handleSelectVideo = async (weekIndex, dayIndex, selectedVideo) => {
         const weeks = Object.keys(studyPlan); // Get all week keys
         const week = weeks[weekIndex];
-    
-        console.log('Selected week:', week, 'Selected day index:', dayIndex); 
-    
+        
         if (!week || !studyPlan[week]) {
             console.error('Week is not defined in studyPlan:', week);
             return;
@@ -175,7 +173,6 @@ const [parsedJson, setParsedJson] =  useState(null);
     };
 
     useEffect(() => {
-        console.log("Markdown Text:", markdownText);
         if (!markdownText) {
             console.error("markdownText is undefined");
             return;
@@ -186,7 +183,6 @@ const [parsedJson, setParsedJson] =  useState(null);
                 // Trim any whitespace and parse JSON
                 const jsonData = JSON.parse(jsonMatch[1].trim());
                 setParsedJson(jsonData);
-                console.log("Parsed JSON:", jsonData);
             } catch (error) {
                 console.error("JSON parsing error:", error);
                 setParsedJson(null);
@@ -196,7 +192,6 @@ const [parsedJson, setParsedJson] =  useState(null);
             try {
                 const jsonData = JSON.parse(jsonMatch[0].trim());
                 setParsedJson(jsonData);
-                console.log("Parsed JSON:", jsonData);
             } catch (error) {
                 console.error("JSON parsing error:", error);
                 // If parsing fails, set the raw markdown text to display as a fallback
@@ -225,15 +220,20 @@ const [parsedJson, setParsedJson] =  useState(null);
                     week.flatMap(day => 
                         // If the resource is an array, flat map it
                         // Else, just return the single resource
-                        Object.values(day.resources || {}).flatMap(resource =>
-                            Array.isArray(resource) ? resource : [resource]
+                        Object.values(day.resources || {}).flatMap(resource => {
+                            return (Array.isArray(resource) ? resource : [resource]).map(item => ({
+                                ...item,
+                                topic: day.topic || "No Topic" // Assuming each day has a 'topic' field; adjust if named differently
+                            }));
+                        }
+                            // Array.isArray(resource) ? resource : [resource]
                         )
                     )
                 );
-    
 
                 const linkStatuses = await Promise.all(resources.map(async resource => {
-                    const result = await checkAvailability(resource.link, participantsId);
+                    const research_query = `Studying ${resource.topic} for ${formData?.topic || ''} with available time of ${formData.availableTime || '0'} hours per day`
+                    const result = await checkAvailability(resource.link, participantsId, research_query);
                     return {
                         link: resource.link,
                         backgroundColor: result.exists ? '#AFD0BF' : '#EB5353',
@@ -281,7 +281,6 @@ const [parsedJson, setParsedJson] =  useState(null);
                     }
     
                     const videoId = extractVideoId(resource.link);
-                    console.log("videoID",videoId);
                     const thumbnail = resource.thumbnail || null;
     
                     if (!videoId) {
@@ -300,7 +299,6 @@ const [parsedJson, setParsedJson] =  useState(null);
                     let thumbnail = data.thumbnail;
     
                     if (!thumbnail && data.videoId) {
-                        console.log('call get_thumbnail');
                         // Call your backend API to get the thumbnail if it's not already present
                         const response = await axios.post(`${API_BASE_URL}/get_thumbnail`, { video_id: data.videoId });
                         thumbnail = response.data.thumbnail || 'https://via.placeholder.com/120';
@@ -322,7 +320,6 @@ const [parsedJson, setParsedJson] =  useState(null);
                     };
                     return acc;
                 }, {});
-                console.log(statusMap);
                 setVideoStatuses(statusMap);
             };
 
@@ -330,15 +327,15 @@ const [parsedJson, setParsedJson] =  useState(null);
         }
     }, [parsedJson]);
 
-    const fetchVideoStatus = async (videoId) => {
+    const fetchVideoStatus = async (videoId, query) => {
         if (!videoId) {
-            return { views: 'N/A', likes: 'N/A'};
+            return { views: 'N/A', likes: 'N/A', fallback: true};
         }
         try {
             // Fetch video statistics
             const statsResponse = await axios.post(`${API_BASE_URL}/video_stats`, { video_id: videoId });
             const statsData = statsResponse.data;
-
+        
             return {
                 views: statsData.views,
                 likes: statsData.likes
@@ -363,7 +360,7 @@ const [parsedJson, setParsedJson] =  useState(null);
             setSelectedDayIndex(dayIndex);
 
             try {
-                const search_message = `${topic} in ${formData?.topic || ''}`;
+                const search_message = `Studying ${topic} for ${formData?.topic || ''} with available time of ${formData.availableTime || '0'} hours per day`; /////////////./////
                 const response = await axios.post(`${API_BASE_URL}/search`, { 
                     search_message: search_message});
                 const items = response.data.response.items || [];
@@ -474,6 +471,7 @@ const [parsedJson, setParsedJson] =  useState(null);
                         <div key={`${type}-${index}`} style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#F3F7F3', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
                                 <h4 style={{ fontSize: '1rem', margin: '0 0.5rem', color: '#333' }}>{type}</h4>
+                                {resourceStatus.fallback && <span style={{ marginLeft: '0.5rem', color: '#EB5353' }}>Fallback resource</span>}
                                 <button 
                                     onClick={() => handleResourcesClick(topic, type, weekIndex, dayIndex)}
                                     style={{ 

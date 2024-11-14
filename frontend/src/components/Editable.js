@@ -72,7 +72,6 @@ const Editable = ({ formData, setResponsePlan , setStudyPlan, participantsId}) =
         try {
             const { topic, background, studyMaterials, duration, availableTime } = updatedData;
             const updated_userMessage = `Create a study plan for a ${background} student on ${topic} using YouTube over ${duration.months} months, ${duration.weeks} weeks, and ${duration.days} days with ${availableTime} hours available per day.`;
-            console.log(updated_userMessage);
             const response = await axios.post(`${API_BASE_URL}/response`, {
                 user_message: updated_userMessage,
                 participantId: participantsId

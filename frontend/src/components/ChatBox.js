@@ -32,8 +32,6 @@ const analytics = getAnalytics(app);
 const db = getFirestore(app);
 
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1350';
-console.log('Backend URL:', process.env.REACT_APP_BACKEND_URL);
-
 
 const ChatBox = () => {
   const [participantsId, setParticipantsId] = useState('');
@@ -302,7 +300,6 @@ const handleResourcesClick = async () => {
       title: item.snippet.title,
       description: item.snippet.description,
     }));
-
     setSearchResults(formattedResults.length ? formattedResults : [{ title: 'No resources found', description: '', url: '', thumbnail: '' }]);
     setResourcesModalIsOpen(true);
   } catch (error) {
@@ -401,7 +398,7 @@ const styles = {
   botMessage: { padding: '10px', borderRadius: '15px', backgroundColor: '#d0e7ff', alignSelf: 'flex-start', maxWidth: '80%', wordWrap: 'break-word', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', fontSize: '16px', marginRight: 'auto' },
   userInputContainer: { display: 'flex', alignItems: 'center', borderTop: '1px solid #ccc', padding: '10px 0' },
   userInput: { flex: 1, padding: '10px', borderRadius: '5px', border: '1px solid #ccc', fontSize: '16px' },
-  sendButton: { padding: '10px 20px', borderRadius: '5px', backgroundColor: '#007bff', color: '#fff', cursor: 'pointer', marginLeft: '10px', fontSize: '16px' },
+  sendButton: { padding: '10px 20px', borderRadius: '5px', border: 'none', backgroundColor: '#007bff', color: '#fff', cursor: 'pointer', marginLeft: '10px', fontSize: '16px' },
 };
 
 export default ChatBox;

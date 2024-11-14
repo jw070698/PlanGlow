@@ -3,6 +3,7 @@
 # Output: videoId, title, description, thumbnails, channelTitle, publishtime
 import json
 from googleapiclient.discovery import build
+import isodate
 import os
 import re
 import random
@@ -35,6 +36,18 @@ youtube = build('youtube', 'v3', developerKey = YOUTUBE_API_KEY)
 # pylint: disable=maybe-no-member
 
 def get_search_response(query):
+    max_duration_seconds = extract_available_time(query)
+    if max_duration_seconds is None:
+        print("Not available time")
+        return []
+    print(max_duration_seconds)
+    if max_duration_seconds <= 240:  
+        video_duration = "short"
+    elif max_duration_seconds <= 1200:  
+        video_duration = "medium"
+    else:
+        video_duration = "long"
+
     search_response = youtube.search().list(
         q = query,
         order = "relevance",
@@ -43,7 +56,19 @@ def get_search_response(query):
         regionCode="US",
         maxResults = 10
     ).execute()
+
     return search_response
+
+def extract_available_time(query):
+    match = re.search(r'(\d+)\s*hours', query)
+    if match:
+        hours = int(match.group(1))
+        return hours * 3600  # Convert hours to seconds
+    return None
+
+def parse_duration(duration):
+    duration_timedelta = isodate.parse_duration(duration)
+    return int(duration_timedelta.total_seconds())
 
 def get_video_info(search_response):
     result_json = {}
@@ -105,11 +130,49 @@ def get_video_thumbnail(video_id): # Returns the thumbnail URL for a given YouTu
         thumbnail_url = 'https://via.placeholder.com/120'
         return thumbnail_url
 
-def check_resource_availability(url):
+def search_similar_videos(query):
+    print("search_similar_videos", query)
+    try:
+        # Perform search with the query
+        search_response = youtube.search().list(
+            q = query,
+            order = "relevance",
+            part = "snippet",
+            type="video",
+            regionCode="US",
+            maxResults = 1
+        ).execute()
+        print("items", search_response['items'])
+        if search_response['items']:
+            video_details = search_response['items'][0]['snippet']
+            video_id = search_response['items'][0]['id'].get('videoId', 'No Video ID')
+            thumbnail_url = video_details.get('thumbnails', {}).get('high', {}).get('url', 'No Thumbnail')
+            title = video_details.get('title', 'No Title')
+            description = video_details.get('description', 'No Description')
+            channel_title = video_details.get('channelTitle', 'No Channel Title')
+            publish_time = video_details.get('publishTime', 'No Publish Time')
+            print(video_id, title, description, thumbnail_url, channel_title)
+            return {
+                "videoId": video_id,
+                "title": title,
+                "description": description,
+                "thumbnails": thumbnail_url,
+                "channelTitle": channel_title,
+                "publishTime": publish_time
+            }
+        else:
+            return {
+                "exists": False,
+                "message": "No similar videos found."
+            }
+       
+    except Exception as e:
+        return {"exists": False, "message": f"An error occurred during search: {e}"}
+
+
+def check_resource_availability(url, query):
     try:
         video_id = extract_video_id(url)
-        if not video_id:
-            raise ValueError("Invalid YouTube URL")
 
         video_response = youtube.videos().list(
             part="snippet",

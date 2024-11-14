@@ -3,12 +3,14 @@ const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:1350
 
 
 // YouTube 
-export const checkAvailability = async(url, custom_id) => {
+export const checkAvailability = async(url, participantsId, research_query) => {
     try {
         const response = await axios.post(`${API_BASE_URL}/checkResource`, {
             check_message: url,
-            custom_id: custom_id
+            participantsId: participantsId,
+            research_query: research_query
         });
+
         const result = response.data.response;
         if (result.title) {
             return {
