@@ -3,7 +3,6 @@
 # Output: videoId, title, description, thumbnails, channelTitle, publishtime
 import json
 from googleapiclient.discovery import build
-import isodate
 import os
 import re
 import random
@@ -65,10 +64,6 @@ def extract_available_time(query):
         hours = int(match.group(1))
         return hours * 3600  # Convert hours to seconds
     return None
-
-def parse_duration(duration):
-    duration_timedelta = isodate.parse_duration(duration)
-    return int(duration_timedelta.total_seconds())
 
 def get_video_info(search_response):
     result_json = {}
