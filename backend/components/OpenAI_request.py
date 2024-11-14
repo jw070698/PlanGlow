@@ -167,8 +167,6 @@ class ChatApp:
         try:
             response = self.generate_response(improvement_prompt, temperature=0.0)
 
-            print("API improved response:", response)
-
             # Search for JSON in the response (in case it's wrapped in code blocks)
             json_match = re.search(r'```json([\s\S]*?)```', response)
             if json_match:
@@ -181,7 +179,7 @@ class ChatApp:
             try:
                 improved_json = json.loads(json_text)
                 print("Parsed JSON improved response:", improved_json)
-                return improved_json
+                return json.dumps(improved_json)
             except json.JSONDecodeError:
                 print("JSON parsing error. Returning raw response.")
                 return response

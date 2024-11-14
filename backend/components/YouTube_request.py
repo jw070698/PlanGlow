@@ -1,3 +1,4 @@
+# YouTube_request.py
 # YouTube Data API v3
 # Input: subject from previous stage
 # Output: videoId, title, description, thumbnails, channelTitle, publishtime
@@ -17,24 +18,34 @@ from dotenv import load_dotenv
 load_dotenv()
 youtube_api_keys = [k for k in os.environ if k.startswith("YOUTUBE_API_KEY")]
 
-#
+def get_random_api_key():
+    """Retrieve a random YouTube API key from the environment variables."""
+    if youtube_api_keys:
+        selected_key = random.choice(youtube_api_keys)
+        api_key = os.getenv(selected_key)
+        if not api_key:
+            raise ValueError("YouTube API key is missing in environment variables.")
+        return api_key
+    else:
+        raise ValueError("No YOUTUBE_API_KEY found in environment variables.")
 
-sorted_keys = sorted(youtube_api_keys)
-selected_key = random.choice(sorted_keys)
-YOUTUBE_API_KEY = os.environ[selected_key]
-
-if youtube_api_keys:
-    sorted_keys = sorted(youtube_api_keys)
-    selected_key = random.choice(sorted_keys)
-    YOUTUBE_API_KEY = os.getenv(selected_key)
-else:
-    raise ValueError("No YOUTUBE_API_KEY found in environment variables")
-
-youtube = build('youtube', 'v3', developerKey = YOUTUBE_API_KEY)
-# youtube = None
-# pylint: disable=maybe-no-member
+def get_youtube_client():
+    """Create and return a YouTube API client using a random API key."""
+    while youtube_api_keys:
+        try:
+            selected_key = random.choice(youtube_api_keys)
+            api_key = os.getenv(selected_key)
+            youtube = build('youtube', 'v3', developerKey=api_key)
+            # Test the key with a simple request to check if it has quota
+            youtube.videos().list(part="snippet", id="Ks-_Mh1QhMc").execute()
+            return youtube
+        except Exception as e:
+            print(f"API key {selected_key} quota exceeded or invalid, trying another. Error: {e}")
+            youtube_api_keys.remove(selected_key)
+    raise ValueError("All API keys have exceeded quota or are invalid.")
 
 def get_search_response(query):
+    youtube = get_youtube_client()  # Initialize YouTube client
     max_duration_seconds = extract_available_time(query)
     if max_duration_seconds is None:
         print("Not available time")
@@ -48,12 +59,12 @@ def get_search_response(query):
         video_duration = "long"
 
     search_response = youtube.search().list(
-        q = query,
-        order = "relevance",
-        part = "snippet",
+        q=query,
+        order="relevance",
+        part="snippet",
         type="video",
         regionCode="US",
-        maxResults = 10
+        maxResults=10
     ).execute()
 
     return search_response
@@ -98,19 +109,18 @@ def info_to_dict(videoId, title, description, thumbnail, channelTitle, publishti
         "thumbnail": thumbnail,
         "channelTitle": channelTitle,
         "publishtime": publishtime
-        }
+    }
     return result
 
-
-def extract_video_id(url): # Extracts video ID from a YouTube URL.
+def extract_video_id(url):
     video_id_match = re.search(r'(?:https?:\/\/)?(?:www\.)?youtu\.be\/([a-zA-Z0-9_-]{11})|(?:https?:\/\/)?(?:www\.)?youtube\.com\/(?:watch\?v=|embed\/|v\/)?([a-zA-Z0-9_-]{11})', url)
     if video_id_match:
         return video_id_match.group(1) or video_id_match.group(2)
     else:
         raise ValueError("Invalid YouTube URL")
 
-
-def get_video_thumbnail(video_id): # Returns the thumbnail URL for a given YouTube video URL.
+def get_video_thumbnail(video_id):
+    youtube = get_youtube_client()  # Initialize YouTube client
     video_response = youtube.videos().list(
         part="snippet",
         id=video_id
@@ -122,20 +132,28 @@ def get_video_thumbnail(video_id): # Returns the thumbnail URL for a given YouTu
         return thumbnail_url
     else:
         print(f"No thumbnail found for ID: {video_id}")
-        thumbnail_url = 'https://via.placeholder.com/120'
-        return thumbnail_url
+        return 'https://via.placeholder.com/120'
 
 def search_similar_videos(query):
+    youtube = get_youtube_client()  # Initialize YouTube client
     print("search_similar_videos", query)
-    try:
-        # Perform search with the query
-        search_response = youtube.search().list(
-            q = query,
-            order = "relevance",
-            part = "snippet",
+    search_response = youtube.search().list(
+            q=query,
+            order="relevance",
+            part="snippet",
             type="video",
             regionCode="US",
-            maxResults = 1
+            maxResults=1
+        ).execute()
+    print("items", search_response['items'])
+    try:
+        search_response = youtube.search().list(
+            q=query,
+            order="relevance",
+            part="snippet",
+            type="video",
+            regionCode="US",
+            maxResults=1
         ).execute()
         print("items", search_response['items'])
         if search_response['items']:
@@ -146,7 +164,6 @@ def search_similar_videos(query):
             description = video_details.get('description', 'No Description')
             channel_title = video_details.get('channelTitle', 'No Channel Title')
             publish_time = video_details.get('publishTime', 'No Publish Time')
-            print(video_id, title, description, thumbnail_url, channel_title)
             return {
                 "videoId": video_id,
                 "title": title,
@@ -160,12 +177,11 @@ def search_similar_videos(query):
                 "exists": False,
                 "message": "No similar videos found."
             }
-       
     except Exception as e:
         return {"exists": False, "message": f"An error occurred during search: {e}"}
 
-
 def check_resource_availability(url, query):
+    youtube = get_youtube_client()  # Initialize YouTube client
     try:
         video_id = extract_video_id(url)
 
@@ -177,8 +193,6 @@ def check_resource_availability(url, query):
         if 'items' in video_response and len(video_response['items']) > 0:
             video_details = video_response['items'][0]['snippet']
             thumbnail_url = video_details.get('thumbnails', {}).get('high', {}).get('url', 'No Thumbnail')
-            
-            # Extract other details with default values if the key is missing
             title = video_details.get('title', 'No Title')
             description = video_details.get('description', 'No Description')
             channel_title = video_details.get('channelTitle', 'No Channel Title')
@@ -203,7 +217,8 @@ def check_resource_availability(url, query):
             "message": f"An error occurred: {e}"
         }
 
-def get_video_stats(video_id): # Count of views and likes    
+def get_video_stats(video_id):
+    youtube = get_youtube_client()  # Initialize YouTube client
     request = youtube.videos().list(
         part="statistics",
         id=video_id
