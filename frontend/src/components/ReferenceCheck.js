@@ -23,7 +23,7 @@ export const checkAvailability = async(url, participantsId, research_query) => {
                 publishTime: result.publishTime || 'No Publish Time',
             };
         } else {
-            return { exists: false, message: result.message };
+                return { exists: false, message: result.message };
         }
     } catch (error) {
         console.error("Error checking resource availability:", error);
