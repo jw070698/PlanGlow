@@ -130,10 +130,12 @@ async def generate_improved_response(request: MessageRequest):
     try:
         participantId = request.participantId
         messages = get_recent_messages(participantId)
+        user_message = messages[-3]['content']
         initial_response = messages[-2]['content']  
         critique_response = messages[-1]['content']
+        print(user_message)
 
-        improved_response = chat_app.get_improved_response(initial_response, critique_response)
+        improved_response = chat_app.get_improved_response(user_message, initial_response, critique_response)
         if not improved_response:
             raise HTTPException(status_code=500, detail="Failed to generate improved response")
 
@@ -202,30 +204,18 @@ async def check_and_replace_invalid_videos(study_plan: dict) -> dict:
 
                 for idx, resource in enumerate(youtube_resources):
                     link = resource.get('link')
-                    if not link or not YOUTUBE_URL_PATTERN.match(link):
-                        # Invalid link - find a replacement
-                        print(f"Invalid YouTube URL detected: {link}")
-                        similar_video = await find_replacement_video(day.get('topic', ''))
-                        if similar_video:
-                            youtube_resources[idx] = similar_video  # Replace invalid with valid
-                            print(f"Replaced invalid video with {similar_video['link']}")
-                        else:
-                            print(f"No similar video found for topic: {day.get('topic', '')}")
-                        continue  # Skip to the next video resource
-
-                    # Check validity of a proper link
-                    video_id = extract_video_id(link)
-                    if not await check_video_validity(video_id):
-                        # Invalid video ID - find a replacement
-                        print(f"Invalid YouTube video ID detected: {video_id}")
-                        similar_video = await find_replacement_video(day.get('topic', ''))
-                        if similar_video:
-                            # Replace invalid with valid
-                            youtube_resources[idx] = similar_video
-                            print(f"Replaced invalid video with {similar_video['link']}")
-                        else:
-                            print(f"No similar video found for topic: {day.get('topic', '')}")
-                        
+                    video_id = extract_video_id(link) if link else None
+                    # Skip valid links
+                    if link and video_id and await check_video_validity(video_id):
+                        continue
+                    # Invalid links
+                    print(f"Invalid YouTube URL detected: {link}")
+                    similar_video = await find_replacement_video(day.get('topic', ''))
+                    if similar_video:
+                        youtube_resources[idx] = similar_video  # Replace invalid with valid
+                        print(f"Replaced invalid video with {similar_video['link']}")
+                    else:
+                        print(f"No similar video found for topic: {day.get('topic', '')}")             
                 resources['YouTube'] = youtube_resources
                 day['resources'] = resources
 
