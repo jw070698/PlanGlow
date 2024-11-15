@@ -305,26 +305,25 @@ async def generate_info_response(request: InfoRequest):
                 {
                     "role": "system",
                     "content": (
-                        "You are a helpful assistant. You will let the user know about the difference in background knowledge levels "
-                        "('absolute beginner', 'beginner', 'intermediate', 'advanced') for the topic as a table. "
+                        "You are a helpful assistant." 
+                        "You will let the user know about the difference in background knowledge levels based on Bloom's taxonomy, especially: domain of knowledge levels. "
+                        "Knowledge Level: At this level the teacher is attempting to determine whether the students can recognize and recall information. Example: What countries were involved in the War of 1812?"
+                        "Here we have 4 levels of background knowledge ('absolute beginner', 'beginner', 'intermediate', 'advanced'). "
                         "Please be concise, with each description at most 2 bullet points. Start directly with the Level and description "
-                        "using table format. "
-                        "Please be pretty, simple, and easy to read."
-                        "\n\n"
-                        "For example:\n"
-                        "| Level             | Description                                                                 |\n"
-                        "|-------------------|-----------------------------------------------------------------------------|\n"
-                        "| Absolute Beginner | - No prior programming experience.                                          |\n"
-                        "|                   | - Unfamiliar with Python and data analysis concepts.                        |\n"
-                        "|-------------------|-----------------------------------------------------------------------------|\n"
-                        "| Beginner          | - Basic understanding of Python syntax and simple scripts.                  |\n"
-                        "|                   | - Familiar with basic data structures (lists, dictionaries).                |\n"
-                        "|-------------------|-----------------------------------------------------------------------------|\n"
-                        "| Intermediate      | - Comfortable with Python libraries like Pandas and NumPy.                  |\n"
-                        "|                   | - Can perform basic data manipulation and visualization.                    |\n"
-                        "|-------------------|-----------------------------------------------------------------------------|\n"
-                        "| Advanced          | - Proficient in using advanced libraries (e.g., SciPy, Scikit-learn).       |\n"
-                        "|                   | - Capable of complex data analysis, machine learning, and optimization.     |\n"
+                        "Using table format below and make it easy to read. "
+                        "| Level             | Description                                                                      |\n"
+                        "|-------------------|----------------------------------------------------------------------------------|\n"
+                        "| Absolute Beginner | - Description                                                                    |\n"
+                        "|                   | - Description                                                                    |\n"
+                        "|-------------------|----------------------------------------------------------------------------------|\n"
+                        "| Beginner          | - Description                                                                    |\n"
+                        "|                   | - Description                                                                    |\n"
+                        "|-------------------|----------------------------------------------------------------------------------|\n"
+                        "| Intermediate      | - Description                                                                    |\n"
+                        "|                   | - Description                                                                    |\n"
+                        "|-------------------|----------------------------------------------------------------------------------|\n"
+                        "| Advanced          | - Description                                                                    |\n"
+                        "|                   | - Description                                                                    |\n"
                     )
                 },
                 {"role": "user", "content": request.info_message}
@@ -435,6 +434,10 @@ async def generate_plan_reasoning(request: PlanRequest):
         if not improved_response_message or not study_plan_response:
             raise HTTPException(status_code=404, detail="No 'Improved Response' message found")
 
+        try:
+            study_plan_response = json.loads(study_plan_response)
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=500, detail="Failed to parse study plan response as JSON")
         study_plan_overview = study_plan_response.get('studyPlan_Overview', {})
         study_plan_overview_str = json.dumps(study_plan_overview)
         response = client.with_options(timeout=120.0).chat.completions.create(
@@ -443,19 +446,41 @@ async def generate_plan_reasoning(request: PlanRequest):
                 {
                     "role": "system",
                     "content": (
-                        "You are a helpful assistant. Please review the study plan provided and explain how you selected the content for each week. "
-                        "Do not show me the study plan in your answer. Just explain how you select and mention the connections between the content for each week."
-                        "Each explanation should clarify the purpose of that week's content and how it builds on prior learning."
-                        "Should use Bloom's Taxonomy verbs for Learning objectives"
-                        "Provide concise explanations in complete sentences. "
-                        "Separate your reason by each week json type: "
+                        "You are a helpful assistant. Please review the study plan provided and generate detailed explanations for each week, focusing on three distinct aspects: Learning Objectives, Content Selection, and Connection.\n"
+                        "Your responses should demonstrate a thorough understanding of constructivist learning principles, including Andragogy which is the theory of adult learning by Knowles Malcolm and Constructivism by Jean Piaget. "
+                        "Provide concise explanations in complete sentences and separate the reasoning into JSON format as follows:\n\n"
+                        "1. Learning Objectives:\n"
+                        "Clearly define measurable outcomes for learners."
+                        "Ensure objectives are relevant to adult learners' needs for actionable and goal-oriented outcomes, aligning with principles of Andragogy. "
+                        "Use specific verbs from Bloom's Taxonomy.\n"
+                        "2. Content Selection:\n"
+                        "Justify the selection of activities, topics, or resources based on their relevance, developmental appropriateness."
+                        "Emphasize their alignment with Constructivism, focusing on building upon learners' prior experiences, encouraging exploration, and enabling active engagement. "
+                        "Address how the content supports adult learners by being immediately relevant and practically useful (Andragogy).\n"
+                        "3. Connection:\n"
+                        "Explain how the content relates to previously covered material to ensure continuity and coherence."
+                        "Highlight how this week’s content sets the foundation for subsequent learning, enabling gradual mastery and skill progression. "
+                        "Focus on how the progression helps build a comprehensive understanding of the subject and supports gradual mastery.\n"                      
+                        "Provide the response in this structured JSON format: "
                         "{\n"
-                        "    \"Week1\": \"- Learning objective...\n - Content selection...\n - Connection...\n\",\n"
-                        "    \"Week2\": \"- Learning objective...\n - Content selection...\n - Connection...\n\",\n"
-                        "    \"Week3\": \"- Learning objective...\n - Content selection...\n - Connection...\n\",\n"
-                        "    \"Week4\": \"- Learning objective...\n - Content selection...\n - Connection...\n\"\n"
+                        "    \"Week1\": \"- Learning objective: Describe what learners will achieve this week, using Bloom's verbs.\n"
+                        "               - Content selection: Explain why this specific content was chosen to meet the objective.\n"
+                        "               - Connection: Describe how this week’s content prepares learners for the next week or builds on prior knowledge.\",\n"
+                        "    \"Week2\": \"- Learning objective...\n"
+                        "               - Content selection...\n"
+                        "               - Connection...\n\",\n"
+                        "    \"Week3\": \"- Learning objective...\n"
+                        "               - Content selection...\n"
+                        "               - Connection...\n\",\n"
+                        "    \"Week4\": \"- Learning objective...\n"
+                        "               - Content selection...\n"
+                        "               - Connection...\n\"\n"
                         "}\n\n"
-
+                        "For each section, ensure that:\n"
+                        "- Learning Objectives: Are specific, measurable, and aligned with Bloom's Taxonomy.\n"
+                        "- Content Selection: Reflects developmental appropriateness, relevance, and scaffolding techniques.\n"
+                        "- Connection: Emphasizes how prior learning is reinforced and future learning is prepared for.\n"
+                        "Do not mention theory explicitly in the results"
                     )
                 },
                 {"role": "user", "content": study_plan_overview_str}
@@ -494,9 +519,15 @@ async def generate_topic_explanation(request: UserMessageRequest):
                 {
                     "role": "system",
                     "content": (
-                        f"You are a helpful assistant. Below is a study plan. Please explain why the topic '{topic}' is important. "
+                        f"You are a helpful assistant. Below is a study plan with specific topics." 
+                        "For each topic, explain why the topic '{topic}' is important and essential. "
                         f"Please give concise answers using 3 bullet points in the context of this study plan '{recent_plan}'. "
-                        "Just give the explanation. Do not give the study plan."                    )
+                        "Please refer these guidance: "
+                        "Explain how this topic aligns with Andragogy which is theory of adult learning by Knowles Malcolm. Describe how the topic meets learners at their current skill level and challenges them appropriately for growth."  
+                        "Outline how this topic supports specific cognitive objectives using Bloom’s Taxonomy. Focus on how the topic enables students to build skills from foundational to advanced levels."
+                        "Describe how this topic acts as a Jerome Bruner's theory of Scaffolding in Education for upcoming material, providing necessary skills or background knowledge. Highlight how it encourages Flavell's metacognition and self-regulated learning to foster independent learning and readiness for more complex topics."
+                        f"Please respond with concise explanations for each topic using the above structure with 3 bullet points. Only provide **reason for study this '{topic}'** based on the theories; do not repeat the study plan content; do not mention theory explicitly in the results; be concise."
+                        )
                     },
                     {"role": "user", "content": recent_plan}
             ],

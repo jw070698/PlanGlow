@@ -49,10 +49,10 @@ const FAQIconStudyPlan = ({ week, participantsId }) => {
             explanationByWeek = {};
           }
         }
-
+        console.log("data", data)
         if (typeof data === 'object' && data !== null) {
           explanationByWeek = data;
-        } else if (!explanationByWeek) {
+        } else{
           console.log('Data is empty or in an unexpected format.');
           explanationByWeek = {};
         }
@@ -63,6 +63,7 @@ const FAQIconStudyPlan = ({ week, participantsId }) => {
           const normalizedKey = key.replace(/\s+/g, '').toLowerCase();
           normalizedExplanations[normalizedKey] = explanationByWeek[key];
         }
+        console.log('Normalized explanations:', normalizedExplanations);
 
         // Normalize the week variable
         const normalizedWeek = week.replace(/\s+/g, '').toLowerCase();
@@ -105,18 +106,19 @@ const FAQIconStudyPlan = ({ week, participantsId }) => {
   }, [week]);
 
   const preprocessDataString = (data) => {
-    // Remove any line breaks within the JSON keys and values
-    data = data.replace(/(\r\n|\n|\r)/gm, '');
-    // Remove any trailing commas that would make the JSON invalid
-    data = data.replace(/,(\s*[}\]])/g, '$1');
-    // Ensure keys and string values are properly quoted
-    data = data.replace(/([{,])\s*(\w+)\s*:/g, '$1"$2":');
-    // Escape double quotes inside string values
-    data = data.replace(/:\s*"([\s\S]*?)"/g, (match, p1) => {
-      const escapedValue = p1.replace(/"/g, '\\"');
-      return `: "${escapedValue}"`;
-    });
-    return data;
+    try {
+      // Remove Markdown code block markers and trim whitespace
+      data = data.replace(/```json/g, '').replace(/```/g, '').trim();
+  
+      // Ensure JSON formatting issues are fixed
+      data = data.replace(/(\r\n|\n|\r)/gm, ''); // Remove line breaks
+      data = data.replace(/,(\s*[}\]])/g, '$1'); // Remove trailing commas
+      data = data.replace(/([{,])\s*(\w+)\s*:/g, '$1"$2":'); // Quote keys
+      return data;
+    } catch (error) {
+      console.error('Error preprocessing data string:', error);
+      return data;
+    }
   };
 
   return (
