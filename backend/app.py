@@ -23,7 +23,7 @@ from components.GoogleSearch_request import google_search_availability
 from dotenv import load_dotenv
 load_dotenv()
 youtube_api_keys = [k for k in os.environ if k.startswith("YOUTUBE_API_KEY")]
-YOUTUBE_URL_PATTERN = re.compile(r'^https?://(www\.)?(youtube\.com/watch\?v=|youtu\.be/)[\w-]+$')
+YOUTUBE_URL_PATTERN = re.compile(r"^(https?://)?(www\.)?(youtube\.com|youtu\.be)/.+$")
 
 api_key = os.getenv('API_KEY1')
 client = OpenAI(api_key=api_key)
@@ -78,7 +78,8 @@ async def generate_response(request: MessageRequest):
         participantId = request.participantId
         # Check if session exists; if not, create a new session
         session_ref = db.collection("messages").document(participantId)
-
+        user_message = request.user_message
+        print("USER MESSAGE IN RESPONSE", user_message)
         if not session_ref.get().exists:
             create_session(participantId)
             print("Session created for", participantId)
@@ -98,6 +99,7 @@ async def generate_response(request: MessageRequest):
         
         # Store the message and response in Firestore (append to history)
         store_messages(participantId, user_message, response_text)
+        session_ref.set({"user_message": user_message}, merge=True)
         print("Stored initial response")
 
         return {"response": response_text}
@@ -129,18 +131,21 @@ async def generate_critique_response(request: MessageRequest):
 async def generate_improved_response(request: MessageRequest):
     try:
         participantId = request.participantId
+        session_ref = db.collection("messages").document(participantId)
+        user_message = request.user_message or session_ref.get().to_dict().get("user_message")
+        print("USER MESSAGE in /response/improved", user_message)
+
         messages = get_recent_messages(participantId)
-        user_message = messages[-3]['content']
         initial_response = messages[-2]['content']  
         critique_response = messages[-1]['content']
-        print(user_message)
 
         improved_response = chat_app.get_improved_response(user_message, initial_response, critique_response)
         if not improved_response:
             raise HTTPException(status_code=500, detail="Failed to generate improved response")
-
+            
+        print("START UPDATED IMPROVED RESPONSE")
         # Process the improved response to check and replace invalid YouTube videos
-        updated_improved_response = await process_improved_response(improved_response)
+        updated_improved_response = await process_improved_response(user_message, improved_response)
 
         # Store the updated improved response
         store_messages(participantId, "Improved Response", updated_improved_response)
@@ -155,7 +160,7 @@ async def generate_improved_response(request: MessageRequest):
         print(f"Error in improved response: {e}")
         raise HTTPException(status_code=500, detail="Failed to generate improved response")
 
-async def process_improved_response(improved_response: str) -> str:
+async def process_improved_response(user_message: str, improved_response: str) -> str:
     # Parse the improved response as JSON
     try:
         # Attempt to find JSON in the response
@@ -170,20 +175,20 @@ async def process_improved_response(improved_response: str) -> str:
             return improved_response
 
         response_data = json.loads(json_text)
-    except Exception as e:
-        print(f"Error parsing improved_response: {e}")
-        return improved_response 
 
     except json.JSONDecodeError:
         # If parsing fails, return the response as is
         print("Improved response is not valid JSON")
         return improved_response
+    except Exception as e:
+        print(f"Error parsing improved_response: {e}")
+        return improved_response 
 
     # Process the study plan
     if 'studyPlan' in response_data:
         study_plan = response_data['studyPlan']
         print("before calling check_and_replace_invalid_videos")
-        updated_study_plan = await check_and_replace_invalid_videos(study_plan)
+        updated_study_plan = await check_and_replace_invalid_videos(user_message, study_plan)
         response_data['studyPlan'] = updated_study_plan
         # Convert back to JSON string
         updated_response_text = json.dumps(response_data, indent=2)
@@ -192,8 +197,11 @@ async def process_improved_response(improved_response: str) -> str:
         # If no study plan, return the response as is
         return improved_response
 
-async def check_and_replace_invalid_videos(study_plan: dict) -> dict:
+async def check_and_replace_invalid_videos(user_message: str, study_plan: dict) -> dict:
     print("THIS IS A STUDY PLAN", study_plan)
+    invalid_urls_cache = set()
+    search_results_cache = {}
+
     for week_key, week_value in study_plan.items():
         for day in week_value:
             resources = day.get('resources', {})
@@ -204,29 +212,59 @@ async def check_and_replace_invalid_videos(study_plan: dict) -> dict:
 
                 for idx, resource in enumerate(youtube_resources):
                     link = resource.get('link')
+                    if link in invalid_urls_cache:
+                        continue  # Skip URLs that have already been processed
+
                     video_id = extract_video_id(link) if link else None
                     # Skip valid links
                     if link and video_id and await check_video_validity(video_id):
                         continue
                     # Invalid links
                     print(f"Invalid YouTube URL detected: {link}")
-                    similar_video = await find_replacement_video(day.get('topic', ''))
+                    invalid_urls_cache.add(link)
+
+                    topic = day.get('topic', '')
+                    if topic in search_results_cache:
+                        similar_video = search_results_cache[topic]
+                    else:
+                        similar_video = await find_replacement_video(user_message, topic)
+                        search_results_cache[topic] = similar_video
+
                     if similar_video:
                         youtube_resources[idx] = similar_video  # Replace invalid with valid
                         print(f"Replaced invalid video with {similar_video['link']}")
                     else:
-                        print(f"No similar video found for topic: {day.get('topic', '')}")             
+                        print(f"No similar video found for topic: {topic}")
+
                 resources['YouTube'] = youtube_resources
                 day['resources'] = resources
 
     return study_plan
 
 
-async def find_replacement_video(topic: str) -> dict:
+
+async def find_replacement_video(user_message:str, topic: str) -> dict:
     # Finds a similar video for the given topic by querying the search function.
-    full_query = f"{topic} in studying overall topic"
+    print("USER MESSAGE IN FIND_REPLACEMENT_VIDEO", user_message)
+    proficiency_match = re.search(r"(absolute beginner|beginner|intermediate|advanced)", user_message, re.IGNORECASE)
+    proficiency = proficiency_match.group(1) if proficiency_match else "unknown level"
+    topic_match = re.search(r"on (\w+)", user_message, re.IGNORECASE)
+    extracted_topic = topic_match.group(1) if topic_match else "unknown topic"
+    duration_match = re.search(r"over (\d+) months?, (\d+) weeks?, and (\d+) days?", user_message, re.IGNORECASE)
+    duration = {
+        "months": int(duration_match.group(1)) if duration_match else 0,
+        "weeks": int(duration_match.group(2)) if duration_match else 0,
+        "days": int(duration_match.group(3)) if duration_match else 0
+    }
+    hours_match = re.search(r"(\d+) hours? available per day", user_message, re.IGNORECASE)
+    hours_per_day = int(hours_match.group(1)) if hours_match else 0
+    full_query = f"Studying {topic} for a {proficiency} in {hours_per_day} hours"
+
     result = await search_similar_video(full_query)
-    return result
+    if result:
+        return result
+
+    return None
 
 
 async def check_video_validity(video_id: str) -> bool:
@@ -237,37 +275,34 @@ async def check_video_validity(video_id: str) -> bool:
         selected_key = random.choice(youtube_api_keys)
         api_key = os.getenv(selected_key)
     if not api_key:
-        print("YouTube API key is not set")
         return False
 
     url = f"https://www.googleapis.com/youtube/v3/videos?id={video_id}&key={api_key}&part=id"
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.get(url) as resp:
-                if resp.status == 403:
-                    print("Quota exceeded or access forbidden; try a different API key.")
-                    return False
-                elif resp.status != 200:
-                    print(f"Error fetching video data: {resp.status}")
-                    return False
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as response:
+                    if response.status == 403:
+                        print("Quota exceeded or access forbidden.")
+                        return False
+                    elif response.status != 200:
+                        print(f"HTTP error: {response.status}")
+                        return False
 
-                data = await resp.json()
-                items = data.get('items', [])
-                return len(items) > 0
+                    data = await response.json()
+                    items = data.get("items", [])
+                    return len(items) > 0
         except Exception as e:
-            print(f"Exception occurred while checking video validity: {e}")
+            print(f"Error while checking video validity: {e}")
             return False
+
 
 async def search_similar_video(search_query: str) -> dict:
     # First attempt with full query
     response = await execute_search_query(search_query)
     if response:
         return response
-    
-    # Fallback with a simplified query
-    simple_query = search_query.split(':')[0].split('-')[0].strip()
-    response = await execute_search_query(simple_query)
-    return response
+    return None
 
 async def execute_search_query(query: str) -> dict:
     url = f"{API_BASE_URL}/search_similar_videos"
@@ -279,13 +314,13 @@ async def execute_search_query(query: str) -> dict:
                     return None
                 data = await resp.json()
                 if data.get('exists'):
-                    items = data.get('items', [])
-                    if items:
-                        first_item = items[0]
-                        video_id = first_item['id']['videoId']
-                        title = first_item['snippet']['title']
-                        link = f"https://www.youtube.com/watch?v={video_id}"
-                        return {'title': title, 'link': link}
+                    video_id = data.get('videoId')
+                    title = data.get('title')
+                    link = f"https://www.youtube.com/watch?v={video_id}"
+                    return {'title': title, 'link': link}
+                else:
+                    print(f"No video found for query: {query}")
+                    return None
         except Exception as e:
             print(f"Error in search: {e}")
             return None
@@ -385,18 +420,8 @@ async def find_similar_videos(request: SearchRequest):
         # Call the search_similar_videos function from YouTube_request.py
         similar_video_response = search_similar_videos(search_message)
 
-        # Check if a similar video was found
-        if not similar_video_response.get("exists"):
-            return {
-                "exists": False,
-                "message": "No similar videos found."
-            }
+        return similar_video_response
 
-        # Return details of the similar video found
-        return {
-            "exists": True,
-            "items": [similar_video_response]
-        }
     except Exception as e:
         print(f"Error finding similar videos: {e}")
         raise HTTPException(status_code=500, detail="Failed to find similar videos")

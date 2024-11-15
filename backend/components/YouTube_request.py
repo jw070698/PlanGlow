@@ -137,15 +137,6 @@ def get_video_thumbnail(video_id):
 def search_similar_videos(query):
     youtube = get_youtube_client()  # Initialize YouTube client
     print("search_similar_videos", query)
-    search_response = youtube.search().list(
-            q=query,
-            order="relevance",
-            part="snippet",
-            type="video",
-            regionCode="US",
-            maxResults=1
-        ).execute()
-    print("items", search_response['items'])
     try:
         search_response = youtube.search().list(
             q=query,
@@ -161,13 +152,18 @@ def search_similar_videos(query):
         items = search_response.get('items', [])
         if not items:
             return {
-                "exists": False,
-                "message": "No similar videos found."
+                'exists': False,
+                'message': 'No similar videos found.'
             }
 
         # Process the first video in the items list
         video_details = items[0]['snippet']
         video_id = items[0]['id'].get('videoId', 'No Video ID')
+        if not video_id:
+            return {
+                'exists': False,
+                'message': 'No video ID found in the search result.'
+            }
         thumbnail_url = video_details.get('thumbnails', {}).get('high', {}).get('url', 'No Thumbnail')
         title = video_details.get('title', 'No Title')
         description = video_details.get('description', 'No Description')
@@ -175,6 +171,7 @@ def search_similar_videos(query):
         publish_time = video_details.get('publishTime', 'No Publish Time')
 
         return {
+            "exists": True,
             "videoId": video_id,
             "title": title,
             "description": description,
@@ -190,7 +187,12 @@ def check_resource_availability(url, query):
     youtube = get_youtube_client()  # Initialize YouTube client
     try:
         video_id = extract_video_id(url)
-
+        if not video_id or len(video_id) != 11:
+            return {
+                "exists": False,
+                "message": f"Invalid video ID extracted from URL: {url}"
+            }
+        print("Check_resoure_availailbity in YouTube_request.py: ",video_id)
         video_response = youtube.videos().list(
             part="snippet",
             id=video_id

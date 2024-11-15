@@ -81,7 +81,6 @@ class ChatApp:
             frequency_penalty=0.2,
             presence_penalty=0.1
         )
-        print("OpenAI initial response:", initial_response)
         if initial_response:
             json_match = re.search(r'```json([\s\S]*?)```', initial_response)
             if json_match:
@@ -126,6 +125,7 @@ class ChatApp:
 
     # step 3 improved response
     def get_improved_response(self, user_message, parsed_json, critique_response):
+        print("USER MESSAGE in GET IMPROVED RESWPONSE",user_message)
         parsed_json_str = json.dumps(parsed_json)
         critique_str = critique_response.strip()
         improvement_prompt = [
@@ -134,39 +134,40 @@ class ChatApp:
             "content": (
                 "You are an assistant improving a study plan based on the following critique. "
                 f"Your primary task is to improve study plans that meet the user’s unique needs which is {user_message} based on {critique_str}."
+                "DO NOT CHANGE STUDY DURATION"
                 "Please use the existing structure in 'studyPlan_Overview' and 'studyPlan' sections, "
                 f"Initial user request: {user_message}\n" ##### add initial prompts
                 f"Initial Study Plan (keep structure):\n{parsed_json_str}\n\n"
                 f"Critique Summary:\n{critique_str}\n\n"
                 "Each week should contain 5 study days, and each month should have 4 weeks.\n"
+                "Resources other than YouTube is prohibitted"
                 "Use the following structure for your JSON output to have all duration of study plan without additional explanations or formatting: \n"
-                    "{\n"
-                    "  'studyPlan_Overview': {\n"
-                    "    'Week1': '',\n"
-                    "    ...\n"
-                    "  },\n"
-                    "  'studyPlan': {\n"
-                    "    'Week 1: ': [\n"
-                    "      {\n"
-                    "        'day': 'Day 1',\n"
-                    "        'topic': 'specific topic',\n"
-                    "        'Time': 'x hours',\n"
-                    "        'resources': {\n"
-                    "          'YouTube': [\n"
-                    "            {\n"
-                    "              'title': 'title of videos',\n"
-                    "              'link': 'link of videos'\n"
-                    "            },\n"
-                    "            { ... }\n"
-                    "          ],\n"
-                    "        }\n"
-                    "      },\n"
-                    "      ...\n"
-                    "    ]\n"
-                    "  }\n"
-                    "}\n"
-                    "\n\n"
-                    "Note: Only recommend more than one YouTube video per day if the user's availability is >= 2 hours per day."
+                    "{\
+                      \"studyPlan_Overview\": {\
+                        \"Week1\": '',\
+                        ...\
+                      },\
+                      \"studyPlan\": {\
+                        \"Week 1: \": [\
+                          {\
+                            \"day\": \"Day 1\",\
+                            \"topic\": \"specific topic\",\
+                            \"Time\": \"x hours\",\
+                            \"resources'\" {\
+                              \"YouTube\": [\
+                                {\
+                                  \"title\": \"title of videos\",\
+                                  \"link\": \"link of videos\"\
+                                },\
+                                { ... }\
+                              ],\
+                            }\
+                          },\
+                          ...\
+                        ]\
+                      }\
+                    }"
+                    "Note: Only recommend one YouTube video per day if the user's availability is <=1 hour per day."
 
             )
         }
