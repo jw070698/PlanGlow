@@ -155,28 +155,34 @@ def search_similar_videos(query):
             regionCode="US",
             maxResults=1
         ).execute()
+
         print("items", search_response['items'])
-        if search_response['items']:
-            video_details = search_response['items'][0]['snippet']
-            video_id = search_response['items'][0]['id'].get('videoId', 'No Video ID')
-            thumbnail_url = video_details.get('thumbnails', {}).get('high', {}).get('url', 'No Thumbnail')
-            title = video_details.get('title', 'No Title')
-            description = video_details.get('description', 'No Description')
-            channel_title = video_details.get('channelTitle', 'No Channel Title')
-            publish_time = video_details.get('publishTime', 'No Publish Time')
-            return {
-                "videoId": video_id,
-                "title": title,
-                "description": description,
-                "thumbnails": thumbnail_url,
-                "channelTitle": channel_title,
-                "publishTime": publish_time
-            }
-        else:
+
+        items = search_response.get('items', [])
+        if not items:
             return {
                 "exists": False,
                 "message": "No similar videos found."
             }
+
+        # Process the first video in the items list
+        video_details = items[0]['snippet']
+        video_id = items[0]['id'].get('videoId', 'No Video ID')
+        thumbnail_url = video_details.get('thumbnails', {}).get('high', {}).get('url', 'No Thumbnail')
+        title = video_details.get('title', 'No Title')
+        description = video_details.get('description', 'No Description')
+        channel_title = video_details.get('channelTitle', 'No Channel Title')
+        publish_time = video_details.get('publishTime', 'No Publish Time')
+
+        return {
+            "videoId": video_id,
+            "title": title,
+            "description": description,
+            "thumbnails": thumbnail_url,
+            "channelTitle": channel_title,
+            "publishTime": publish_time
+        }
+            
     except Exception as e:
         return {"exists": False, "message": f"An error occurred during search: {e}"}
 

@@ -23,7 +23,7 @@ from components.GoogleSearch_request import google_search_availability
 from dotenv import load_dotenv
 load_dotenv()
 youtube_api_keys = [k for k in os.environ if k.startswith("YOUTUBE_API_KEY")]
-YOUTUBE_URL_PATTERN = re.compile(r'(https?://)?(www\.)?(youtube\.com|youtu\.be)/(watch\?v=)?([a-zA-Z0-9_-]{11})')
+YOUTUBE_URL_PATTERN = re.compile(r'^https?://(www\.)?(youtube\.com/watch\?v=|youtu\.be/)[\w-]+$')
 
 api_key = os.getenv('API_KEY1')
 client = OpenAI(api_key=api_key)
@@ -180,6 +180,7 @@ async def process_improved_response(improved_response: str) -> str:
     # Process the study plan
     if 'studyPlan' in response_data:
         study_plan = response_data['studyPlan']
+        print("before calling check_and_replace_invalid_videos")
         updated_study_plan = await check_and_replace_invalid_videos(study_plan)
         response_data['studyPlan'] = updated_study_plan
         # Convert back to JSON string
@@ -198,38 +199,45 @@ async def check_and_replace_invalid_videos(study_plan: dict) -> dict:
                 youtube_resources = resources['YouTube']
                 if not isinstance(youtube_resources, list):
                     youtube_resources = [youtube_resources]
-                updated_resources = []
-                for resource in youtube_resources:
+
+                for idx, resource in enumerate(youtube_resources):
                     link = resource.get('link')
                     if not link or not YOUTUBE_URL_PATTERN.match(link):
+                        # Invalid link - find a replacement
                         print(f"Invalid YouTube URL detected: {link}")
-                        topic = day.get('topic', '')
-                        full_query = f"{topic} in studying overall topic"
-                        similar_video = await search_similar_video(full_query)
+                        similar_video = await find_replacement_video(day.get('topic', ''))
                         if similar_video:
-                            updated_resources.append(similar_video)
+                            youtube_resources[idx] = similar_video  # Replace invalid with valid
                             print(f"Replaced invalid video with {similar_video['link']}")
                         else:
-                            updated_resources.append(resource)
-                            print(f"No similar video found for topic: {topic}")
-                    else:
-                        video_id = extract_video_id(link)
-                        is_valid = await check_video_validity(video_id)
-                        if is_valid:
-                            updated_resources.append(resource)
+                            print(f"No similar video found for topic: {day.get('topic', '')}")
+                        continue  # Skip to the next video resource
+
+                    # Check validity of a proper link
+                    video_id = extract_video_id(link)
+                    if not await check_video_validity(video_id):
+                        # Invalid video ID - find a replacement
+                        print(f"Invalid YouTube video ID detected: {video_id}")
+                        similar_video = await find_replacement_video(day.get('topic', ''))
+                        if similar_video:
+                            # Replace invalid with valid
+                            youtube_resources[idx] = similar_video
+                            print(f"Replaced invalid video with {similar_video['link']}")
                         else:
-                            topic = day.get('topic', '')
-                            full_query = f"{topic} in studying overall topic"
-                            similar_video = await search_similar_video(full_query)
-                            if similar_video:
-                                updated_resources.append(similar_video)
-                                print(f"Replaced invalid video with {similar_video['link']}")
-                            else:
-                                updated_resources.append(resource)
-                                print(f"No similar video found for topic: {topic}")
-                resources['YouTube'] = updated_resources if len(updated_resources) > 1 else updated_resources[0]
+                            print(f"No similar video found for topic: {day.get('topic', '')}")
+                        
+                resources['YouTube'] = youtube_resources
                 day['resources'] = resources
+
     return study_plan
+
+
+async def find_replacement_video(topic: str) -> dict:
+    # Finds a similar video for the given topic by querying the search function.
+    full_query = f"{topic} in studying overall topic"
+    result = await search_similar_video(full_query)
+    return result
+
 
 async def check_video_validity(video_id: str) -> bool:
     if not video_id:
