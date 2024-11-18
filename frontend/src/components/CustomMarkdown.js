@@ -47,6 +47,9 @@ const [parsedJson, setParsedJson] =  useState(null);
     const [dayVisibility, setDayVisibility] = useState({});   
     const [additionalResourcesCount, setAdditionalResourcesCount] = useState(0);
     const [selectCount, setSelectCount] = useState(0);
+    const [toggleWeekCount, setToggleWeekCount] = useState(0);
+    const [toggleDayCount, setToggleDayCount] = useState(0);
+
 
     const fetchParticipantData = async () => {
         try {
@@ -66,25 +69,58 @@ const [parsedJson, setParsedJson] =  useState(null);
       };
 
 
-    const handleToggleWeek = (week) => {
-        setWeekVisibility(prevState => ({
+      const handleToggleWeek = async (week) => {
+        const isOpening = !weekVisibility[week];
+    
+        // Toggle visibility for the week
+        setWeekVisibility((prevState) => ({
             ...prevState,
-            [week]: !prevState[week] 
+            [week]: isOpening, 
         }));
+    
+        if (isOpening) {
+            // Increment the toggleWeekCount only if the week is being opened
+            setToggleWeekCount((prevCount) => prevCount + 1);
+    
+            try {
+                const participantRef = doc(db, "messages", participantsId);
+                await updateDoc(participantRef, {
+                    toggleWeekCount: increment(1),
+                });
+            } catch (error) {
+                console.error("Error updating toggleWeekCount:", error);
+            }
+        }
     };
-
-    const handleToggleDay = (week, day, topic) => {
-        setDayVisibility(prevState => ({
+    
+    const handleToggleDay = async (week, day, topic) => {
+        const isOpening = !dayVisibility[week]?.[day];
+    
+        setDayVisibility((prevState) => ({
             ...prevState,
             [week]: {
                 ...prevState[week],
-                [day]: !prevState[week]?.[day]
-            }
+                [day]: isOpening, 
+            },
         }));
-        if (!dayVisibility[week]?.[day]) {
+    
+        if (isOpening) {
+            // Increment the toggleDayCount only if the day is being opened
+            setToggleDayCount((prevCount) => prevCount + 1);
+    
+            try {
+                const participantRef = doc(db, "messages", participantsId);
+                await updateDoc(participantRef, {
+                    toggleDayCount: increment(1),
+                });
+            } catch (error) {
+                console.error("Error updating toggleDayCount:", error);
+            }
+    
             fetchExplanation(topic, week, day);
         }
     };
+    
 
     const formatNumber = (num) => {
         if (num >= 1000000) {

@@ -167,8 +167,6 @@ class ChatApp:
                         ]\
                       }\
                     }"
-                    "Note: Only recommend one YouTube video per day if the user's availability is <=1 hour per day."
-
             )
         }
     ]

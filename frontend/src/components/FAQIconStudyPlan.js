@@ -13,10 +13,6 @@ const FAQIconStudyPlan = ({ week, participantsId }) => {
   const fetchedWeeksRef = useRef({});
 
   useEffect(() => {
-    console.log(`useEffect triggered for week: ${week}`);
-    console.log('Current explanationContent:', explanationContent);
-    console.log('Current fetchedWeeksRef:', fetchedWeeksRef.current);
-
     // Check if the explanation for the week has already been fetched
     if (fetchedWeeksRef.current[week] || explanationContent[week]) {
       console.log(`SKIP API CALL for week: ${week}`);
