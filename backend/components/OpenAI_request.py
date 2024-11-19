@@ -4,6 +4,9 @@ import os
 import json
 import time
 import re
+import firebase_admin
+from firebase_admin import credentials, firestore
+db = firestore.client()
 
 class ChatApp:
     def __init__(self, api_key):
@@ -24,31 +27,30 @@ class ChatApp:
                         Each week consists of exactly five study days, and a month includes four weeks.\
                         Use a structured JSON format, clearly separating the study plan overview from the day-by-day breakdown."
                     "The JSON must be strictly valid and formatted as specified below:"
-                    "{\n"
-                    "  'studyPlan_Overview': {\n"
-                    "    'Week1': 'Overview of topics for week 1',\n"
-                    "    ...\n"
-                    "  },\n"
-                    "  'studyPlan': {\n"
-                    "    'Week 1: Introduction to Python': [\n"
-                    "      {\n"
-                    "        'day': 'Day 1',\n"
-                    "        'topic': 'specific topic',\n"
-                    "        'Time': 'x hours',\n"
-                    "        'resources': {\n"
-                    "          'YouTube': [\n"
-                    "            {\n"
-                    "              'title': 'Advanced OOP Concepts in Python',\n"
-                    "              'link': 'https://youtu.be/BJ-VvGyQxho'\n"
-                    "            },\n"
-                    "            { ... }\n"
-                    "        }\n"
-                    "      },\n"
-                    "      ...\n"
-                    "    ]\n"
-                    "  }\n"
-                    "}\n"
-                    "\n\n"
+                    "{\
+                      \"studyPlan_Overview\": {\
+                        \"Week1\": \"Overview of topics for week 1\",\
+                        ...\
+                      },\
+                      \"studyPlan\": {\
+                        \"Week 1: Introduction to Python\": [\
+                          {\
+                            \"day\": \"Day 1\",\
+                            \"topic\": \"specific topic\",\
+                            \"Time\": \"x hours\",\
+                            \"resources\": {\
+                              \"YouTube\": [\
+                                {\
+                                  \"title\": 'Advanced OOP Concepts in Python',\
+                                  \"link\": 'https://youtu.be/BJ-VvGyQxho'\
+                                },\
+                                { ... }\
+                            }\
+                          },\
+                          ...\
+                        ]\
+                      }\
+                    }"
                     "When delivering the study plan:\
                         The 'studyPlan_Overview' section should concisely describe the focus of each week.\
                         Validate all YouTube links to ensure they are active and appropriate for the user’s level."
@@ -125,7 +127,6 @@ class ChatApp:
 
     # step 3 improved response
     def get_improved_response(self, user_message, parsed_json, critique_response):
-        print("USER MESSAGE in GET IMPROVED RESWPONSE",user_message)
         parsed_json_str = json.dumps(parsed_json)
         critique_str = critique_response.strip()
         improvement_prompt = [
@@ -193,3 +194,108 @@ class ChatApp:
         except Exception as e:
             print(f"Error during improved response generation: {e}")
             return "An error occurred while generating the improved response."
+
+    def chat_response(self, user_chat, participantId):
+        # json match -> critique -> get_improved_response
+        # else: markdown
+        try:
+            session_ref = db.collection("messages").document(participantId)
+            session_data = session_ref.get().to_dict() if session_ref.get().exists else {}
+            print("session_DATA", session_data)
+            conversation_history = session_data.get("history", [])
+            print("CONVERsation",conversation_history)
+            history_as_text = "\n".join([f"{entry['role']}: {entry['content']}" for entry in conversation_history]) if conversation_history else "No conversation history available."
+            print("history", history_as_text)
+        except Exception as e:
+            print(f"Error retrieving session data for {participantId}: {e}")
+            conversation_history = []
+            history_as_text = "Unable to retrieve conversation history."
+
+        system_prompt = (
+            "You are a helpful assistant tasked with navigating the user to a comprehensive study plan. "
+            "Follow the user's request carefully. "
+            f"Here is the full conversation history for this user:\n{history_as_text}\n"
+            "If the user asks a general question, provide a direct and helpful answer without using JSON."
+            "If the user wants to fix or improve the current plan, your output should be in JSON format, "
+            "structured as follows:\n\n"
+            "{\
+                \"studyPlan_Overview\": {\
+                    \"Week1\": \"Overview of topics for week 1\",\
+                        ...\
+                },\
+                \"studyPlan\": {\
+                    \"Week 1: Introduction to Python\": [\
+                        {\
+                            \"day\": \"Day 1\",\
+                            \"topic\": \"specific topic\",\
+                            \"Time\": \"x hours\",\
+                            \"resources\": {\
+                              \"YouTube\": [\
+                                {\
+                                  \"title\": 'Advanced OOP Concepts in Python',\
+                                  \"link\": 'https://youtu.be/BJ-VvGyQxho'\
+                                },\
+                                { ... }\
+                            }\
+                          },\
+                          ...\
+                    ]\
+                }\
+            }"
+        )
+        # Create the full prompt for the assistant
+        full_prompt = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_chat}
+        ]
+       
+        print("json_match before try")
+        try:
+            response = self.generate_response(
+                prompt=full_prompt, 
+                temperature=0.0, 
+                top_p=0.8, 
+                frequency_penalty=0.2, 
+                presence_penalty=0.1)
+            print("Initial response received:", response)
+            if response:
+                json_match = re.search(r'```json([\s\S]*?)```', response)
+                if json_match:
+                    json_text = json_match.group(1).strip()
+                    try:
+                        parsed_json = json.loads(json_text)
+                        print("Parsed JSON response:", parsed_json)
+
+                        # Proceed to critique
+                        critique = self.get_critique_response(parsed_json)
+                        print("Critique response:", critique)
+
+                        # Proceed to improvement
+                        improved_response = self.get_improved_response(user_chat, parsed_json, critique)
+                        print("Improved response:", improved_response)
+
+                        return improved_response
+                    except json.JSONDecodeError:
+                        print("JSON parsing error. Proceeding with raw JSON for critique.")
+                        critique = self.get_critique_response(json_text)
+                        print("Critique response for raw JSON:", critique)
+
+                        # Proceed to improvement
+                        improved_response = self.get_improved_response(user_chat, json_text, critique)
+                        print("Improved response from raw JSON:", improved_response)
+
+                        return improved_response
+                else:
+                    print("No JSON block found. Proceeding with raw response.")
+                    critique = self.get_critique_response(response)
+                    print("Critique response for raw response:", critique)
+
+                    improved_response = self.get_improved_response(user_chat, response, critique)
+                    print("Improved response from raw response:", improved_response)
+
+                    return improved_response
+            else:
+                return {"error": "No response from OpenAI API."}
+        except Exception as e:
+            print(f"Unexpected error during chat response: {e}")
+            return {"error": "An unexpected error occurred.", "details": str(e)}

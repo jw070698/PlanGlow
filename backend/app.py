@@ -75,22 +75,46 @@ class UserMessageRequest(BaseModel):
 @app.post("/response")
 async def generate_response(request: MessageRequest):
     try:
+        # Database
         participantId = request.participantId
-        # Check if session exists; if not, create a new session
         session_ref = db.collection("messages").document(participantId)
-        user_message = request.user_message
-        print("USER MESSAGE IN RESPONSE", user_message)
         if not session_ref.get().exists:
             create_session(participantId)
             print("Session created for", participantId)
         else:
             print("Session already exists for", participantId)
+
+        user_chat = None
+        # Separate user_message and user_chat
+        user_message = request.user_message
+        if user_message and user_message.startswith("Create a study plan for a"):
+            # Treat as user_message
+            print("Detected as user_message:", user_message)
+        else: 
+            user_chat = user_message
+
+        # If chatting,
+        if user_chat:
+            print("Chatting")
+            session_ref.set({"user_input": user_chat}, merge=True)
+            response_chat = chat_app.chat_response(user_chat, participantId)
+            if not response_chat:
+                raise HTTPException(status_code=500, detail="Failed to generate improved response")
+                
+            # Process the improved response to check and replace invalid YouTube videos
+            updated_improved_response = await process_improved_response(user_chat, response_chat)
+
+            # Store the updated improved response
+            
+            store_messages(participantId, user_chat, updated_improved_response)
+            print("Stored improved response with valid YouTube video IDs")
+            print(updated_improved_response)
+            return {"response": updated_improved_response}
         
-        # Handle user message input
-        user_message = request.user_message or request.user_input
         if not user_message:
             raise HTTPException(status_code=400, detail="No message provided")
         
+        print("Submitted")
         # Step 1
         # Generate response and store it
         response_text = chat_app.chat(user_message)
@@ -150,6 +174,7 @@ async def generate_improved_response(request: MessageRequest):
         # Store the updated improved response
         store_messages(participantId, "Improved Response", updated_improved_response)
         print("Stored improved response with valid YouTube video IDs")
+        print(updated_improved_response)
         return {"response": updated_improved_response}
 
     except TypeError as e:
@@ -258,7 +283,7 @@ async def find_replacement_video(user_message:str, topic: str) -> dict:
     }
     hours_match = re.search(r"(\d+) hours? available per day", user_message, re.IGNORECASE)
     hours_per_day = int(hours_match.group(1)) if hours_match else 0
-    full_query = f"Studying {topic} for a {proficiency} in {hours_per_day} hours"
+    full_query = f"Studying {topic} in {extracted_topic} for a {proficiency} in {hours_per_day} hours"
 
     result = await search_similar_video(full_query)
     if result:

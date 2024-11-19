@@ -7,6 +7,7 @@ from googleapiclient.discovery import build
 import os
 import re
 import random
+'''
 # Get all environment variables
 env_vars = os.environ
 env_vars_dict = dict(env_vars)
@@ -17,7 +18,7 @@ youtube_api_keys = [k for k in env_vars_dict if k.startswith("YOUTUBE_API_KEY")]
 from dotenv import load_dotenv
 load_dotenv()
 youtube_api_keys = [k for k in os.environ if k.startswith("YOUTUBE_API_KEY")]
-'''
+
 def get_random_api_key():
     """Retrieve a random YouTube API key from the environment variables."""
     if youtube_api_keys:
