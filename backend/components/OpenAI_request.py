@@ -201,11 +201,8 @@ class ChatApp:
         try:
             session_ref = db.collection("messages").document(participantId)
             session_data = session_ref.get().to_dict() if session_ref.get().exists else {}
-            print("session_DATA", session_data)
             conversation_history = session_data.get("history", [])
-            print("CONVERsation",conversation_history)
             history_as_text = "\n".join([f"{entry['role']}: {entry['content']}" for entry in conversation_history]) if conversation_history else "No conversation history available."
-            print("history", history_as_text)
         except Exception as e:
             print(f"Error retrieving session data for {participantId}: {e}")
             conversation_history = []
@@ -249,7 +246,6 @@ class ChatApp:
             {"role": "user", "content": user_chat}
         ]
        
-        print("json_match before try")
         try:
             response = self.generate_response(
                 prompt=full_prompt, 

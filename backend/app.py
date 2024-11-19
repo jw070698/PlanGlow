@@ -240,7 +240,11 @@ async def check_and_replace_invalid_videos(user_message: str, study_plan: dict) 
                     if link in invalid_urls_cache:
                         continue  # Skip URLs that have already been processed
 
-                    video_id = extract_video_id(link) if link else None
+                    try:
+                        video_id = extract_video_id(link) 
+                    except Exception as e:
+                        print(f"Error extracting video ID from {link}: {e}")
+                        video_id = None
                     # Skip valid links
                     if link and video_id and await check_video_validity(video_id):
                         continue

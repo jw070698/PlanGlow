@@ -592,6 +592,11 @@ const [parsedJson, setParsedJson] =  useState(null);
     
 
     const renderStudyPlan = (plan) => {
+        console.log(typeof plan);
+        if (!plan || typeof plan !== 'object' || Array.isArray(plan)) {
+            console.error('Invalid plan passed to renderStudyPlan:', plan);
+            return <p>No valid study plan available.</p>;
+        }
         return Object.keys(plan).map((week, weekIndex) => (
             <div key={week} style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '1rem', marginBottom: '1rem', backgroundColor: '#f9f9f9' }}>
                 <div
@@ -734,7 +739,10 @@ const [parsedJson, setParsedJson] =  useState(null);
                                         marginLeft: 'auto' 
                                     }}>
                                     <button
-                                        onClick={() => handleSelectVideo(selectedWeekIndex, selectedDayIndex, result)} 
+                                        onClick={() => {
+                                            console.log('Selected video index:', index);
+                                            handleSelectVideo(selectedWeekIndex, selectedDayIndex, result);
+                                        }} 
                                         style={{ 
                                             fontSize: '1rem', 
                                             backgroundColor: '#C0C4C2', 

@@ -66,44 +66,87 @@ const Editable = ({ formData, setResponsePlan , setStudyPlan, participantsId}) =
         setEditableData(initialEditableData);
     }, [formData]);
 
-    // Function to update the API with the new data
+    const getInitialResponse = async (userMessage) => {
+        try {
+            const response = await axios.post(`${API_BASE_URL}/response`, {
+                user_message: userMessage,
+                participantId: participantsId,
+            });
+            return response.data.response; // Returns initial response
+        } catch (error) {
+            console.error('Error getting initial response:', error);
+            return null;
+        }
+    };
+    const getCritiqueResponse = async () => {
+        try {
+            const response = await axios.post(`${API_BASE_URL}/response/critique`, {
+                participantId: participantsId,
+            });
+            return response.data.response; // Returns critique response
+        } catch (error) {
+            console.error('Error getting critique response:', error);
+            return null;
+        }
+    };
+    const getImprovedResponse = async () => {
+        try {
+            const response = await axios.post(`${API_BASE_URL}/response/improved`, {
+                participantId: participantsId,
+            });
+            return response.data.response; // Returns improved response
+        } catch (error) {
+            console.error('Error getting improved response:', error);
+            return null;
+        }
+    };
+    
+   // Function to update the API with the new data
     const updateAPI = async (updatedData) => {
         setLoading(true);
+        const { topic, background, studyMaterials, duration, availableTime } = updatedData;
+        const updated_userMessage = `Create a study plan for a ${background} student on ${topic} using YouTube over ${duration.months} months, ${duration.weeks} weeks, and ${duration.days} days with ${availableTime} hours available per day.`;
         try {
-            const { topic, background, studyMaterials, duration, availableTime } = updatedData;
-            const updated_userMessage = `Create a study plan for a ${background} student on ${topic} using YouTube over ${duration.months} months, ${duration.weeks} weeks, and ${duration.days} days with ${availableTime} hours available per day.`;
-            const response = await axios.post(`${API_BASE_URL}/response`, {
-                user_message: updated_userMessage,
-                participantId: participantsId
-            });
-            
-            if (response.data?.response) {
-                const markdownText = response.data.response;
-                const jsonMatch = markdownText.match(/```json([\s\S]*?)```/);
-                
-                if (jsonMatch && jsonMatch[1]) {
-                    try {
-                        const jsonData = JSON.parse(jsonMatch[1].trim());
-    
-                        // Store the original plan only if it's not set yet
-                        if (!originalPlan) {
-                            setOriginalPlan(jsonData);
-                        }
-    
-                        // Update the plan with the new response
-                        setResponsePlan(jsonData);
-                        setStudyPlan(jsonData);
-                        setUpdatedPlan(jsonData); // Store the updated plan
-    
-                    } catch (jsonError) {
-                        console.error('Error parsing JSON:', jsonError);
-                    }
-                } else {
-                    console.error('No JSON content found in the response.');
-                }
-            } else {
-                console.error('No response data from API');
+            // Step 1: Initial Response
+            const initialResponse = await getInitialResponse(updated_userMessage);
+            if (!initialResponse) throw new Error('Failed to fetch initial response');
+
+            console.log('Initial Response:', initialResponse);
+
+            // Step 2: Critique Response
+            const critiqueResponse = await getCritiqueResponse();
+            if (!critiqueResponse) throw new Error('Failed to fetch critique response');
+
+            console.log('Critique Response:', critiqueResponse);
+
+            // Step 3: Improved Response
+            const improvedResponse = await getImprovedResponse();
+            if (!improvedResponse) throw new Error('Failed to fetch improved response');
+            console.log('Improved Response:', improvedResponse);
+
+
+            const parsedResponse = typeof improvedResponse === 'string'
+                ? JSON.parse(improvedResponse)
+                : improvedResponse;
+
+            console.log('Parsed Improved Response:', parsedResponse);
+
+            if (!parsedResponse.studyPlan) {
+                console.warn('Parsed response is missing studyPlan. Falling back to initial response.');
+                setOriginalPlan(initialResponse);
+                setResponsePlan(initialResponse);
+                setStudyPlan(initialResponse.studyPlan || {});
+                setUpdatedPlan(initialResponse);
+                return;
             }
+
+            // Save the improved response
+            setOriginalPlan(parsedResponse);
+            setResponsePlan(parsedResponse);
+            setStudyPlan(parsedResponse.studyPlan);
+            setUpdatedPlan(parsedResponse);
+            console.log('Study plan successfully updated.');
+            
         } catch (error) {
             console.error('Error updating API:', error);
         } finally {
