@@ -225,7 +225,7 @@ async def process_improved_response(user_message: str, improved_response: str) -
 async def check_and_replace_invalid_videos(user_message: str, study_plan: dict) -> dict:
     print("THIS IS A STUDY PLAN", study_plan)
     invalid_urls_cache = set()
-    search_results_cache = {}
+    resources_sumup = []
 
     for week_key, week_value in study_plan.items():
         for day in week_value:
@@ -241,34 +241,57 @@ async def check_and_replace_invalid_videos(user_message: str, study_plan: dict) 
                         continue  # Skip URLs that have already been processed
 
                     try:
-                        video_id = extract_video_id(link) 
+                        video_id = extract_video_id(link)
                     except Exception as e:
                         print(f"Error extracting video ID from {link}: {e}")
                         video_id = None
-                    # Skip valid links
+
+                    # Check if the video is valid
                     if link and video_id and await check_video_validity(video_id):
-                        continue
+                        resources_sumup.append(resource)
+                        continue  # Valid video, move to next resource
+
                     # Invalid links
                     print(f"Invalid YouTube URL detected: {link}")
                     invalid_urls_cache.add(link)
 
                     topic = day.get('topic', '')
-                    if topic in search_results_cache:
-                        similar_video = search_results_cache[topic]
-                    else:
+
+                    # Loop to find a unique replacement video
+                    max_attempts = 3  # Limit to avoid infinite loops
+                    attempts = 0
+                    while attempts < max_attempts:
                         similar_video = await find_replacement_video(user_message, topic)
-                        search_results_cache[topic] = similar_video
+                        attempts += 1
 
-                    if similar_video:
-                        youtube_resources[idx] = similar_video  # Replace invalid with valid
-                        print(f"Replaced invalid video with {similar_video['link']}")
+                        if similar_video:
+                            similar_link = similar_video.get('link')
+                            # Check if the similar video's link is already in resources_sumup
+                            if any(res.get('link') == similar_link for res in resources_sumup):
+                                print("It already exists, trying to find another video...")
+                                continue  # Try to find another video
+                            else:
+                                youtube_resources[idx] = similar_video  # Replace invalid with valid
+                                print(f"Replaced invalid video with {similar_video['link']}")
+                                resources_sumup.append(similar_video)
+                                break  # Found a unique video, exit loop
+                        else:
+                            print(f"No similar video found for topic: {topic}")
+                            break  # Exit loop if no video found
+
                     else:
-                        print(f"No similar video found for topic: {topic}")
+                        # If max_attempts reached without finding a unique video
+                        print(f"Could not find a unique replacement video for topic: {topic}")
+                        youtube_resources[idx] = None  # Remove invalid resource
 
+                # Clean up None entries from youtube_resources
+                youtube_resources = [res for res in youtube_resources if res is not None]
                 resources['YouTube'] = youtube_resources
                 day['resources'] = resources
 
+    print("All resources collected:", resources_sumup)
     return study_plan
+
 
 
 
