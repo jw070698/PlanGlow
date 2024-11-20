@@ -8,7 +8,7 @@ from urllib.parse import urlparse, parse_qs
 from openai import OpenAI
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
-API_BASE_URL = os.getenv('API_BASE_URL', 'http://localhost:1350')
+API_BASE_URL = os.getenv('https://plan-glow-backend.vercel.app, 'http://localhost:1350')
 # Initialize Firebase Admin SDK
 cred = credentials.Certificate("serviceAccountKey.json")
 
