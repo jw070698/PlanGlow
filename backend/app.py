@@ -259,7 +259,7 @@ async def check_and_replace_invalid_videos(user_message: str, study_plan: dict) 
                     topic = day.get('topic', '')
 
                     # Loop to find a unique replacement video
-                    max_attempts = 3  # Limit to avoid infinite loops
+                    max_attempts = 5  # Limit to avoid infinite loops
                     attempts = 0
                     while attempts < max_attempts:
                         similar_video = await find_replacement_video(user_message, topic)
