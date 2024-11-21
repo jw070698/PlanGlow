@@ -8,7 +8,8 @@ from urllib.parse import urlparse, parse_qs
 from openai import OpenAI
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
-API_BASE_URL = os.getenv('https://plan-glow-backend.vercel.app', 'http://localhost:1350')
+from components.YouTube_request import search_similar_videos
+
 # Initialize Firebase Admin SDK
 cred = credentials.Certificate("serviceAccountKey.json")
 
@@ -357,26 +358,20 @@ async def search_similar_video(search_query: str) -> dict:
     return None
 
 async def execute_search_query(query: str) -> dict:
-    url = f"{API_BASE_URL}/search_similar_videos"
-    payload = {'search_message': query}
-    async with aiohttp.ClientSession() as session:
-        try:
-            async with session.post(url, json=payload) as resp:
-                if resp.status != 200:
-                    return None
-                data = await resp.json()
-                if data.get('exists'):
-                    video_id = data.get('videoId')
-                    title = data.get('title')
-                    link = f"https://www.youtube.com/watch?v={video_id}"
-                    return {'title': title, 'link': link}
-                else:
-                    print(f"No video found for query: {query}")
-                    return None
-        except Exception as e:
-            print(f"Error in search: {e}")
+    try:
+        # Directly call the function that searches for similar videos
+        similar_video_response = search_similar_videos(query)
+        if similar_video_response.get('exists'):
+            video_id = similar_video_response.get('videoId')
+            title = similar_video_response.get('title')
+            link = f"https://www.youtube.com/watch?v={video_id}"
+            return {'title': title, 'link': link}
+        else:
+            print(f"No video found for query: {query}")
             return None
-    return None
+    except Exception as e:
+        print(f"Error in search: {e}")
+        return None
 
 @app.post("/info")
 async def generate_info_response(request: InfoRequest):
