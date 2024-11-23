@@ -142,16 +142,16 @@ class ChatApp:
         {
             "role": "system",
             "content": (
-                "You are an assistant improving a study plan based on the following. "
-                f"Your primary task is to improve study plans that meet the user’s unique needs which is {user_message} based on {critique_str}."
-                "Do not change study duration."
-                "Please use the existing structure in 'studyPlan_Overview' and 'studyPlan' sections, "
-                f"Initial user request: {user_message}\n" ##### add initial prompts
+                "You are an assistant tasked with improving a study plan based on the following:\n"
+                f"Your primary task is to enhance study plans to meet the user’s unique needs, which are described as {user_message}, based on {critique_str}.\n"
+                "Do not modify the study duration."
+                "Please retain the existing structure in the 'studyPlan_Overview' and 'studyPlan' sections.\n "
+                f"Initial user request: {user_message}\n"
                 f"Initial Study Plan (keep structure):\n{parsed_json_str}\n\n"
                 f"Critique Summary:\n{critique_str}\n\n"
-                "Each week should contain 5 study days, and each month should have 4 weeks.\n"
+                "Each week should include 5 study days, and each month should consist of 4 weeks.\n"
                 "Resources other than YouTube are prohibited"
-                "Use the following structure for your JSON output to have all duration of study plan without additional explanations or formatting: \n"
+                "Use the following structure for your JSON output to represent the entire duration of the study plan without additional explanations or formatting: \n"
                     "{\
                       \"studyPlan_Overview\": {\
                         \"Week1\": '',\
@@ -218,12 +218,11 @@ class ChatApp:
             history_as_text = "Unable to retrieve conversation history."
 
         system_prompt = (
-            "You are a helpful assistant tasked with navigating the user to a comprehensive study plan. "
+            "You are a helpful assistant tasked with guiding the user toward a comprehensive study plan."
             "Follow the user's request carefully. "
             f"Here is the full conversation history for this user:\n{history_as_text}\n"
             "If the user asks a general question, provide a direct and helpful answer without using JSON."
-            "If the user wants to fix or improve the current plan, your output should be in JSON format, "
-            "structured as follows:\n\n"
+            "If the user wants to fix or improve the current plan, your output should be in JSON format, structured as follows:\n\n"
             "{\
                 \"studyPlan_Overview\": {\
                     \"Week1\": \"Overview of topics for week 1\",\

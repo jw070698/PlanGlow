@@ -530,13 +530,31 @@ async def generate_plan_reasoning(request: PlanRequest):
                 {
                     "role": "system",
                     "content": (
-                        "You are a helpful assistant. Please review the study plan provided and generate detailed explanations for each week, focusing on three distinct aspects: Learning Objectives, Content Selection, and Connection.\n"
+                        f"You are a helpful assistant. Please review the study plan provided('{recent_plan}') and generate detailed explanations for each week, focusing on three distinct aspects: Learning Objectives, Content Selection, and Connection.\n"
                         "Your responses should demonstrate a thorough understanding of constructivist learning principles, including Andragogy which is the theory of adult learning by Knowles Malcolm and Constructivism by Jean Piaget. "
                         "Provide concise explanations in complete sentences and separate the reasoning into JSON format as follows:\n\n"
-                        "1. Learning Objectives:\n"
-                        "Clearly define measurable outcomes for learners."
-                        "Ensure objectives are relevant to adult learners' needs for actionable and goal-oriented outcomes, aligning with principles of Andragogy. "
-                        "Use specific verbs from Bloom's Taxonomy.\n"
+                        "1. Learning Objectives:\n\
+                            Please refer these guidance: these 6 levels can be used to structure the learning outcomes, lessons, and assessments of your course.\
+                            1) Remembering: Retrieving, recognizing, and recalling relevant knowledge from long‐term memory.\
+                            2) Understanding: Constructing meaning from oral, written, and graphic messages through interpreting, exemplifying, classifying, summarizing, inferring, comparing, and explaining.\
+                            3) Applying: Carrying out or using a procedure for executing, or implementing.\
+                            4) Analyzing: Breaking material into constituent parts, determining how the parts relate to one another and to an overall structure or purpose through differentiating, organizing, and attributing.\
+                            5) Evaluating: Making judgments based on criteria and standards through checking and critiquing.\
+                            6) Creating: Putting elements together to form a coherent or functional whole; reorganizing elements into a new pattern or structure through generating, planning, or producing.\
+                            Bloom’s is hierarchical, meaning that learning at the higher levels is dependent on having attained prerequisite knowledge and skills at lower levels.\
+                            How Bloom’s can aid in study plan design? Bloom’s taxonomy is a powerful tool to help develop learning outcomes because it explains the process of learning:\
+                                1) Before you can understand a concept, you must remember it.\
+                                2) To apply a concept you must first understand it.\
+                                3) In order to evaluate a process, you must have analyzed it.\
+                                4) To create an accurate conclusion, you must have completed a thorough evaluation.\
+                                However, we don’t always start with lower order skills and step all the way through the entire taxonomy for each concept you present in your course. That approach would become tedious–for both you and your students! Instead, start by considering the level of learners in your course:\
+                                    - Is this an “Introduction to…” course? If so, many your learning outcomes may target the lower order Bloom’s skills, because your students are building foundational knowledge. However, even in this situation we would strive to move a few of your outcomes into the applying and analyzing level, but getting too far up in the taxonomy could create frustration and unachievable goals.\
+                                    - Do your students have a solid foundation in much of the terminology and processes you will be working on your course? If so, then you should not have many remembering and understanding level outcomes. You may need a few, for any radically new concepts specific to your course. However, these advanced students should be able to master higher-order learning objectives. Too many lower level outcomes might cause boredom or apathy.\
+                            Steps towards writing effective learning outcomes:\
+                                1) Make sure there is one measurable verb in each objective.\
+                                2) Each outcome needs one verb. Either a student can master the outcome , or they fail to master it. If an outcome has two verbs (say, define and apply), what happens if a student can define, but not apply? Are they demonstrating mastery?\
+                                3) Ensure that the verbs in the course level outcome are at least at the highest Bloom’s Taxonomy as the highest lesson level outcomes that support it. (Because we can’t verify they can evaluate if our lessons only taught them (and assessed) to define.)\
+                                4) Strive to keep all your learning outcomes measurable, clear and concise."
                         "2. Content Selection:\n"
                         "Justify the selection of activities, topics, or resources based on their relevance, developmental appropriateness."
                         "Emphasize their alignment with Constructivism, focusing on building upon learners' prior experiences, encouraging exploration, and enabling active engagement. "
@@ -560,11 +578,7 @@ async def generate_plan_reasoning(request: PlanRequest):
                         "               - Content selection...\n"
                         "               - Connection...\n\"\n"
                         "}\n\n"
-                        "For each section, ensure that:\n"
-                        "- Learning Objectives: Are specific, measurable, and aligned with Bloom's Taxonomy.\n"
-                        "- Content Selection: Reflects developmental appropriateness, relevance, and scaffolding techniques.\n"
-                        "- Connection: Emphasizes how prior learning is reinforced and future learning is prepared for.\n"
-                        "Do not mention theory explicitly in the results"
+                        "For each section, ensure that do not mention theory explicitly in the results"
                     )
                 },
                 {"role": "user", "content": study_plan_overview_str}
@@ -603,14 +617,18 @@ async def generate_topic_explanation(request: UserMessageRequest):
                 {
                     "role": "system",
                     "content": (
-                        f"You are a helpful assistant. Below is a study plan with specific topics." 
-                        "For each topic, explain why the topic '{topic}' is important and essential. "
-                        f"Please give concise answers using 3 bullet points in the context of this study plan '{recent_plan}'. "
-                        "Please refer these guidance: "
-                        "Explain how this topic aligns with Andragogy which is theory of adult learning by Knowles Malcolm. Describe how the topic meets learners at their current skill level and challenges them appropriately for growth."  
-                        "Outline how this topic supports specific cognitive objectives using Bloom’s Taxonomy. Focus on how the topic enables students to build skills from foundational to advanced levels."
-                        "Describe how this topic acts as a Jerome Bruner's theory of Scaffolding in Education for upcoming material, providing necessary skills or background knowledge. Highlight how it encourages Flavell's metacognition and self-regulated learning to foster independent learning and readiness for more complex topics."
-                        f"Please respond with concise explanations for each topic using the above structure with 3 bullet points. Only provide **reason for study this '{topic}'** based on the theories; do not repeat the study plan content; do not mention theory explicitly in the results; be concise."
+                        f"You are a helpful assistant to explain why the topic '{topic}' is important and essential in the context of this study plan '{recent_plan}'.\n"
+                        "Please provide accurate and relevant explanations for the reasons for studying each topic by referring to these guidelines:\
+                            - To direct and assist the student in learning the content of each assignment, it is useful first to consider the learning needs of students in studying an assignment and, hence, to examine what functions various components might play in fulfilling these needs.\
+                            - Orientation: It is beneficial for students to begin studying an assignment with a general idea of what they will encounter in the assignment. \
+                            This approach is ingrained in contemporary educational thinking and supported by research on learning (Hartley and Davis, 1976). Ausubel (1968) has strongly argued that a preliminary framework of what is to come—what he calls an \"advance organizer\"—can greatly facilitate learning, and he has demonstrated its practical utility.\
+                            A general framework sets the scope of the assignment and shows how it fits into the overall course. It also illustrates how the topics within the assignment are partitioned and interrelated. Furthermore, it can highlight the relevance of the assignment for the student.\
+                            Another aspect of orientation is goal-setting. It is helpful for students to be aware of the goals they are expected to achieve while studying an assignment (Melton, 1978). \
+                            This awareness enables them to focus their efforts on reaching those goals and helps them maintain perspective on their learning progress throughout the assignment. \
+                            Consider the contrast between goal-directed study and a situation where the student is unsure of the relative importance of different parts of the assignment content. \
+                            Goal awareness leads to more organized study and improved learning outcomes for the student (Duchastel and Merrill, 1973)."
+                        "Display each sentence as a separate bullet point."
+                        f"Only provide **reason for study this '{topic}'**; Do not repeat the study plan content; Do not mention theory explicitly in the results; Be concise."
                     )
                     },
                     {"role": "user", "content": recent_plan}
