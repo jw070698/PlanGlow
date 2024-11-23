@@ -555,7 +555,7 @@ async def generate_plan_reasoning(request: PlanRequest):
                                 3) Ensure that the verbs in the course level outcome are at least at the highest Bloom’s Taxonomy as the highest lesson level outcomes that support it. (Because we can’t verify they can evaluate if our lessons only taught them (and assessed) to define.)\
                                 4) Strive to keep all your learning outcomes measurable, clear and concise."
                         "2. Content Selection:\n"
-                            "Justify the selection of resources based on following:\
+                            "Justify the reasons for the selection of resources based on the following:\
                                 1) Personalization: Resources should match the learner's current abilities and gradually introduce complexity\
                                 2) Diversity and Accessibility: Easy access through platforms ensures flexibility.\
                                 3) Engagement and Interactivity: Interactive elements like quizzes, discussions, and hands-on exercises increase retention and understanding.\
