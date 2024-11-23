@@ -107,22 +107,26 @@ class ChatApp:
         critique_prompt = [
             {"role": "system", "content": "You are a study plan evaluator.\n"
             f"Here's my initial study plan response: {parsed_json}. \n"
-            "Critique this response by focusing on the following criteria:"
-            "1. Plan structure\
-                - Adult learning is based upon comprehension, organization and synthesis of knowledge rather than rote memory.\
-                - They learn effectively only when they are free to direct their own learning and have a strong inner motivation to develop a new skill or acquire a particular type of knowledge, this sustains learning.\
-                - Adults are practical in their approach to learning; they want to know, How is this going to help me right now? Is it relevant (content, connection, and application) and does it meet my targeted goals?\
-                - Adults learn by doing: Adults learn through active practice and participation. This helps in integrating component skills into a coherent whole.\
-                - Adult learning focuses on problem-solving: Adults tend to start with a problem and then work to find a solution. A meaningful engagement, such as posing and answering realistic questions and problems is necessary for deeper learning. This leads to more elaborate, longer lasting, and stronger representations of the knowledge.\
-                - Experience affects adult learning: Adults have more experience than adolescents. This can be an asset and a liability, if prior knowledge is inaccurate, incomplete, or immature, it can interfere with or distort the integration of incoming information.\
-                - Adults learn best in an informal situation: Often, adults learn by taking responsibility for the value and need of content they have to understand and the particular goals it will achieve. Being in an inviting, collaborative and networking environment as an active participant in the learning process makes it efficient.\
-                - Adults want guidance and consideration as equal partners in the process: Adults want information that will help them improve their situation. They do not want to be told what to do and they evaluate what helps and what doesn't. They want to choose options based on their individual needs and the meaningful impact a learning engagement could provide. Socialization is more important among adults."
-            "2. Resource selection\
-                - Are the resources exclusively YouTube-based, as required?\
-                - Are the selected resources effectively aligned with the study goals and learning outcomes?\
-                - Do the resources provide accurate, reliable, and engaging content appropriate for the intended topics?"
-
-            
+            "Evaluate this plan by focusing on the following criteria:\
+                1. Knowles’ Five Assumptions of Adult Learners: Knowles theory of andragogy identified five assumptions that teachers should make about adult learners.\
+                    1) Self-Concept – Because adults are at a mature developmental stage, they have a more secure self-concept than children. This allows them to take part in directing their own learning.\
+                    2) Past Learning Experience – Adults have a vast array of experiences to draw on as they learn, as opposed to children who are in the process of gaining new experiences.\
+                    3) Readiness to Learn – Many adults have reached a point in which they see the value of education and are ready to be serious about and focused on learning.\
+                    4) Practical Reasons to Learn – Adults are looking for practical, problem-centered approaches to learning. Many adults return to continuing education for specific practical reasons, such as entering a new field.\
+                    5) Driven by Internal Motivation – While many children are driven by external motivators – such as punishment if they get bad grades or rewards if they get good grades – adults are more internally motivated.\
+                2. Four Principles of Andragogy: Based on these assumptions about adult learners, Knowles discussed four principles that  educators should consider when teaching adults.\
+                    1) Since adults are self-directed, they should have a say in the content and process of their learning.\
+                    2) Because adults have so much experience to draw from, their learning should focus on adding to what they have already learned in the past.\
+                    3) Since adults are looking for practical learning, content should focus on issues related to their work or personal life.\
+                    4) Additionally, learning should be centered on solving problems instead of memorizing content.\
+                3. The following are proposed as the components of an ideal study guide assignment(Duchastel, P. (1983). Toward the ideal study guide: An exploration of the functions and components of study guides. British Journal of Educational Technology, 14(3), 216-231.):\
+                    1) Purpose, significance, and goals\
+                    2) Text references\
+                    3) Outline of the subject matter\
+                    4) Questions on the subject matter\
+                    5) Key words and phrases\
+                    6) Application problem\
+                    7) Assignment test"
             "Provide actionable and constructive feedback addressing these areas. Keep the critique concise but specific, highlighting the most critical improvements needed. Avoid unnecessary elaboration or repetition."
             }
         ]

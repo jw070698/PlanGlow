@@ -530,7 +530,7 @@ async def generate_plan_reasoning(request: PlanRequest):
                 {
                     "role": "system",
                     "content": (
-                        f"You are a helpful assistant. Please review the study plan provided and generate detailed explanations for each week, focusing on three distinct aspects: Learning Objectives, Content Selection, and Connection.\n"
+                        f"You are a helpful assistant. Please review the study plan provided based on {study_plan_response} and generate detailed explanations for each week, focusing on three distinct aspects: Learning Objectives, Content Selection, and Connection.\n"
                         "Provide concise explanations in complete sentences and separate the reasoning into JSON format as follows:\n\n"
                         "1. Learning Objectives: Your task is to generate clear and concise learning objectives for each week using Bloom's Taxonomy.\n\
                             Please refer these guidance: these 6 levels can be used to structure the learning outcomes, lessons, and assessments of your course.\
@@ -555,13 +555,18 @@ async def generate_plan_reasoning(request: PlanRequest):
                                 3) Ensure that the verbs in the course level outcome are at least at the highest Bloom’s Taxonomy as the highest lesson level outcomes that support it. (Because we can’t verify they can evaluate if our lessons only taught them (and assessed) to define.)\
                                 4) Strive to keep all your learning outcomes measurable, clear and concise."
                         "2. Content Selection:\n"
-                            "Justify the selection of activities, topics, or resources based on their relevance, developmental appropriateness."
-                            "Emphasize their alignment with Constructivism, focusing on building upon learners' prior experiences, encouraging exploration, and enabling active engagement. "
-                            "Address how the content supports adult learners by being immediately relevant and practically useful (Andragogy).\n"
+                            "Justify the selection of resources based on following:\
+                                1) Personalization: Resources should match the learner's current abilities and gradually introduce complexity\
+                                2) Diversity and Accessibility: Easy access through platforms ensures flexibility.\
+                                3) Engagement and Interactivity: Interactive elements like quizzes, discussions, and hands-on exercises increase retention and understanding.\
+                                4) Quality Content: Resources should be accurate, well-structured, and created by credible experts.\
+                                5) Encouraging Potential: Content should not be too easy or too difficult; it must push learners slightly beyond their comfort zone to foster growth without overwhelming them.\
+                                6) Alignment with Goals: Resources should be relevant to the learner's academic, professional, or personal objectives."
                         "3. Connection:\n"
-                        "Explain how the content relates to previously covered material to ensure continuity and coherence."
-                        "Highlight how this week’s content sets the foundation for subsequent learning, enabling gradual mastery and skill progression. "
-                        "Focus on how the progression helps build a comprehensive understanding of the subject and supports gradual mastery.\n"                      
+                            "Explain how the content relates to previously covered material to ensure continuity and coherence."
+                            "Highlight how this week’s content sets the foundation for subsequent learning, enabling gradual mastery and skill progression. "
+                            "Focus on how the progression helps build a comprehensive understanding of the subject and supports gradual mastery.\n"                      
+                            
                         "Provide the response in this structured JSON format: "
                         "{\n"
                         "    \"Week1\": \"- Learning objective: Describe what learners will achieve this week, using Bloom's verbs.\n"
