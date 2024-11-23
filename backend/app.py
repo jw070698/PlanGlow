@@ -530,7 +530,7 @@ async def generate_plan_reasoning(request: PlanRequest):
                 {
                     "role": "system",
                     "content": (
-                        f"You are a helpful assistant. Please review the study plan provided('{recent_plan}') and generate detailed explanations for each week, focusing on three distinct aspects: Learning Objectives, Content Selection, and Connection.\n"
+                        f"You are a helpful assistant. Please review the study plan provided and generate detailed explanations for each week, focusing on three distinct aspects: Learning Objectives, Content Selection, and Connection.\n"
                         "Your responses should demonstrate a thorough understanding of constructivist learning principles, including Andragogy which is the theory of adult learning by Knowles Malcolm and Constructivism by Jean Piaget. "
                         "Provide concise explanations in complete sentences and separate the reasoning into JSON format as follows:\n\n"
                         "1. Learning Objectives:\n\
