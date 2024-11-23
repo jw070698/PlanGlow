@@ -563,8 +563,9 @@ async def generate_plan_reasoning(request: PlanRequest):
                                 5) Encouraging Potential: Content should not be too easy or too difficult; it must push learners slightly beyond their comfort zone to foster growth without overwhelming them.\
                                 6) Alignment with Goals: Resources should be relevant to the learner's academic, professional, or personal objectives."
                         "3. Connection:\n"
-                            "Explain how the content relates to previously covered material to ensure continuity and coherence."
-                            "Highlight how this week’s content sets the foundation for subsequent learning, enabling gradual mastery and skill progression. "
+                            "Explain how the content relates to previously covered material to ensure continuity and coherence.\
+                            Focus on an aligned approach to planning and implementing strategies where all elements—goals, actions, resources, and assessments—are interconnected and mutually reinforcing."
+                            "Highlight how this week’s content sets the foundation for subsequent learning, enabling skill progression. "
                             "Focus on how the progression helps build a comprehensive understanding of the subject and supports gradual mastery.\n"                      
                             
                         "Provide the response in this structured JSON format: "
