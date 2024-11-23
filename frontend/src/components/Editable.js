@@ -215,7 +215,7 @@ const Editable = ({ formData, setResponsePlan , setStudyPlan, participantsId}) =
         e.currentTarget.style.backgroundColor = '#FFF';
     };
 
-    const backgroundOptions = ['Novice’, ‘Advanced Beginner’, ‘Competence’, ‘Proficiency’, ‘Expertise’, ‘Mastery'];
+    const backgroundOptions = ['Novice', 'Advanced Beginner', 'Competence', 'Proficiency', 'Expertise', 'Mastery'];
     const studyMaterialsOptions = ['YouTube', 'Blog'];
 
     return (

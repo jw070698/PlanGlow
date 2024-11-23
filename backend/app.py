@@ -401,7 +401,7 @@ async def generate_info_response(request: InfoRequest):
                         "| Level             | Description                                                                      |\n"
                         "|-------------------|----------------------------------------------------------------------------------|\n"
                         "| Novice            | - Description                                                                    |\n"
-                        "|                   |                                                                                   |\n"
+                        "|                   |                                                                                  |\n"
                         "|-------------------|----------------------------------------------------------------------------------|\n"
                         "| Advanced Beginner | - Description                                                                    |\n"
                         "|                   |                                                                                  |\n"
@@ -533,7 +533,7 @@ async def generate_plan_reasoning(request: PlanRequest):
                         f"You are a helpful assistant. Please review the study plan provided and generate detailed explanations for each week, focusing on three distinct aspects: Learning Objectives, Content Selection, and Connection.\n"
                         "Your responses should demonstrate a thorough understanding of constructivist learning principles, including Andragogy which is the theory of adult learning by Knowles Malcolm and Constructivism by Jean Piaget. "
                         "Provide concise explanations in complete sentences and separate the reasoning into JSON format as follows:\n\n"
-                        "1. Learning Objectives:\n\
+                        "1. Learning Objectives: Your task is to generate clear and concise learning objectives for each week using Bloom's Taxonomy.\n\
                             Please refer these guidance: these 6 levels can be used to structure the learning outcomes, lessons, and assessments of your course.\
                             1) Remembering: Retrieving, recognizing, and recalling relevant knowledge from long‐term memory.\
                             2) Understanding: Constructing meaning from oral, written, and graphic messages through interpreting, exemplifying, classifying, summarizing, inferring, comparing, and explaining.\
@@ -556,9 +556,9 @@ async def generate_plan_reasoning(request: PlanRequest):
                                 3) Ensure that the verbs in the course level outcome are at least at the highest Bloom’s Taxonomy as the highest lesson level outcomes that support it. (Because we can’t verify they can evaluate if our lessons only taught them (and assessed) to define.)\
                                 4) Strive to keep all your learning outcomes measurable, clear and concise."
                         "2. Content Selection:\n"
-                        "Justify the selection of activities, topics, or resources based on their relevance, developmental appropriateness."
-                        "Emphasize their alignment with Constructivism, focusing on building upon learners' prior experiences, encouraging exploration, and enabling active engagement. "
-                        "Address how the content supports adult learners by being immediately relevant and practically useful (Andragogy).\n"
+                            "Justify the selection of activities, topics, or resources based on their relevance, developmental appropriateness."
+                            "Emphasize their alignment with Constructivism, focusing on building upon learners' prior experiences, encouraging exploration, and enabling active engagement. "
+                            "Address how the content supports adult learners by being immediately relevant and practically useful (Andragogy).\n"
                         "3. Connection:\n"
                         "Explain how the content relates to previously covered material to ensure continuity and coherence."
                         "Highlight how this week’s content sets the foundation for subsequent learning, enabling gradual mastery and skill progression. "
@@ -628,7 +628,7 @@ async def generate_topic_explanation(request: UserMessageRequest):
                             Consider the contrast between goal-directed study and a situation where the student is unsure of the relative importance of different parts of the assignment content. \
                             Goal awareness leads to more organized study and improved learning outcomes for the student (Duchastel and Merrill, 1973)."
                         "Display each sentence as a separate bullet point."
-                        f"Only provide **reason for study this '{topic}'**; Do not repeat the study plan content; Do not mention theory explicitly in the results; Be concise."
+                        f"Only provide **reason for study this '{topic}'**; Do not repeat the study plan content; Do not mention theory explicitly in the results; Be concise and include as fewer points as possible."
                     )
                     },
                     {"role": "user", "content": recent_plan}
@@ -672,7 +672,7 @@ async def generate_learning_objectives(request: UserMessageRequest):
                     "role": "system",
                     "content": (
                         f"You are a helpful assistant. This is a study plan with specific topics: '{recent_plan}'." 
-                        f"Your task is to generate clear and concise learning objectives for the topic '{topic}' using Bloom's Taxonomy."                    
+                        f"Your task is to generate clear and concise learning objectives with as fewer points as possible for the topic '{topic}' using Bloom's Taxonomy."                    
                         "Please refer these guidance: these 6 levels can be used to structure the learning outcomes, lessons, and assessments of your course.\
                             1. Remembering: Retrieving, recognizing, and recalling relevant knowledge from long‐term memory.\
                             2. Understanding: Constructing meaning from oral, written, and graphic messages through interpreting, exemplifying, classifying, summarizing, inferring, comparing, and explaining.\
