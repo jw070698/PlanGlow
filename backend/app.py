@@ -283,7 +283,7 @@ async def check_and_replace_invalid_videos(user_message: str, study_plan: dict) 
                     else:
                         # If max_attempts reached without finding a unique video
                         print(f"Could not find a unique replacement video for topic: {topic}")
-                        youtube_resources[idx] = None  # Remove invalid resource
+                        # youtube_resources[idx] = None  # Remove invalid resource
 
                 # Clean up None entries from youtube_resources
                 youtube_resources = [res for res in youtube_resources if res is not None]
@@ -385,25 +385,39 @@ async def generate_info_response(request: InfoRequest):
                 {
                     "role": "system",
                     "content": (
-                        "You are a helpful assistant." 
-                        "You will let the user know about the difference in background knowledge levels based on Bloom's taxonomy, especially: domain of knowledge levels. "
-                        "Knowledge Level: At this level the teacher is attempting to determine whether the students can recognize and recall information. Example: What countries were involved in the War of 1812?"
-                        "Here we have 4 levels of background knowledge ('absolute beginner', 'beginner', 'intermediate', 'advanced'). "
-                        "Please be concise, with each description at most 2 bullet points. Start directly with the Level and description "
-                        "Using table format below and make it easy to read. "
+                        "You are a helpful assistant to explain background knowledge based on the subject that users want to study. " 
+                        "Here we have 6 levels of background expertise ('novice', 'advanced beginner', 'competence', 'proficiency', 'expertise', 'mastery'). "
+                        "1. Novice: Novices rely heavily on context-free rules and step-by-step instructions. Their performance tends to be slow, clumsy, and requires conscious effort. Novices struggle to adapt when situations don't align with the instructions. A novice cook strictly follows recipe measurements and timing, regardless of variations in ingredients or peculiarities of the oven. A novice driver might rigidly maintain speed limits without considering traffic flow or the presence of pedestrians. Novices have a detached approach to outcomes. To progress, novices need to keep gaining experience and making mistakes in a variety of situations.\n"
+                        "2. Advanced Beginner: Advanced beginners recognize situation-specific nuances and can apply experience-based maxims beyond general rules. For instance, an advanced beginner cook might adjust heat based on the smell and look of the food as it is cooking rather than just the instructions in the recipe. They have had enough experience to recognize the smell of burning oil and can now apply the maxim that “the smell of burning oil usually means the heat is too high.”  An advanced beginner chess player begins to recognize such aspects of situation such as \'weakened king’s side\' and can apply the maxim to \'attack a weakened king\’s side.\' The performance of an advanced beginner is more sophisticated than novice, but it is still analytical. They continue to struggle with unfamiliar situations. At the same time, they begin to feel more emotionally engaged, often becoming overwhelmed or frustrated. Progression requires building further emotional involvement and commitment to outcomes.\n"
+                        "3. Competence: Competent performers choose specific goals and adopt an overall perspective on what their situation calls for. A competent cook can choose to have the cold dishes ready before the hot ones. A competent chess player could choose an attacking strategy, focusing on the moves and pieces that support this plan. Success and failure now partially depend on the performer’s choice of perspective and not just on how well they follow rules. This leads to higher emotional involvement, with competent performers feeling joy or regret according to the outcomes. While more fluid than advanced beginners, competent performance still proceeds by analysis, calculation, and deliberate rule-following. Competent performers show improved coordination and anticipation but may rigidly stick to chosen perspectives even when circumstances change. To advance to proficiency, more risks need to be taken with letting go of rules and procedures while trusting one’s emerging intuition.\n" 
+                        "4. Proficiency: Proficient performers intuitively grasp what a situation calls for but consciously decide responses. When a perspective intuitively occurs to them, proficient nurses can instantly sense a patient\'s deterioration before vital signs change. However, they then deliberately consider treatment options. Proficient drivers instinctively tell they\'re going too fast on a rainy curve but then consciously decide whether to brake or decelerate. Proficient performers adapt better to changing circumstances but still rely on rule-based decision-making for actions. The transition to expertise requires further letting go of rules and procedures while gaining more direct experience learning which intuited perspectives work in which kind of situation.\n"
+                        "5. Expertise: Experts demonstrate seamless integration of perception and action. An expert chef creates dishes without recipes, intuitively adjusting techniques and ingredients based on specific circumstances. Expert drivers intuitively lift their foot off the accelerator rather than braking. Their performance happens without deliberation or decision-making. Experts often struggle to precisely explain their actions. When circumstances abruptly change, experts smoothly adapt and shift perspectives in a \"reflexive reorientation.\" For example, expert nurses constantly attend to subtle transitions in a patient’s condition. They intuitively shift perspectives and initiate a corresponding shift in treatment when solicited by transitions in the patient’s condition.\n"
+                        "6. Mastery:  Masters seek to expand and refine their repertoire of intuitive perspectives. In doing so, they sometimes create new possibilities of performing and transform the style of their domain. For example, Cézanne expanded the possibilities for the painting of form and perspective, Stephen Curry altered the style of play in basketball by making the 3-point shot central rather than marginal, and B.B. King transformed the space of possibilities in music by harnessing the previously marginal capacity of the electric guitar to sustain notes. Masters identify overlooked aspects of a practice and experiment with new approaches, accepting short-term drops in particular performances for long-term expansions in their intuition.\n"
+
+                        "Must start directly with the Level and description."
+                        "Using table format below and make it easy to read." 
+                        "Each sentence starts with a new bullet point."
+                        "Be concise."
                         "| Level             | Description                                                                      |\n"
                         "|-------------------|----------------------------------------------------------------------------------|\n"
-                        "| Absolute Beginner | - Description                                                                    |\n"
-                        "|                   | - Description                                                                    |\n"
+                        "| Novice            | - Description                                                                    |\n"
+                        "|                   |                                                                                   |\n"
                         "|-------------------|----------------------------------------------------------------------------------|\n"
-                        "| Beginner          | - Description                                                                    |\n"
-                        "|                   | - Description                                                                    |\n"
+                        "| Advanced Beginner | - Description                                                                    |\n"
+                        "|                   |                                                                                  |\n"
                         "|-------------------|----------------------------------------------------------------------------------|\n"
-                        "| Intermediate      | - Description                                                                    |\n"
-                        "|                   | - Description                                                                    |\n"
+                        "| Competence        | - Description                                                                    |\n"
+                        "|                   |                                                                                  |\n"
                         "|-------------------|----------------------------------------------------------------------------------|\n"
-                        "| Advanced          | - Description                                                                    |\n"
-                        "|                   | - Description                                                                    |\n"
+                        "| Proficiency       | - Description                                                                    |\n"
+                        "|                   |                                                                                  |\n"
+                        "|-------------------|----------------------------------------------------------------------------------|\n"
+                        "| Expertise         | - Description                                                                    |\n"
+                        "|                   |                                                                                  |\n"
+                        "|-------------------|----------------------------------------------------------------------------------|\n"
+                        "| Mastery           | - Description                                                                    |\n"
+                        "|                   |                                                                                  |\n"
+                        "|-------------------|----------------------------------------------------------------------------------|\n"                 
                     )
                 },
                 {"role": "user", "content": request.info_message}
@@ -597,7 +611,7 @@ async def generate_topic_explanation(request: UserMessageRequest):
                         "Outline how this topic supports specific cognitive objectives using Bloom’s Taxonomy. Focus on how the topic enables students to build skills from foundational to advanced levels."
                         "Describe how this topic acts as a Jerome Bruner's theory of Scaffolding in Education for upcoming material, providing necessary skills or background knowledge. Highlight how it encourages Flavell's metacognition and self-regulated learning to foster independent learning and readiness for more complex topics."
                         f"Please respond with concise explanations for each topic using the above structure with 3 bullet points. Only provide **reason for study this '{topic}'** based on the theories; do not repeat the study plan content; do not mention theory explicitly in the results; be concise."
-                        )
+                    )
                     },
                     {"role": "user", "content": recent_plan}
             ],
@@ -639,9 +653,34 @@ async def generate_learning_objectives(request: UserMessageRequest):
                 {
                     "role": "system",
                     "content": (
-                        f"You are a helpful assistant. Below is a study plan '{recent_plan}'. Please generate clear and concise learning objectives "
-                        f"(at most 3) using Bloom's Taxonomy verbs for the topic '{topic}'. "
-                        "Begin with the objectives immediately. Do not say 'Objectives for the topic' in the context of this study plan."
+                        f"You are a helpful assistant. This is a study plan with specific topics: '{recent_plan}'." 
+                        f"Your task is to generate clear and concise learning objectives for the topic '{topic}' using Bloom's Taxonomy."                    
+                        "Please refer these guidance: these 6 levels can be used to structure the learning outcomes, lessons, and assessments of your course.\
+                            1. Remembering: Retrieving, recognizing, and recalling relevant knowledge from long‐term memory.\
+                            2. Understanding: Constructing meaning from oral, written, and graphic messages through interpreting, exemplifying, classifying, summarizing, inferring, comparing, and explaining.\
+                            3. Applying: Carrying out or using a procedure for executing, or implementing.\
+                            4. Analyzing: Breaking material into constituent parts, determining how the parts relate to one another and to an overall structure or purpose through differentiating, organizing, and attributing.\
+                            5. Evaluating: Making judgments based on criteria and standards through checking and critiquing.\
+                            6. Creating: Putting elements together to form a coherent or functional whole; reorganizing elements into a new pattern or structure through generating, planning, or producing."
+                        "Bloom’s is hierarchical, meaning that learning at the higher levels is dependent on having attained prerequisite knowledge and skills at lower levels."
+                        "How Bloom’s can aid in study plan design? Bloom’s taxonomy is a powerful tool to help develop learning outcomes because it explains the process of learning:\
+                            1. Before you can understand a concept, you must remember it.\
+                            2. To apply a concept you must first understand it.\
+                            3. In order to evaluate a process, you must have analyzed it.\
+                            4. To create an accurate conclusion, you must have completed a thorough evaluation.\
+                            However, we don’t always start with lower order skills and step all the way through the entire taxonomy for each concept you present in your course. That approach would become tedious–for both you and your students! Instead, start by considering the level of learners in your course:\
+                                - Is this an “Introduction to…” course? If so, many your learning outcomes may target the lower order Bloom’s skills, because your students are building foundational knowledge. However, even in this situation we would strive to move a few of your outcomes into the applying and analyzing level, but getting too far up in the taxonomy could create frustration and unachievable goals.\
+                                - Do your students have a solid foundation in much of the terminology and processes you will be working on your course? If so, then you should not have many remembering and understanding level outcomes. You may need a few, for any radically new concepts specific to your course. However, these advanced students should be able to master higher-order learning objectives. Too many lower level outcomes might cause boredom or apathy."
+                        "Steps towards writing effective learning outcomes:\
+                            1. Make sure there is one measurable verb in each objective.\
+                            2. Each outcome needs one verb. Either a student can master the outcome , or they fail to master it. If an outcome has two verbs (say, define and apply), what happens if a student can define, but not apply? Are they demonstrating mastery?\
+                            3. Ensure that the verbs in the course level outcome are at least at the highest Bloom’s Taxonomy as the highest lesson level outcomes that support it. (Because we can’t verify they can evaluate if our lessons only taught them (and assessed) to define.)\
+                            4. Strive to keep all your learning outcomes measurable, clear and concise."
+                        "Must start directly with learning objectives. Numbering all learning objectives."
+                        "For example, \
+                            1. learning objective\
+                            2. learning objective\
+                            ..."
                     )
                 },
                 {"role": "user", "content": recent_plan}

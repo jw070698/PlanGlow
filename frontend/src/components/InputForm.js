@@ -19,7 +19,7 @@ const InputForm = ({ formData, handleInputChange, handleFormSubmit, handleInfoCl
       value={formData.background} 
       onChange={handleInputChange} 
       type="select" 
-      options={["Absolute Beginner", "Beginner", "Intermediate", "Advanced"]} 
+      options={["Novice", "Advanced Beginner", "Competence", "Proficiency", "Expertise", "Mastery"]} 
       button=
       {<button style={{ background: 'none', border: 'none', cursor: 'pointer' }} onClick={handleInfoClick}>
         <FontAwesomeIcon icon={faLightbulb} style={{ marginLeft: '0.5rem', marginTop: '0.5rem' }} />

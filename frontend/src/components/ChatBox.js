@@ -38,7 +38,7 @@ const ChatBox = () => {
   const [isIdSubmitted, setIsIdSubmitted] = useState(false);
   const [formData, setFormData] = useState({
     topic: '',
-    background: 'absolute beginner',
+    background: 'novice',
     studyMaterials: [],
     duration: { months: 0, weeks: 0, days: 0 },
     availableTime: 0,
