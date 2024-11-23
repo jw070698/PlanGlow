@@ -299,7 +299,7 @@ async def check_and_replace_invalid_videos(user_message: str, study_plan: dict) 
 async def find_replacement_video(user_message:str, topic: str) -> dict:
     # Finds a similar video for the given topic by querying the search function.
     print("USER MESSAGE IN FIND_REPLACEMENT_VIDEO", user_message)
-    proficiency_match = re.search(r"(absolute beginner|beginner|intermediate|advanced)", user_message, re.IGNORECASE)
+    proficiency_match = re.search(r"(Novice|Advanced Beginner|Competence|Proficiency|Expertise|Mastery)", user_message, re.IGNORECASE)
     proficiency = proficiency_match.group(1) if proficiency_match else "unknown level"
     topic_match = re.search(r"on (\w+)", user_message, re.IGNORECASE)
     extracted_topic = topic_match.group(1) if topic_match else "unknown topic"
@@ -531,7 +531,6 @@ async def generate_plan_reasoning(request: PlanRequest):
                     "role": "system",
                     "content": (
                         f"You are a helpful assistant. Please review the study plan provided and generate detailed explanations for each week, focusing on three distinct aspects: Learning Objectives, Content Selection, and Connection.\n"
-                        "Your responses should demonstrate a thorough understanding of constructivist learning principles, including Andragogy which is the theory of adult learning by Knowles Malcolm and Constructivism by Jean Piaget. "
                         "Provide concise explanations in complete sentences and separate the reasoning into JSON format as follows:\n\n"
                         "1. Learning Objectives: Your task is to generate clear and concise learning objectives for each week using Bloom's Taxonomy.\n\
                             Please refer these guidance: these 6 levels can be used to structure the learning outcomes, lessons, and assessments of your course.\
@@ -627,8 +626,7 @@ async def generate_topic_explanation(request: UserMessageRequest):
                             This awareness enables them to focus their efforts on reaching those goals and helps them maintain perspective on their learning progress throughout the assignment. \
                             Consider the contrast between goal-directed study and a situation where the student is unsure of the relative importance of different parts of the assignment content. \
                             Goal awareness leads to more organized study and improved learning outcomes for the student (Duchastel and Merrill, 1973)."
-                        "Display each sentence as a separate bullet point."
-                        f"Only provide **reason for study this '{topic}'**; Do not repeat the study plan content; Do not mention theory explicitly in the results; Be concise and include as fewer points as possible."
+                        f"Only provide **reason for study this '{topic}'**; Do not repeat the study plan content; Do not mention theory explicitly in the results; Be concise, as fewer as possible."
                     )
                     },
                     {"role": "user", "content": recent_plan}
@@ -694,7 +692,8 @@ async def generate_learning_objectives(request: UserMessageRequest):
                             2. Each outcome needs one verb. Either a student can master the outcome , or they fail to master it. If an outcome has two verbs (say, define and apply), what happens if a student can define, but not apply? Are they demonstrating mastery?\
                             3. Ensure that the verbs in the course level outcome are at least at the highest Bloom’s Taxonomy as the highest lesson level outcomes that support it. (Because we can’t verify they can evaluate if our lessons only taught them (and assessed) to define.)\
                             4. Strive to keep all your learning outcomes measurable, clear and concise."
-                        "Must start directly with learning objectives. Numbering all learning objectives."
+                        "Validate whether these learning objectives can be achieved within the hours the user wants to study. If not, reduce them."                        
+                        "Must include only learning objectives. Numbering all learning objectives."
                         "For example, \
                             1. learning objective\
                             2. learning objective\
