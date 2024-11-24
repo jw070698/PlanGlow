@@ -417,6 +417,7 @@ const [parsedJson, setParsedJson] =  useState(null);
                         likes: status.likes
                     };
                 });
+                console.log("formattedresults",formattedResults);
                 setSearchResults(formattedResults.length > 0 ? formattedResults : [{ title: 'No resources found', description: '', url: '', thumbnail: '', views: 'N/A', likes: 'N/A'}]);
                 setResourcesModalIsOpen(true);
 
