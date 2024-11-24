@@ -311,7 +311,7 @@ async def find_replacement_video(user_message:str, topic: str) -> dict:
     }
     hours_match = re.search(r"(\d+) hours? available per day", user_message, re.IGNORECASE)
     hours_per_day = int(hours_match.group(1)) if hours_match else 0
-    full_query = f"Studying {topic} in {extracted_topic} for a {proficiency} in {hours_per_day} hours"
+    full_query = f"{topic} in {extracted_topic} for a {proficiency} in {hours_per_day} hours"
 
     result = await search_similar_video(full_query)
     if result:
