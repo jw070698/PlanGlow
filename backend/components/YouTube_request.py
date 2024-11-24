@@ -61,7 +61,7 @@ def get_search_response(query):
     print(query)
     search_response = youtube.search().list(
         q=query,
-        order="rating",
+        order="relevance",
         part="snippet",
         type="video",
         regionCode="US",
