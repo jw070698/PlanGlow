@@ -268,7 +268,7 @@ const [parsedJson, setParsedJson] =  useState(null);
                 );
 
                 const linkStatuses = await Promise.all(resources.map(async resource => {
-                    const research_query = `Studying ${resource.topic} for ${formData?.topic || ''} with available time of ${formData.availableTime || '0'} hours per day`
+                    const research_query = `${resource.topic} in ${formData?.topic || ''} for ${formData?.background||''} within ${formData.availableTime || '0'} hours`
                     const result = await checkAvailability(resource.link, participantsId, research_query);
                     return {
                         link: resource.link,
@@ -396,7 +396,8 @@ const [parsedJson, setParsedJson] =  useState(null);
             setSelectedDayIndex(dayIndex);
 
             try {
-                const search_message = `Studying ${topic} for ${formData?.topic || ''} with available time of ${formData.availableTime || '0'} hours per day`; /////////////./////
+                const search_message = `${topic} in ${formData?.topic || ''} for ${formData?.background||''} within ${formData?.availableTime || '0'} hours`; /////////////./////
+                console.log("SEARCU", search_message)
                 const response = await axios.post(`${API_BASE_URL}/search`, { 
                     search_message: search_message});
                 const items = response.data.response.items || [];

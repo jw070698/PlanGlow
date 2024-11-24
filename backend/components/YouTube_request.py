@@ -58,7 +58,7 @@ def get_search_response(query):
         video_duration = "medium"
     else:
         video_duration = "long"
-
+    print(query)
     search_response = youtube.search().list(
         q=query,
         order="relevance",
