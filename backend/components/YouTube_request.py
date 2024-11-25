@@ -66,8 +66,7 @@ def get_search_response(query):
         type="video",
         regionCode="US",
         maxResults=10,
-        safeSearch="strict",
-        videoCategoryId="27"
+        safeSearch="strict"
     ).execute()
 
     return search_response
@@ -148,8 +147,7 @@ def search_similar_videos(query):
             type="video",
             regionCode="US",
             maxResults=1,
-            safeSearch="strict",
-            videoCategoryId="27"
+            safeSearch="strict"
         ).execute()
 
         print("items", search_response['items'])
