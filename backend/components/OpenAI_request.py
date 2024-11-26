@@ -225,8 +225,8 @@ class ChatApp:
             "You are a helpful assistant tasked with guiding the user toward a comprehensive study plan."
             "Follow the user's request carefully. "
             f"Here is the full conversation history for this user:\n{history_as_text}\n"
-            "If the user asks a general question, provide a direct and helpful answer without using JSON."
-            "If the user wants to fix or improve the current plan, your output should be in JSON format, structured as follows:\n\n"
+            "If the user asks a general question, provide a direct and helpful answer using Markdown, instead of JSON format."
+            "ELSE If the user wants to fix or improve the current plan, your output should be in JSON format, structured as follows:\n\n"
             "{\
                 \"studyPlan_Overview\": {\
                     \"Week1\": \"Overview of topics for week 1\",\
