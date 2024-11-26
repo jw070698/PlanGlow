@@ -259,51 +259,56 @@ class ChatApp:
         ]
        
         try:
-            response = self.generate_response(
-                prompt=full_prompt, 
-                temperature=0.0, 
-                top_p=0.8, 
-                frequency_penalty=0.2, 
-                presence_penalty=0.1)
-            print("Initial response received:", response)
-            if response:
-                json_match = re.search(r'```json([\s\S]*?)```', response)
-                if json_match:
-                    json_text = json_match.group(1).strip()
-                    try:
-                        parsed_json = json.loads(json_text)
-                        print("Parsed JSON response:", parsed_json)
+        response = self.generate_response(
+            prompt=full_prompt, 
+            temperature=0.0, 
+            top_p=0.8, 
+            frequency_penalty=0.2, 
+            presence_penalty=0.1)
+        print("Initial response received:", response)
 
-                        # Proceed to critique
-                        critique = self.get_critique_response(parsed_json)
-                        print("Critique response:", critique)
+        # Check user intent
+        if "improve" in user_chat.lower() or "fix" in user_chat.lower() or "update" in user_chat.lower() or "change" in user_chat.lower() or "revise" in user_chat.lower():
+            # Process JSON responses for improvement
+            json_match = re.search(r'```json([\s\S]*?)```', response)
+            if json_match:
+                json_text = json_match.group(1).strip()
+                try:
+                    parsed_json = json.loads(json_text)
+                    print("Parsed JSON response:", parsed_json)
 
-                        # Proceed to improvement
-                        improved_response = self.get_improved_response(user_chat, parsed_json, critique)
-                        print("Improved response:", improved_response)
+                    # Proceed to critique
+                    critique = self.get_critique_response(parsed_json)
+                    print("Critique response:", critique)
 
-                        return improved_response
-                    except json.JSONDecodeError:
-                        print("JSON parsing error. Proceeding with raw JSON for critique.")
-                        critique = self.get_critique_response(json_text)
-                        print("Critique response for raw JSON:", critique)
+                    # Proceed to improvement
+                    improved_response = self.get_improved_response(user_chat, parsed_json, critique)
+                    print("Improved response:", improved_response)
 
-                        # Proceed to improvement
-                        improved_response = self.get_improved_response(user_chat, json_text, critique)
-                        print("Improved response from raw JSON:", improved_response)
+                    return improved_response
+                except json.JSONDecodeError:
+                    print("JSON parsing error. Proceeding with raw JSON for critique.")
+                    critique = self.get_critique_response(json_text)
+                    print("Critique response for raw JSON:", critique)
 
-                        return improved_response
-                else:
-                    print("No JSON block found. Proceeding with raw response.")
-                    critique = self.get_critique_response(response)
-                    print("Critique response for raw response:", critique)
-
-                    improved_response = self.get_improved_response(user_chat, response, critique)
-                    print("Improved response from raw response:", improved_response)
+                    # Proceed to improvement
+                    improved_response = self.get_improved_response(user_chat, json_text, critique)
+                    print("Improved response from raw JSON:", improved_response)
 
                     return improved_response
             else:
-                return {"error": "No response from OpenAI API."}
-        except Exception as e:
-            print(f"Unexpected error during chat response: {e}")
-            return {"error": "An unexpected error occurred.", "details": str(e)}
+                print("No JSON block found. Proceeding with raw response.")
+                critique = self.get_critique_response(response)
+                print("Critique response for raw response:", critique)
+
+                improved_response = self.get_improved_response(user_chat, response, critique)
+                print("Improved response from raw response:", improved_response)
+
+                return improved_response
+        else:
+            # General question, return response as Markdown
+            return response
+
+    except Exception as e:
+        print(f"Unexpected error during chat response: {e}")
+        return {"error": "An unexpected error occurred.", "details": str(e)}
