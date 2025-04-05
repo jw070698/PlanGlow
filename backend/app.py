@@ -393,31 +393,21 @@ async def generate_info_response(request: InfoRequest):
                         "4. Proficiency: Proficient performers intuitively grasp what a situation calls for but consciously decide responses. When a perspective intuitively occurs to them, proficient nurses can instantly sense a patient\'s deterioration before vital signs change. However, they then deliberately consider treatment options. Proficient drivers instinctively tell they\'re going too fast on a rainy curve but then consciously decide whether to brake or decelerate. Proficient performers adapt better to changing circumstances but still rely on rule-based decision-making for actions. The transition to expertise requires further letting go of rules and procedures while gaining more direct experience learning which intuited perspectives work in which kind of situation.\n"
                         "5. Expertise: Experts demonstrate seamless integration of perception and action. An expert chef creates dishes without recipes, intuitively adjusting techniques and ingredients based on specific circumstances. Expert drivers intuitively lift their foot off the accelerator rather than braking. Their performance happens without deliberation or decision-making. Experts often struggle to precisely explain their actions. When circumstances abruptly change, experts smoothly adapt and shift perspectives in a \"reflexive reorientation.\" For example, expert nurses constantly attend to subtle transitions in a patient’s condition. They intuitively shift perspectives and initiate a corresponding shift in treatment when solicited by transitions in the patient’s condition.\n"
                         "6. Mastery:  Masters seek to expand and refine their repertoire of intuitive perspectives. In doing so, they sometimes create new possibilities of performing and transform the style of their domain. For example, Cézanne expanded the possibilities for the painting of form and perspective, Stephen Curry altered the style of play in basketball by making the 3-point shot central rather than marginal, and B.B. King transformed the space of possibilities in music by harnessing the previously marginal capacity of the electric guitar to sustain notes. Masters identify overlooked aspects of a practice and experiment with new approaches, accepting short-term drops in particular performances for long-term expansions in their intuition.\n"
-
-                        "Must start directly with the Level and description."
+                        "Format your response as a clean **HTML <table>**."
+                        "The table should have two columns: Level and Description."
                         "Using table format below and make it easy to read." 
+                        "Each description should contain bullet points inside an unordered list (`<ul><li>…</li></ul>`)."
                         "Each sentence starts with a new bullet point."
                         "Be concise."
-                        "| Level             | Description                                                                      |\n"
-                        "|-------------------|----------------------------------------------------------------------------------|\n"
-                        "| Novice            | - Description                                                                    |\n"
-                        "|                   |                                                                                  |\n"
-                        "|-------------------|----------------------------------------------------------------------------------|\n"
-                        "| Advanced Beginner | - Description                                                                    |\n"
-                        "|                   |                                                                                  |\n"
-                        "|-------------------|----------------------------------------------------------------------------------|\n"
-                        "| Competence        | - Description                                                                    |\n"
-                        "|                   |                                                                                  |\n"
-                        "|-------------------|----------------------------------------------------------------------------------|\n"
-                        "| Proficiency       | - Description                                                                    |\n"
-                        "|                   |                                                                                  |\n"
-                        "|-------------------|----------------------------------------------------------------------------------|\n"
-                        "| Expertise         | - Description                                                                    |\n"
-                        "|                   |                                                                                  |\n"
-                        "|-------------------|----------------------------------------------------------------------------------|\n"
-                        "| Mastery           | - Description                                                                    |\n"
-                        "|                   |                                                                                  |\n"
-                        "|-------------------|----------------------------------------------------------------------------------|\n"                 
+                        "Use proper HTML tags and indentation."
+                        "Here are the 6 levels to include:\
+                        - Novice\
+                        - Advanced Beginner\
+                        - Competence\
+                        - Proficiency\
+                        - Expertise\
+                        - Mastery\
+                        Start directly with `<table>...</table>`, and make sure the output is valid HTML."
                     )
                 },
                 {"role": "user", "content": request.info_message}
