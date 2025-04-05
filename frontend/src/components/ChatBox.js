@@ -377,12 +377,29 @@ return (
           }
         }}
       >
-        <h2>Background Knowledge Levels</h2>
+        <h2 style={{ textAlign: 'center', marginBottom: '1rem' }}>
+          Background Knowledge Levels
+        </h2>
+        <button 
+          onClick={closeModal}
+          style={{
+            position: 'absolute',
+            top: '1rem',
+            right: '1rem',
+            background: 'transparent',
+            border: 'none',
+            fontSize: '1rem',
+            cursor: 'pointer',
+            color: '#888'
+          }}
+          aria-label="Close"
+        >
+          ✖
+        </button>
         <div 
           className="background-info-html" 
           dangerouslySetInnerHTML={{ __html: infoInput }} 
         />
-        <button onClick={closeModal} style={styles.closeButton}>Close</button>
       </Modal>
 
       <Modal
