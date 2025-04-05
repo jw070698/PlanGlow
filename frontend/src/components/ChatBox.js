@@ -406,10 +406,34 @@ return (
         isOpen={resourcesModalIsOpen}
         onRequestClose={closeResourcesModal}
         contentLabel="Additional Resources"
-        style={styles.modal}
+        style={{
+          ...styles.modal,
+          content: {
+            ...styles.modal?.content,
+            position: 'relative',
+            padding: '2rem',
+            maxWidth: '800px',
+            margin: 'auto',
+            borderRadius: '12px'
+          }
+        }}
       >
-        <button onClick={closeResourcesModal} style={styles.closeButton}>Close</button>
-        {/* Display searchResults here */}
+        <button 
+          onClick={closeResourcesModal}
+          style={{
+            position: 'absolute',
+            top: '1rem',
+            right: '1rem',
+            background: 'transparent',
+            border: 'none',
+            fontSize: '1rem',
+            cursor: 'pointer',
+            color: '#888'
+          }}
+          aria-label="Close"
+        >
+          ✖
+        </button>
       </Modal>
     </div>
   );
