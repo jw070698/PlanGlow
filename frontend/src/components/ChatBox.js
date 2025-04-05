@@ -368,10 +368,20 @@ return (
         isOpen={modalIsOpen}
         onRequestClose={closeModal}
         contentLabel="Markdown Info"
-        style={styles.modal}
+        style={{
+          content: {
+            maxWidth: '800px',
+            margin: 'auto',
+            padding: '2rem',
+            borderRadius: '12px'
+          }
+        }}
       >
-        
-        <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>{infoInput}</ReactMarkdown>
+        <h2>Background Knowledge Levels</h2>
+        <div 
+          className="background-info-html" 
+          dangerouslySetInnerHTML={{ __html: infoInput }} 
+        />
         <button onClick={closeModal} style={styles.closeButton}>Close</button>
       </Modal>
 
