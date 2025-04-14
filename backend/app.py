@@ -11,8 +11,10 @@ from firebase_admin import credentials, firestore, auth
 from components.YouTube_request import search_similar_videos
 
 # Initialize Firebase Admin SDK
-cred = credentials.Certificate("serviceAccountKey.json")
+# cred = credentials.Certificate("serviceAccountKey.json")
 
+service_account_info = json.loads(os.environ["FIREBASE_SERVICE_ACCOUNT"])
+cred = credentials.Certificate(service_account_info)
 firebase_admin.initialize_app(cred)
 
 from components.OpenAI_request import ChatApp
