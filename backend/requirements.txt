@@ -1,0 +1,9 @@
+pydantic
+fastapi[standard]
+uvicorn
+openai
+python-dotenv
+google-api-python-client
+firebase_admin
+aiohttp
+google-auth
